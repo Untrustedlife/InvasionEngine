@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "clean": "node -e \"import('node:fs/promises').then(fs=>fs.rm('dist',{recursive:true,force:true}))\"",
-    "build": "node scripts/build.mjs",
+    "build": "node build.mjs",
     "serve": "npm run build && start \"\" powershell -NoProfile -WindowStyle Hidden -Command \"Start-Process http://localhost:5500/\" && python -m http.server 5500 -d dist",
     "zip": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Compress-Archive -Path dist\\* -DestinationPath game.zip -Force\""
   },
