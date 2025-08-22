@@ -29,10 +29,10 @@ console.log("Clean dist/");
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 
-//Bundle JS, preserving "src/main.js" path in dist so existing HTML keeps working.
+//Bundle JS, preserving "src/Main.js" path in dist so existing HTML keeps working.
 await build({
   entryPoints: [
-    join(root, "src/main.js"),
+    join(root, "src/Main.js"),
     join(root, "src/editor/MapEditor.js"),
   ],
   bundle: true,
@@ -41,7 +41,7 @@ await build({
   minify: true,
   sourcemap: false,
   outdir: out,
-  outbase: root, //keep folder structure (sist/src/main.js)
+  outbase: root, //keep folder structure (sist/src/Main.js)
   entryNames: "[dir]/[name]",
   chunkNames: "chunks/[name]-[hash]",
 });
@@ -72,7 +72,7 @@ for (const f of htmlFiles) {
 }
 
 //If there was no index.html, use RealmChildInvasionGameController.html as index.
-//Otherwise, create a minimal index.html that loads dist/src/main.js.
+//Otherwise, create a minimal index.html that loads dist/src/Main.js.
 if (!indexWritten) {
   const controller = htmlFiles.find(
     (f) => f.toLowerCase() === "realmchildinvasiongamecontroller.html"
@@ -90,7 +90,7 @@ if (!indexWritten) {
 <style>html,body{height:100%;margin:0;background:#0b1322}#root,canvas{height:100%;width:100%;display:block}</style>
 <body>
 <canvas id="view"></canvas>
-<script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/Main.js"></script>
 </body>
 </html>`;
     await writeFile(join(out, "index.html"), html);
