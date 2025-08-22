@@ -333,9 +333,9 @@ function paintField() {
 }
 
 //Texture atlas (index -> canvas). Index 0 is null for “empty/air”.
-export const TEX = [
+const baseTextures = [
   null,
-  paintBrick(),
+  paintBrick(), //Replaced by backrooms wall later
   paintPanel(),
   paintTech(),
   paintDoor(),
@@ -343,6 +343,8 @@ export const TEX = [
   paintBlueDoor(),
   paintField(),
 ];
+
+export const TEX = [...baseTextures];
 
 //Convert texture to column-major format for fast vertical sampling
 export function cacheColumns(tex) {
@@ -366,3 +368,68 @@ export function cacheColumns(tex) {
 
 //Pre-sliced texture columns for fast rendering
 export const TEXCACHE = TEX.map((tex) => (tex ? cacheColumns(tex) : null));
+
+// #region New Code for Backrooms Game
+export function addLoadedTextures(loadedTextures) {
+  TEX.push(...loadedTextures);
+  rebuildTextureCache();
+}
+
+//Rebuild TEXCACHE when new textures are added
+function rebuildTextureCache() {
+  TEXCACHE.length = 0; // Clear existing cache
+  TEX.forEach((tex) => {
+    TEXCACHE.push(tex ? cacheColumns(tex) : null);
+  });
+}
+
+//Load a 64x64 wall texture image from assets/gfx (forced) and return a canvas
+async function loadWallTexture(imageName) {
+  const imagePathReal = `../assets/gfx/${imageName}`;
+  //Async so use promises
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = makeTex(64, 64); //Use existing makeTex function
+      const context = canvas.getContext("2d");
+      context.imageSmoothingEnabled = false;
+      context.drawImage(img, 0, 0, 64, 64); //Force to 64x64
+      resolve(canvas);
+    };
+    img.onerror = () =>
+      reject(new Error(`Failed to load texture: ${imagePathReal}`));
+    img.src = imagePathReal;
+  });
+}
+
+//Load multiple wall textures and add them to TEX/TEXCACHE arrays
+async function loadWallTextures(textureList) {
+  const promises = textureList.map(async (texPath, index) => {
+    try {
+      return await loadWallTexture(texPath);
+    } catch (error) {
+      console.warn(`Failed to load texture ${texPath}:`, error);
+      return paintBrick(); //Fallback to brick texture (Should add gmod missing file texture lmao)
+    }
+  });
+  return Promise.all(promises);
+}
+//#endregion
+
+//#region Backrooms Textures
+// Load the wallpaper asynchronously and update TEX/TEXCACHE
+export async function initAsyncTextures() {
+  try {
+    const c = await paintBackroomsWallpaper();
+    TEX[1] = c; // replace placeholder at index 1
+    rebuildTextureCache();
+  } catch (err) {
+    console.warn("Failed to init backrooms wallpaper:", err);
+  }
+}
+//Backrooms wallpaper
+async function paintBackroomsWallpaper() {
+  const c = await loadWallTexture("backrooms_wallpaper.jpg");
+  return c;
+}
+//

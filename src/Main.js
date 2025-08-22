@@ -37,6 +37,10 @@ import {
 } from "./Gameplay.js";
 import { rollDice, getRandomElementFromArray } from "./UntrustedUtils.js";
 import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
+import { initAsyncTextures } from "./Textures.js";
+
+//Initialize override textures
+initAsyncTextures();
 
 //Wire inputs
 wireInput(canvas);
