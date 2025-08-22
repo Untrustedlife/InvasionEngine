@@ -1,0 +1,422 @@
+/* ===========================================
+   PRONODE v33 CHANGELOG - Terminal Interface
+   =========================================== */
+
+/* This CSS creates a scrollable terminal changelog viewer.
+   Designed to look like a CRT terminal with easy copy-paste functionality.
+   Maintains immersion with "Development Cycle" dating system. */
+
+/* ===========================================
+   BASIC LAYOUT - Full screen terminal
+   =========================================== */
+
+/* Scanlines Effect */
+
+@keyframes scanlines {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(2px);
+  }
+}
+
+/* Body styling - matches other modules exactly */
+body {
+  margin: 0;
+  padding: 20px;
+  background: #000;
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Main terminal container - matches game dimensions */
+.terminal-container {
+  width: min(98vw, 1920px);
+  height: 90vh;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border: 4px solid var(--nodeos-color);
+  padding: 15px;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevent main container scrolling */
+  position: relative;
+}
+
+.terminal-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 255, 0, 0.05) 0%,
+    rgba(0, 255, 0, 0.02) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Scanlines Effect - Applied as overlay */
+.terminal-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+  pointer-events: none;
+  animation: scanlines 0.1s linear infinite;
+}
+
+/* Inner content container */
+.terminal-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===========================================
+   HEADER SECTION - Terminal title and prompt
+   =========================================== */
+
+/* OS header styling - matches main menu */
+.os-header {
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--nodeos-color);
+  padding-bottom: 5px;
+}
+
+.os-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+  color: var(--nodeos-color);
+}
+
+.os-version {
+  font-size: 11px;
+  color: var(--nodeos-node-color);
+  margin: 0;
+}
+
+/* Terminal prompt line */
+.terminal-prompt {
+  margin: 8px 0;
+  color: var(--nodeos-color);
+  font-size: 12px;
+}
+
+/* Blinking cursor animation */
+.cursor {
+  display: inline-block;
+  background: var(--nodeos-color);
+  width: 8px;
+  height: 12px;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ===========================================
+   NAVIGATION - Back button
+   =========================================== */
+
+/* Navigation controls container */
+.nav-controls {
+  margin: 8px 0 15px 0;
+}
+
+/* Back button styled as terminal command */
+.back-button {
+  display: inline-block;
+  color: var(--nodeos-color);
+  background: none;
+  border: 1px solid var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  text-align: center;
+  padding: 5px 10px;
+  cursor: pointer;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all 0.1s;
+}
+
+.back-button:hover {
+  color: #000;
+  background: var(--nodeos-color);
+}
+
+.back-button:active {
+  color: var(--nodeos-color);
+  background: var(--nodeos-node-color);
+}
+
+/* ===========================================
+   CHANGELOG VIEWER - Main content area
+   =========================================== */
+
+/* Main changelog container */
+.changelog-viewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flexbox to shrink */
+  border: 2px solid var(--nodeos-color);
+  background: #000;
+}
+
+/* Changelog header with system info */
+.changelog-header {
+  background: #000;
+  border-bottom: 1px solid var(--nodeos-node-color);
+  padding: 10px;
+}
+
+.system-info {
+  font-size: 11px;
+  color: var(--nodeos-node-color);
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* ===========================================
+   SCROLLABLE CONTENT - The main changelog area
+   =========================================== */
+
+/* Scrollable changelog content container */
+.changelog-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  background: #000;
+}
+
+/* Individual changelog entry */
+.changelog-entry {
+  margin-bottom: 25px;
+  border: 1px solid var(--nodeos-node-color);
+  background: #000;
+  padding: 12px;
+}
+
+.changelog-entry:last-child {
+  margin-bottom: 0;
+}
+
+/* Entry header with date and version */
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--nodeos-node-color);
+}
+
+.entry-date {
+  color: var(--nodeos-color);
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.entry-version {
+  color: var(--nodeos-node-color);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+/* Entry content area */
+.entry-content {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.entry-content h3 {
+  color: var(--nodeos-color);
+  font-size: 11px;
+  margin: 10px 0 5px 0;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.entry-content ul {
+  margin: 5px 0 15px 15px;
+  padding: 0;
+}
+
+.entry-content li {
+  color: var(--nodeos-node-color);
+  margin: 3px 0;
+  list-style: none;
+  position: relative;
+}
+
+/* Terminal-style bullet points */
+.entry-content li::before {
+  content: "- ";
+  color: var(--nodeos-color);
+  font-weight: bold;
+}
+
+/* ===========================================
+   SYSTEM STATUS - Bottom info bar
+   =========================================== */
+
+/* Bottom status bar like other modules */
+.system-status {
+  position: absolute;
+  bottom: 10px;
+  left: 20px;
+  right: 20px;
+  font-size: 10px;
+  color: var(--nodeos-color);
+  border-top: 1px solid var(--nodeos-node-color);
+  padding-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  background: #000;
+}
+
+/* ===========================================
+   CUSTOM SCROLLBARS - Terminal aesthetic
+   =========================================== */
+
+/* Custom scrollbar for changelog content */
+.changelog-content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.changelog-content::-webkit-scrollbar-track {
+  background: #000;
+  border: 1px solid var(--nodeos-node-color);
+}
+
+.changelog-content::-webkit-scrollbar-thumb {
+  background: var(--nodeos-node-color);
+  border: 1px solid var(--nodeos-color);
+}
+
+.changelog-content::-webkit-scrollbar-thumb:hover {
+  background: var(--nodeos-color);
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN - Mobile adjustments
+   =========================================== */
+
+/* Tablet adjustments */
+@media (max-width: 1200px) {
+  .terminal-container {
+    padding: 10px;
+  }
+
+  .changelog-content {
+    padding: 10px;
+  }
+
+  .changelog-entry {
+    padding: 8px;
+    margin-bottom: 15px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 900px) {
+  .terminal-container {
+    width: 98vw;
+    height: 95vh;
+    padding: 8px;
+  }
+
+  .entry-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .system-status {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 9px;
+  }
+
+  .changelog-content {
+    padding: 8px;
+  }
+
+  .back-button {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 600px) {
+  .terminal-container {
+    padding: 5px;
+  }
+
+  .os-title {
+    font-size: 14px;
+  }
+
+  .os-version {
+    font-size: 10px;
+  }
+
+  .entry-content {
+    font-size: 10px;
+  }
+
+  .entry-content h3 {
+    font-size: 10px;
+  }
+}
+
+/* ===========================================
+   ACCESSIBILITY - Focus and selection
+   =========================================== */
+
+/* Focus outline for keyboard navigation */
+.back-button:focus {
+  outline: 1px solid var(--nodeos-color);
+  outline-offset: 2px;
+}
+
+/* Selection styling */
+::selection {
+  background: var(--nodeos-color);
+  color: #000;
+}
+
+/* Ensure good contrast and readability */
+.changelog-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nodeos-node-color) #000;
+}

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PRONODE v33 - System Changelog</title>
+    <link rel="stylesheet" href="styles/_variables.css" />
+    <link rel="stylesheet" href="styles/changelog.css" />
+  </head>
+  <body>
+    <div class="terminal-container">
+      <div class="terminal-content">
+        <!-- OS Header -->
+        <div class="os-header">
+          <h1 class="os-title">PRONODE v33 - System Changelog</h1>
+          <p class="os-version">
+            DEVELOPMENT CYCLE LOG - NODE MAINTENANCE RECORDS
+          </p>
+        </div>
+
+        <div class="terminal-prompt">
+          ]CHANGELOG<span class="cursor"></span>
+        </div>
+
+        <!-- Back Button -->
+        <div class="nav-controls">
+          <a href="../index.html" class="back-button"
+            >← RETURN TO PRONODE TERMINAL</a
+          >
+        </div>
+
+        <!-- Changelog Content Area -->
+        <div class="changelog-viewer">
+          <div class="changelog-header">
+            <div class="system-info">
+              CHANGE LOG
+              <br />
+              CLASSIFICATION: NODE MAINTENANCE
+              <br />
+              FORMAT: DC.YY.MM.DD.HHHH (DEVELOPMENT CYCLE.YEAR.MONTH.DAY.HASH)
+            </div>
+          </div>
+
+          <!-- Scrollable Changelog Content -->
+          <div class="changelog-content">
+            <!-- CHANGELOG ENTRIES - Easy to copy/paste new ones here -->
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.67.08.17.2025</span>
+                <span class="entry-version">v1.4</span>
+              </div>
+              <div class="entry-content">
+                <h3>SYSTEM UPDATES:</h3>
+                <ul>
+                  <li>Rewrote map system to allow multiple maps</li>
+                  <li>Added ceiling and ground controls to all maps.</li>
+                  <li>
+                    Map editor can now place infoPlayerStart and infoPlayerExit
+                    on maps.
+                  </li>
+                  <li>Map editor now exports and imports in new map format.</li>
+                </ul>
+                <h3>GAME FEATURES:</h3>
+                <ul>
+                  <li>
+                    USER Soul now properly absorbed by the node upon death
+                  </li>
+                  <li>Removed yellow dot in middle of screen</li>
+                  <li>Loot amounts now dynamic based on map size</li>
+                  <li>Added music to the game, now plays in the background.</li>
+                  <li>Can now use arrow keys to move up and down.</li>
+                  <li>
+                    Added 3 new maps. They play in order. Then start randomizing
+                    after you exhaust them.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.67.08.16.2025</span>
+                <span class="entry-version">v1.3</span>
+              </div>
+              <div class="entry-content">
+                <h3>SYSTEM UPDATES:</h3>
+                <ul>
+                  <li>Updated Map Editor to NodeOS terminal interface</li>
+                  <li>Added system changelog viewer</li>
+                  <li>Fixed canvas coordinate alignment in editor</li>
+                  <li>Colors in minimap/map editor now match up.</li>
+                  <li>Added scanlines in editor and changelog.</li>
+                  <li>Added terminal glow in editor and changelog.</li>
+                </ul>
+                <h3>BUG FIXES:</h3>
+                <ul>
+                  <li>Resolved tile placement misalignment in map editor</li>
+                  <li>Eliminated unnecessary scrolling in editor interface</li>
+                  <li>Fixed Game log Scroll when new item added</li>
+                  <li>Fixed bug with drone sprite having weird extra pixel.</li>
+                </ul>
+                <h3>GAME FEATURES:</h3>
+                <ul>
+                  <li>Barrels no longer freakishly huge.</li>
+                  <li>
+                    All logs moved from Bar UI to log on left side of screen.
+                  </li>
+                  <li>
+                    Minimap colors changed to reflect what the tiles actually
+                    are now.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.67.08.16.2025</span>
+                <span class="entry-version">v1.2</span>
+              </div>
+              <div class="entry-content">
+                <h3>SYSTEM UPDATES:</h3>
+                <ul>
+                  <li>Improved layout and styling consistency</li>
+                  <li>Enhanced terminal aesthetic across all modules</li>
+                </ul>
+                <h3>BUG FIXES:</h3>
+                <ul>
+                  <li>Fixed responsive layout issues</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.67.08.15.2025</span>
+                <span class="entry-version">v1.1</span>
+              </div>
+              <div class="entry-content">
+                <h3>CORE SYSTEMS:</h3>
+                <ul>
+                  <li>Implemented NodeOS v33 terminal interface</li>
+                  <li>Added CRT monitor effects and scanlines</li>
+                  <li>Created unified terminal styling system</li>
+                  <li>Established PRONODE compatibility layer</li>
+                </ul>
+                <h3>GAME ENGINE:</h3>
+                <ul>
+                  <li>Enhanced raycasting renderer</li>
+                  <li>Improved collision detection system</li>
+                  <li>Added minimap functionality</li>
+                  <li>Optimized sprite rendering</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.67.08.01.2025</span>
+                <span class="entry-version">v1.0</span>
+              </div>
+              <div class="entry-content">
+                <h3>INITIAL RELEASE:</h3>
+                <ul>
+                  <li>Base game engine implemented</li>
+                  <li>Raycasting 3D renderer</li>
+                  <li>Player movement and controls</li>
+                  <li>Map editor basic functionality</li>
+                  <li>Audio system integration</li>
+                </ul>
+                <h3>GAME FEATURES:</h3>
+                <ul>
+                  <li>Enemy AI</li>
+                  <li>Weapon systems and combat</li>
+                  <li>Texture mapping and sprites</li>
+                  <li>Environmental effects</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 
+            EASY COPY-PASTE TEMPLATE:
+            
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.YY.MM.DD</span>
+                <span class="entry-version">NODE vX.X</span>
+              </div>
+              <div class="entry-content">
+                <h3>SECTION TITLE:</h3>
+                <ul>
+                  <li>Change description</li>
+                  <li>Another change</li>
+                </ul>
+              </div>
+            </div>
+            
+            -->
+          </div>
+        </div>
+
+        <!-- System Status Bar -->
+        <div class="system-status">
+          <span>CHANGELOG READY</span>
+          <span id="entry-count">ENTRIES: --</span>
+          <span id="last-update">LAST UPDATE: --</span>
+          <span>PRONODE v33</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      //Auto-populate changelog status information
+      document.addEventListener("DOMContentLoaded", function () {
+        //Count changelog entries
+        const entries = document.querySelectorAll(".changelog-entry");
+        const entryCount = entries.length;
+
+        //Get the latest date (first entry's date)
+        let lastUpdate = "--";
+        if (entries.length > 0) {
+          const firstEntryDate = entries[0].querySelector(".entry-date");
+          if (firstEntryDate) {
+            lastUpdate = firstEntryDate.textContent.trim();
+          }
+        }
+
+        //Update status bar
+        document.getElementById(
+          "entry-count"
+        ).textContent = `ENTRIES: ${entryCount}`;
+        document.getElementById(
+          "last-update"
+        ).textContent = `LAST UPDATE: ${lastUpdate}`;
+      });
+    </script>
+  </body>
+</html>

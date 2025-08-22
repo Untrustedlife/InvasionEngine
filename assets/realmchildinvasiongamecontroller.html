@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REALMCHILD INVASION</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Uncial+Antiqua&family=MedievalSharp&family=Nosifer&display=swap"
+      rel="stylesheet"
+    />
+    <!-- New Forest Fantasy CSS -->
+    <link rel="stylesheet" href="styles/_variables.css" />
+    <link rel="stylesheet" href="styles/_base.css" />
+    <link rel="stylesheet" href="styles/_components.css" />
+    <link rel="stylesheet" href="styles/game-controller.css" />
+  </head>
+  <body>
+    <div id="game">
+      <div class="game-log collapsed" id="gameLog">
+        <button
+          class="log-handle"
+          id="logHandle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="gameLog"
+        >
+          LOG
+        </button>
+        <div class="log-items">
+          <div>NODIC INCURSION DETECTED</div>
+          <div>NODIC CONNECTION ESTABLISHED</div>
+          <div>PRONODE V33 LOADED</div>
+          <div>SYSTEM BOOT...</div>
+        </div>
+      </div>
+      <canvas id="view" width="960" height="540"></canvas>
+      <canvas id="mini" width="200" height="200" class="minimap"></canvas>
+      <div class="crosshair"></div>
+      <div class="hud" id="hud">
+        <div class="panel">
+          <div>STATUS:</div>
+          <div class="row">
+            <div>HP:</div>
+            <div class="bar warn"><i id="hpBar" style="width: 100%"></i></div>
+            <div id="hpText">10</div>
+          </div>
+          <div class="row">
+            <div>AMMO:</div>
+            <div class="bar"><i id="ammoBar" style="width: 100%"></i></div>
+            <div id="ammoText">10</div>
+          </div>
+          <div class="info" id="msg">FIND KEY TO ESCAPE</div>
+        </div>
+        <div class="help">
+          <div>CONTROLS:</div>
+          <div>MOVE: W/A/S/D</div>
+          <div>TURN: ARROW KEYS</div>
+          <div>RUN: SHIFT</div>
+          <div>SHOOT: SPACE/CLICK</div>
+          <div>MAP: M</div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" id="btnReset">RESET</button>
+      <button class="btn" id="btnToggleMap">TOGGLE MAP</button>
+    </footer>
+    <script type="module" src="../src/main.js"></script>
+    <script>
+      //Collapsible game log toggle inside the controller page
+      (function () {
+        const log = document.getElementById("gameLog");
+        const btn = document.getElementById("logHandle");
+        if (!log || !btn) return;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const nowOpen = log.classList.toggle("collapsed");
+          btn.setAttribute("aria-expanded", String(!nowOpen));
+        });
+      })();
+    </script>
+  </body>
+</html>

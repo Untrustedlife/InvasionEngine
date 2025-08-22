@@ -1,0 +1,23 @@
+{
+  "name": "realmchild-invasion",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "node -e \"import('node:fs/promises').then(fs=>fs.rm('dist',{recursive:true,force:true}))\"",
+    "build": "node scripts/build.mjs",
+    "serve": "npm run build && start \"\" powershell -NoProfile -WindowStyle Hidden -Command \"Start-Process http://localhost:5500/\" && python -m http.server 5500 -d dist",
+    "zip": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Compress-Archive -Path dist\\* -DestinationPath game.zip -Force\""
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "globals": "^16.3.0",
+    "esbuild": "^0.21.5",
+    "serve": "^14.2.1"
+  }
+}

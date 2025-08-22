@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Map Editor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="styles/_variables.css" />
+    <link rel="stylesheet" href="styles/map-editor.css" />
+  </head>
+  <body>
+    <div class="terminal-container">
+      <div class="terminal-content">
+        <!-- OS Header -->
+        <div class="os-header">
+          <h1 class="os-title">Map Editor --Terminal</h1>
+          <p class="os-version">
+            MAP.EDITOR.rbn RC Invasion Tile Editor System
+          </p>
+        </div>
+
+        <div class="terminal-prompt">
+          ]MAP_EDITOR<span class="cursor"></span>
+        </div>
+
+        <div class="editor-layout">
+          <!-- LEFT: Tileset Panel -->
+          <section class="terminal-panel">
+            <div class="panel-header">TILESET CONTROLS</div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <label>MAX TILE ID (0..255)</label>
+                <input id="maxId" type="number" value="7" min="0" max="255" />
+              </div>
+              <button id="genBtn">GENERATE IDS</button>
+            </div>
+
+            <div class="button-row">
+              <button id="seedWolf3dBtn">SEED SAMPLE MAP</button>
+              <button id="resetNamesBtn">AUTO-NAME TILES</button>
+            </div>
+
+            <div class="section-header">TILE PALETTE</div>
+            <div id="palList" class="palette-list"></div>
+
+            <div class="terminal-text">
+              > Right-click canvas to eyedrop tile ID > Use number keys 0-9 to
+              select tiles
+            </div>
+
+            <div class="control-row">
+              <div class="control-group">
+                <label>ACTIVE TILE ID</label>
+                <input
+                  id="activeId"
+                  type="number"
+                  value="1"
+                  min="0"
+                  max="255"
+                />
+              </div>
+              <div class="id-badge" id="activeBadge">ID: 1</div>
+            </div>
+          </section>
+
+          <!-- CENTER: Canvas Editor -->
+          <section class="canvas-panel">
+            <div class="panel-header">MAP EDITOR</div>
+
+            <div class="canvas-controls">
+              <div class="control-row">
+                <div class="control-group">
+                  <label>WIDTH</label>
+                  <input id="w" type="number" value="20" min="1" max="256" />
+                </div>
+                <div class="control-group">
+                  <label>HEIGHT</label>
+                  <input id="h" type="number" value="20" min="1" max="256" />
+                </div>
+                <div class="control-group">
+                  <label>ZOOM</label>
+                  <input id="cell" type="number" value="16" min="2" max="48" />
+                </div>
+              </div>
+
+              <div class="button-row">
+                <button id="resizeBtn">RESIZE</button>
+                <button id="clearBtn">CLEAR</button>
+                <button id="fillBtn">FILL</button>
+                <button id="gridBtn">GRID: ON</button>
+                <button id="undoBtn">UNDO</button>
+                <button id="redoBtn">REDO</button>
+              </div>
+            </div>
+
+            <canvas id="editor" width="320" height="320" tabindex="0"></canvas>
+
+            <div class="status-bar">
+              <span id="status">POSITION: (-, -) TILE: -</span>
+              <span class="controls-text"
+                >LMB: PAINT | RMB: EYEDROP | CTRL+Z/Y: UNDO/REDO</span
+              >
+            </div>
+          </section>
+
+          <!-- RIGHT: Import/Export Panel -->
+          <section class="terminal-panel">
+            <div class="panel-header">IMPORT / EXPORT</div>
+
+            <div class="section-header">EXPORT JAVASCRIPT</div>
+            <div class="control-group">
+              <label>MAP NAME</label>
+              <input
+                id="mapName"
+                value="Village"
+                placeholder="Enter map name"
+              />
+            </div>
+            <div class="control-group">
+              <label>MAP CONSTANT NAME</label>
+              <input id="jsMapName" value="MAP" />
+            </div>
+            <div class="button-row">
+              <button id="exportTsBtn">GENERATE JS</button>
+              <button id="copyTsBtn">COPY</button>
+              <button id="downloadTsBtn">DOWNLOAD</button>
+            </div>
+
+            <div class="section-header">EXPORT JSON</div>
+            <button id="downloadJsonBtn">DOWNLOAD JSON</button>
+
+            <textarea
+              id="io"
+              spellcheck="false"
+              placeholder="//PASTE 2D ARRAY [[...]] OR FULL JSON 
+//FORMAT: {width,height,tiles:[{id,name,color}],map:[...]}
+//FOR JS: paste line with 'export const MAP = [...]'"
+            ></textarea>
+
+            <div class="button-row">
+              <button id="loadArrayBtn">LOAD DATA</button>
+              <button id="loadSampleBtn">LOAD SAMPLE</button>
+            </div>
+
+            <div class="terminal-text">
+              > Generated JS includes: export const MAP > Format: 2D number[][]
+              array
+            </div>
+
+            <div class="back-link">
+              <a href="../index.html">← RETURN TO PRONODE</a>
+            </div>
+          </section>
+        </div>
+
+        <!-- System Status Bar -->
+        <div class="system-status">
+          <span>MAP EDITOR READY</span>
+          <span>VERSION: 1.4</span>
+          <span>SYSTEM: PRONODE V33</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="../src/editor/MapEditor.js"></script>
+  </body>
+</html>
