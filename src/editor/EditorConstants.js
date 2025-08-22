@@ -16,7 +16,7 @@ export const MAX_TILE_ID = 255;
 //Default tile definitions
 export const DEFAULT_TILES = [
   { id: 0, name: "empty", color: "#0b1020" },
-  { id: 1, name: "brick", color: "#6e3434" },
+  { id: 1, name: "backroomswall", color: "#ECDE60" },
   { id: 2, name: "panel", color: "#707a88" },
   { id: 3, name: "hedge", color: "#00e676" },
   { id: 4, name: "door", color: "#996633" },
