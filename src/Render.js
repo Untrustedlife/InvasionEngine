@@ -242,7 +242,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     perpendicularDistance = Math.max(NEAR, perpendicularDistance);
 
     //For UVs: keep front-wall stabilization only; no side pushing
-    const UV_NEAR_DISTANCE = 0.75; //front-facing stabilization (center)
+    const UV_NEAR_DISTANCE = 0.0; //front-facing stabilization (center)
     const normalXForward = wallSide === 0 ? stepDirectionX : 0;
     const normalYForward = wallSide === 1 ? stepDirectionY : 0;
     const incidenceForward = Math.abs(
@@ -319,9 +319,11 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
     //Soft height limit for close walls
     const maxWallHeight = (HEIGHT * MAX_SLICE_FACTOR) | 0;
+    /*
     if (wallLineHeight > maxWallHeight) {
       wallLineHeight = maxWallHeight + ((wallLineHeight - maxWallHeight) >> 2);
     }
+    */
 
     //Compute unclipped vertical segment and derive texture source window for any clipping
     const unclippedStartY = ((HEIGHT - wallLineHeight) / 2) | 0;
@@ -347,7 +349,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       (drawStartY - unclippedStartY) *
       (textureHeight / Math.max(1, wallLineHeight));
     const sourceHeight =
-      visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
+        visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
 
     //Distance shading with Y-side darkening
     let shadeAmount =

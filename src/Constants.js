@@ -1,13 +1,13 @@
 //Raycaster configuration constants
 
 //Field of view in radians (115 degrees)
-export const FOV = (115 * Math.PI) / 180;
+export const FOV = (90 * Math.PI) / 180;
 export const HALF_FOV = FOV * 0.5;
 
 //Clipping distances in world units
-export const NEAR = 0.18; //near clipping to prevent extreme wall heights
-export const PROJ_NEAR = 0.6; //projection-only near distance for wall stretch prevention
-export const FAR_PLANE = 15; //far clipping distance
+export const NEAR = 0.01; //near clipping to prevent extreme wall heights
+export const PROJ_NEAR = 0.01; //projection-only near distance for wall stretch prevention
+export const FAR_PLANE = 20; //far clipping distance
 
 export const MAX_SLICE_FACTOR = 1.4;
 
@@ -24,9 +24,9 @@ export const HEALTH_FROM_FOOD = 10;
 export const REALMDRONE_DAMAGE = 3.33;
 
 //Vignette effect parameters
-export const VIGNETTE_BASE = 0.3;
-export const VIGNETTE_NEAR_BOOST = 6;
-export const VIGNETTE_NEAR_START = 1;
-export const VIGNETTE_NEAR_END = 0.6;
-export const VIGNETTE_NEAR_SCALE = 0.05;
-export const VIGNETTE_SHIFT_FRAC = 0.22;
+export const VIGNETTE_BASE = 0.0;
+export const VIGNETTE_NEAR_BOOST = 0;
+export const VIGNETTE_NEAR_START = 0;
+export const VIGNETTE_NEAR_END = 0.0;
+export const VIGNETTE_NEAR_SCALE = 0.00;
+export const VIGNETTE_SHIFT_FRAC = 0.0;
