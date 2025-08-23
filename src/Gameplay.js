@@ -560,40 +560,33 @@ function showGameOverPopup() {
     popup.innerHTML = `
       <div style="
         background: #000;
-        border: 3px solid #ecde60;
+        border: 3px solid #04650d;
         color: #20b2db;
         width: 600px;
         max-width: 90vw;
-        box-shadow: 0 0 20px #ecde60;
+        box-shadow: 0 0 20px #04650d;
         font-family: 'Courier New', monospace;
       ">
         <div style="
           background:#000;
-          color: #ecde60;
+          color: #04650d;
           padding: 8px 15px;
           display: flex;
           justify-content: space-between;
           font-weight: bold;
           font-size: 12px;
         ">
-          <span style ="color: #ecde60; border: 1px solid #ecde60;">NODIC CONNECTION STATUS</span>
+          <span style ="color: #04650d; border: 1px solid #04650d;">YOU HAVE DIED</span>
           <span style="background: #ff0000; padding: 2px 8px; border-radius: 2px; font-size: 10px;">ERROR</span>
         </div>
         <div style="padding: 20px; min-height: 200px;">
           <div style="margin-bottom: 30px;">
-            <div style="font-size: 14px; margin: 8px 0;">></div>
-            <div style="font-size: 14px; margin: 8px 0;">> CRITICAL SYSTEM FAILURE</div>
-            <div style="font-size: 14px; margin: 8px 0;">></div>
-            <div style="font-size: 16px; margin: 8px 0; color: #ecde60; font-weight: bold;">> ORPHANED SOUL ABSORBED BY THE NODE</div>
-            <div style="font-size: 14px; margin: 8px 0; color: #ff0000;">> LINK SEVERED</div>
-            <div style="font-size: 14px; margin: 8px 0; color: #ff0000;">> NODIC CONNECTION TERMINATED</div>
-            <div style="font-size: 14px; margin: 8px 0;">></div>
-            <div style="font-size: 16px; margin: 8px 0;">> RETURN TO PRONODE TERMINAL?</div>
+            <div style="font-size: 16px; margin: 8px 0;">> RETURN TO TERMINAL?</div>
           </div>
           <div style="text-align: center; margin-top: 20px;">
             <button id="returnBtn" style="
               background: #000;
-              border: 2px solid #ecde60;
+              border: 2px solid #04650d;
               color: #ecde60;
               padding: 12px 24px;
               font-family: 'Courier New', monospace;
@@ -602,7 +595,7 @@ function showGameOverPopup() {
               cursor: pointer;
               text-transform: uppercase;
               letter-spacing: 1px;
-            ">RETURN TO PRONODE TERMINAL</button>
+            ">RETURN TO TERMINAL</button>
           </div>
         </div>
       </div>

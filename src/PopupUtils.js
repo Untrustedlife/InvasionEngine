@@ -58,10 +58,10 @@ export function createWordPressProofPopup(options = {}) {
   const themes = {
     terminal: {
       bg: "#000",
-      border: "#ecde60",
+      border: "#04650d",
       text: "#20b2db",
       headerBg: "#000",
-      headerText: "#ecde60",
+      headerText: "#04650d",
     },
     error: {
       bg: "#000",
@@ -232,7 +232,7 @@ export function showTerminalError(message, returnUrl = "../index.html") {
       <div style="font-size: 14px; margin: 8px 0;">></div>
       <div style="font-size: 14px; margin: 8px 0;">> CRITICAL SYSTEM FAILURE</div>
       <div style="font-size: 14px; margin: 8px 0;">></div>
-      <div style="font-size: 16px; margin: 8px 0; color: #ecde60; font-weight: bold;">> ${message}</div>
+      <div style="font-size: 16px; margin: 8px 0; color: #04650d; font-weight: bold;">> ${message}</div>
       <div style="font-size: 14px; margin: 8px 0;">></div>
       <div style="font-size: 16px; margin: 8px 0;">> RETURN TO PRONODE TERMINAL?</div>
     `,
