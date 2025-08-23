@@ -549,7 +549,7 @@ function showGameOverPopup() {
     popup.style.left = "0";
     popup.style.width = "100vw";
     popup.style.height = "100vh";
-    popup.style.background = "#FE6660";
+    popup.style.background = "#ff0000";
     popup.style.display = "flex";
     popup.style.alignItems = "center";
     popup.style.justifyContent = "center";
@@ -576,18 +576,17 @@ function showGameOverPopup() {
           font-weight: bold;
           font-size: 12px;
         ">
-          <span style ="color: #04650d; border: 1px solid #04650d;">YOU HAVE DIED</span>
-          <span style="background: #ff0000; padding: 2px 8px; border-radius: 2px; font-size: 10px;">ERROR</span>
+          <span style ="color: #FFFFFF; border: 1px solid #04650d;">Death...</span>
         </div>
         <div style="padding: 20px; min-height: 200px;">
           <div style="margin-bottom: 30px;">
-            <div style="font-size: 16px; margin: 8px 0;">> RETURN TO TERMINAL?</div>
+            <div style="text-align: center; color: #FFFFFF; font-size: 32px; margin: 8px 0;">YOU HAVE DIED</div>
           </div>
           <div style="text-align: center; margin-top: 20px;">
             <button id="returnBtn" style="
               background: #000;
               border: 2px solid #04650d;
-              color: #ecde60;
+              color: #04650d;
               padding: 12px 24px;
               font-family: 'Courier New', monospace;
               font-size: 14px;
