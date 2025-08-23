@@ -69,9 +69,6 @@ function placeFloating(spriteHeight) {
     spriteTopY = 0;
   }
   let spriteBottomY = spriteTopY + spriteHeight;
-  if (spriteBottomY > HEIGHT) {
-    spriteBottomY = HEIGHT;
-  }
   return { startY: spriteTopY, endY: spriteBottomY };
 }
 
@@ -136,7 +133,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
     : placeFloating(finalSpriteHeight);
 
   const drawStartX = Math.round(screenCenterPixelX - (finalSpriteWidth >> 1));
-  const drawEndX = Math.min(WIDTH, drawStartX + finalSpriteWidth);
+  const drawEndX = drawStartX + finalSpriteWidth;
 
   return {
     drawStartX,
