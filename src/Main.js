@@ -355,8 +355,8 @@ function drawWeaponHUD() {
     bowDisplayWidth * (bow.height / bow.width)
   );
   const hudMargin = Math.max(8, (WIDTH * 0.02) | 0);
-  const bowPositionX = WIDTH * 0.75 - bowDisplayWidth - hudMargin;
-  const bowPositionY = HEIGHT - bowDisplayHeight - hudMargin - 30;
+  const bowPositionX = WIDTH * 0.80 - bowDisplayWidth - hudMargin;
+  const bowPositionY = HEIGHT - bowDisplayHeight - hudMargin + 20;
 
   ctx.drawImage(
     bow,
