@@ -52,7 +52,6 @@ export function wireInput(canvas) {
       e.preventDefault();
       fire();
     }
-
     if (e.code === "KeyM") {
       e.preventDefault();
       cMini.classList.toggle("visible");
