@@ -68,6 +68,35 @@ export function makeSprite(pattern, palette, scale = 1) {
   return src;
 }
 
+export async function makeSpriteLoad(spriteName, scale) {
+  const src = await loadSprite(spriteName, scale, 1);
+  return src;
+}
+
+async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
+  const imagePathReal = `../assets/gfx/${imageName}`;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const originalWidth = img.width;
+      const originalHeight = img.height;
+      canvas.width = originalWidth * scale;
+      canvas.height = originalHeight * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = false; // Pixel-perfect scaling
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Set properties like existing sprites
+      canvas.baseline = baselineFraction;
+      canvas.scale = scale;
+      resolve(canvas);
+    };
+    img.onerror = () =>
+      reject(new Error(`Failed to load sprite: ${imagePathReal}`));
+    img.src = imagePathReal;
+  });
+}
+
 //Color palettes for ASCII sprites
 export const wolfPalette = {
   B: "#2c1810", //Dark brown
@@ -151,36 +180,8 @@ export const barrel = makeSprite(
   3
 );
 
-export const foodPalette = {
-  b: "#8B4513", //Brown bread
-  y: "#FFD700", //Golden yellow
-  r: "#DC143C", //Red apple
-  g: "#32CD32", //Green
-  w: "#F5DEB3", //Wheat
-};
 //Food pickup (bread and apple).
-export const food = makeSprite(
-  `
-  ................
-  .....bbbbbb.....
-  ...bbwwwwwbb....
-  ..bwwwwwwwwwb...
-  .bwwwwywwwwwb...
-  .bwwwwwwwwwwb...
-  ..bbwwwwwwwbb...
-  ...bbbbbbbbb....
-  ................
-  ......rrrr......
-  .....rrrrrrr.....
-  ....rrrrrrrrr....
-  ....rrrrrrrrr....
-  .....rrrrrrr.....
-  ......rggr.......
-  .......r.........
-  `,
-  foodPalette,
-  3
-);
+export const food = await makeSpriteLoad("apple.png", 3);
 
 export const keyPalette = {
   k: "#5a4500", //Dark outline for gold key
