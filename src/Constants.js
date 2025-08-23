@@ -19,7 +19,7 @@ export const FOG_START_FRAC = 0.6; //fog starts at 60% of FAR_PLANE
 export const FOG_COLOR = "#101b2e";
 
 //Game balance constants
-export const ARROWS_FROM_QUIVER = 3;
+export const ARROWS_FROM_QUIVER = 5;
 export const HEALTH_FROM_FOOD = 10;
 export const REALMDRONE_DAMAGE = 3.33;
 

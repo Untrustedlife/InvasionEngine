@@ -71,11 +71,11 @@ for (const f of htmlFiles) {
   }
 }
 
-//If there was no index.html, use RealmChildInvasionGameController.html as index.
+//If there was no index.html, use towerclimbgamecontroller.html as index.
 //Otherwise, create a minimal index.html that loads dist/src/Main.js.
 if (!indexWritten) {
   const controller = htmlFiles.find(
-    (f) => f.toLowerCase() === "realmchildinvasiongamecontroller.html"
+    (f) => f.toLowerCase() === "towerclimbgamecontroller.html"
   );
   if (controller) {
     const src = await readFile(join(root, controller), "utf8");
@@ -86,7 +86,7 @@ if (!indexWritten) {
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Realmchild Invasion</title>
+<title>Backrooms Towerlcimb</title>
 <style>html,body{height:100%;margin:0;background:#0b1322}#root,canvas{height:100%;width:100%;display:block}</style>
 <body>
 <canvas id="view"></canvas>

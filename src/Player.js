@@ -12,7 +12,7 @@ export const player = {
   maxTenacity: 20,
 };
 
-export const collisionRadius = 0.35;
+export const collisionRadius = 0.2;
 
 export let wave = 1;
 export const MIN_WAVE = 1;
