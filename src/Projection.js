@@ -6,7 +6,7 @@ import { player } from "./Player.js";
 
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
-  return clamp(HEIGHT / distanceFromCamera, 0, HEIGHT);
+  return HEIGHT / distanceFromCamera
 }
 
 //Transform world coordinates to camera space using camera basis vectors
@@ -38,11 +38,13 @@ function placeGrounded(spriteHeight, floorBias = 0, scaleLockFraction = 0.5) {
     transitionStartFraction + 0.08,
     Math.min(0.95, scaleLockFraction + 0.15)
   );
-  const transitionStartPixels = HEIGHT * transitionStartFraction;
-  const transitionEndPixels = HEIGHT * transitionEndFraction;
+  const transitionStartPixels = HEIGHT;
+  const transitionEndPixels = HEIGHT;
 
   //Calculate floor lock interpolation factor
   let floorLockFactor = 0;
+
+    /*
   if (spriteHeight >= transitionStartPixels) {
     floorLockFactor = Math.min(
       1,
@@ -50,10 +52,10 @@ function placeGrounded(spriteHeight, floorBias = 0, scaleLockFraction = 0.5) {
         Math.max(1, transitionEndPixels - transitionStartPixels)
     );
   }
+  */
 
   //Interpolate between perspective position and floor-locked position
-  const finalBottomY =
-    perspectiveBottomY * (1 - floorLockFactor) + HEIGHT * floorLockFactor;
+  const finalBottomY =perspectiveBottomY;
   let spriteTopY = finalBottomY - spriteHeight;
   if (spriteTopY < 0) {
     spriteTopY = 0;
@@ -111,7 +113,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
   }
   sprite._hR = roundedSpriteHeight;
 
-  const finalSpriteHeight = Math.max(1, Math.min(HEIGHT, roundedSpriteHeight));
+  const finalSpriteHeight = roundedSpriteHeight;
   const spriteImage = sprite.img;
   const aspectRatio =
     spriteImage && spriteImage.width && spriteImage.height
