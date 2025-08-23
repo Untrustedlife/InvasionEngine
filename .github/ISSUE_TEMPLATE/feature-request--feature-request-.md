@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Is your feature request related to a problem? If so make  abug report instead.**
+**Is your feature request related to a problem? Make  a bug report instead. We define bug as "problem"**
 
 **Describe the solution you'd like**
 A clear and concise description of what you want to happen.
