@@ -7,7 +7,7 @@ export const HALF_FOV = FOV * 0.5;
 //Clipping distances in world units
 export const NEAR = 0.01; //near clipping to prevent extreme wall heights
 export const PROJ_NEAR = 0.01; //projection-only near distance for wall stretch prevention
-export const FAR_PLANE = 20; //far clipping distance
+export const FAR_PLANE = 15; //far clipping distance
 
 export const MAX_SLICE_FACTOR = 1.4;
 
@@ -28,5 +28,5 @@ export const VIGNETTE_BASE = 0.0;
 export const VIGNETTE_NEAR_BOOST = 0;
 export const VIGNETTE_NEAR_START = 0;
 export const VIGNETTE_NEAR_END = 0.0;
-export const VIGNETTE_NEAR_SCALE = 0.00;
+export const VIGNETTE_NEAR_SCALE = 0.0;
 export const VIGNETTE_SHIFT_FRAC = 0.0;
