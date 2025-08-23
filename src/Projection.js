@@ -6,7 +6,7 @@ import { player } from "./Player.js";
 
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
-  return HEIGHT / distanceFromCamera
+  return HEIGHT / distanceFromCamera;
 }
 
 //Transform world coordinates to camera space using camera basis vectors
@@ -30,21 +30,21 @@ function placeGrounded(spriteHeight, floorBias = 0, scaleLockFraction = 0.5) {
     horizonLineY + (spriteHeight >> 1) + (adjustedFloorBias | 0);
 
   //Calculate transition range for floor locking effect
-  const transitionStartFraction = Math.max(
+  /*const transitionStartFraction = Math.max(
     0.2,
     Math.min(0.8, scaleLockFraction - 0.15)
   );
-  const transitionEndFraction = Math.max(
+  /*const transitionEndFraction = Math.max(
     transitionStartFraction + 0.08,
     Math.min(0.95, scaleLockFraction + 0.15)
-  );
-  const transitionStartPixels = HEIGHT;
-  const transitionEndPixels = HEIGHT;
+  );*/
+  //const transitionStartPixels = HEIGHT * transitionStartFraction;
+  //const transitionEndPixels = HEIGHT * transitionEndFraction;
 
   //Calculate floor lock interpolation factor
-  let floorLockFactor = 0;
+  //const floorLockFactor = 0;
 
-    /*
+  /*
   if (spriteHeight >= transitionStartPixels) {
     floorLockFactor = Math.min(
       1,
@@ -55,7 +55,7 @@ function placeGrounded(spriteHeight, floorBias = 0, scaleLockFraction = 0.5) {
   */
 
   //Interpolate between perspective position and floor-locked position
-  const finalBottomY =perspectiveBottomY;
+  const finalBottomY = perspectiveBottomY;
   let spriteTopY = finalBottomY - spriteHeight;
   if (spriteTopY < 0) {
     spriteTopY = 0;
@@ -70,7 +70,7 @@ function placeFloating(spriteHeight) {
   if (spriteTopY < 0) {
     spriteTopY = 0;
   }
-  let spriteBottomY = spriteTopY + spriteHeight;
+  const spriteBottomY = spriteTopY + spriteHeight;
   return { startY: spriteTopY, endY: spriteBottomY };
 }
 
