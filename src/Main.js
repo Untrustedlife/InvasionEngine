@@ -161,9 +161,9 @@ function init() {
   //assets pack
   resetLevel();
   //D&D Style starting health
-  player.maxHealth = rollDice(6) + rollDice(6);
+  player.maxHealth = 6 + rollDice(6);
   player.health = player.maxHealth;
-  player.ammo = rollDice(3);
+  player.ammo = 5 + rollDice(5);
 
   //Update bars
   updateBars();
@@ -355,7 +355,7 @@ function drawWeaponHUD() {
     bowDisplayWidth * (bow.height / bow.width)
   );
   const hudMargin = Math.max(8, (WIDTH * 0.02) | 0);
-  const bowPositionX = WIDTH * 0.80 - bowDisplayWidth - hudMargin;
+  const bowPositionX = WIDTH * 0.8 - bowDisplayWidth - hudMargin;
   const bowPositionY = HEIGHT - bowDisplayHeight - hudMargin + 20;
 
   ctx.drawImage(
