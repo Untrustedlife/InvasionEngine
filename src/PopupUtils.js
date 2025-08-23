@@ -234,9 +234,9 @@ export function showTerminalError(message, returnUrl = "../index.html") {
       <div style="font-size: 14px; margin: 8px 0;">></div>
       <div style="font-size: 16px; margin: 8px 0; color: #04650d; font-weight: bold;">> ${message}</div>
       <div style="font-size: 14px; margin: 8px 0;">></div>
-      <div style="font-size: 16px; margin: 8px 0;">> RETURN TO PRONODE TERMINAL?</div>
+      <div style="font-size: 16px; margin: 8px 0;">> RETURN TO TERMINAL?</div>
     `,
-    buttonText: "RETURN TO PRONODE TERMINAL",
+    buttonText: "RETURN TO TERMINAL",
     onConfirm: returnUrl,
     theme: "terminal",
   });
