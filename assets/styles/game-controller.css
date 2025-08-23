@@ -136,8 +136,6 @@ div.help {
    MINIMAP - Top left corner
    =========================================== */
 
-/*Minimap positioning was broken because of 
-   conflicting position values. Fixed by using simple absolute. */
 .minimap {
   position: absolute !important;
   top: 10px !important;

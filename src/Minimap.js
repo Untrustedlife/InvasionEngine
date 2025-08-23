@@ -10,7 +10,8 @@ export function drawMinimap(sprites) {
   mctx.clearRect(0, 0, cMini.width, cMini.height);
 
   const scale = 8; //pixels per world tile
-
+  cMini.width = 2 + gameStateObject.MAP_W * scale + 2;
+  cMini.height = 2 + gameStateObject.MAP_H * scale + 2;
   //Draw map tiles with material-based colors
   for (let y = 0; y < gameStateObject.MAP_H; y++) {
     for (let x = 0; x < gameStateObject.MAP_W; x++) {
@@ -18,8 +19,8 @@ export function drawMinimap(sprites) {
 
       let color = "#0c1220"; //empty/floor
       if (cell === 1) {
-        color = "#6e3434";
-      } //brick (red)
+        color = "#ECDE60";
+      } //backrooms wallapper
       else if (cell === 2) {
         color = "#707a88";
       } //Gray stone (blue-gray)
