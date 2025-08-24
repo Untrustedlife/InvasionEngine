@@ -21,26 +21,47 @@ export const zBuffer = new Float32Array(WIDTH);
 //via Canvas2D filter brightness for speed. This avoids per-pixel ImageData work.
 //srcY/srcH select the portion of the source column to map to the visible segment
 function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
-  const h = y1 - y0;
-  if (h <= 0) {
+  const columnHeight = y1 - y0;
+  if (columnHeight <= 0) {
     return;
   }
   g.save();
   g.imageSmoothingEnabled = false;
   //Draw the column slice
-  const sY = Math.max(0, Math.min(texCanvas.height, srcY || 0));
-  const sH = Math.max(
-    0,
-    Math.min(texCanvas.height - sY, srcH || texCanvas.height)
+  const rawSourceY = srcY || 0;
+  const clampedSourceY =
+    rawSourceY < 0
+      ? 0
+      : rawSourceY > texCanvas.height
+      ? texCanvas.height
+      : rawSourceY;
+  const rawSourceHeight = srcH || texCanvas.height;
+  const maxAllowedHeight = texCanvas.height - clampedSourceY;
+  const clampedSourceHeight =
+    rawSourceHeight < 0
+      ? 0
+      : rawSourceHeight > maxAllowedHeight
+      ? maxAllowedHeight
+      : rawSourceHeight;
+
+  g.drawImage(
+    texCanvas,
+    texX,
+    clampedSourceY,
+    1,
+    clampedSourceHeight,
+    x,
+    y0,
+    1,
+    columnHeight
   );
-  g.drawImage(texCanvas, texX, sY, 1, sH, x, y0, 1, h);
   //Apply multiplicative shade using multiply composite for speed
   if (shade < 0.999) {
-    const s = Math.max(0, Math.min(1, shade));
-    const c = (s * 255) | 0;
+    const clampedShade = shade < 0 ? 0 : shade > 1 ? 1 : shade;
+    const colorValue = (clampedShade * 255) | 0;
     g.globalCompositeOperation = "multiply";
-    g.fillStyle = `rgb(${c},${c},${c})`;
-    g.fillRect(x, y0, 1, h);
+    g.fillStyle = `rgb(${colorValue},${colorValue},${colorValue})`;
+    g.fillRect(x, y0, 1, columnHeight);
   }
   g.restore();
 }
