@@ -4,6 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Backrooms Towerclimb</title>
+
+    <!-- Prevent caching -->
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -11,10 +19,10 @@
       rel="stylesheet"
     />
     <!-- New Forest Fantasy CSS -->
-    <link rel="stylesheet" href="styles/_variables.css" />
-    <link rel="stylesheet" href="styles/_base.css" />
-    <link rel="stylesheet" href="styles/_components.css" />
-    <link rel="stylesheet" href="styles/game-controller.css" />
+    <link rel="stylesheet" href="styles/_variables.css?v=1.2" />
+    <link rel="stylesheet" href="styles/_base.css?v=1.2" />
+    <link rel="stylesheet" href="styles/_components.css?v=1.2" />
+    <link rel="stylesheet" href="styles/game-controller.css?v=1.2" />
   </head>
   <body>
     <div id="game">
@@ -64,7 +72,7 @@
       <button class="btn" id="btnReset">RESET</button>
       <button class="btn" id="btnToggleMap">TOGGLE MAP</button>
     </footer>
-    <script type="module" src="../src/Main.js"></script>
+    <script type="module" src="../src/Main.js?v=1.2"></script>
     <script>
       //Collapsible game log toggle inside the controller page
       (function () {
