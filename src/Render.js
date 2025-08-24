@@ -38,7 +38,7 @@ function drawColumn(g, x, y0, y1, col, shade, srcY, srcH) {
   for (let y = 0; y < h; y++) {
     //si = source index into the pre-sliced column's RGBA array.
     //Bitwise OR 0 works as fast floor for non-negative numbers.
-    const si = ((ty | 0) * 4) | 0;
+    const si = ((ty | 0) * 4) | 0; // Faster than Math.floor
     ty += step;
 
     //Apply multiplicative shade to RGB. Clamp via "| 0" to int 0..255.
@@ -266,17 +266,20 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let textureCoordinateU;
     if (wallSide === 0) {
       //x-side (vertical wall): use fractional part of Y
-      textureCoordinateU = hitPositionY - Math.floor(hitPositionY);
+      textureCoordinateU = hitPositionY - (hitPositionY | 0); // Faster than Math.floor
     } else {
       //y-side (horizontal wall): use fractional part of X
-      textureCoordinateU = hitPositionX - Math.floor(hitPositionX);
+      textureCoordinateU = hitPositionX - (hitPositionX | 0); // Faster than Math.floor
     }
-    textureCoordinateU = Math.min(
-      0.999999,
-      Math.max(0.0, textureCoordinateU + 1e-6)
-    );
+    //Fast clamp to [0, 0.999999] range
+    textureCoordinateU =
+      textureCoordinateU < 0
+        ? 0
+        : textureCoordinateU > 0.999999
+        ? 0.999999
+        : textureCoordinateU + 1e-6;
 
-    //Select texture based on material ID
+    //Select texture based on material ID (optimized lookup)
     const textureData = TEXCACHE[hitTextureId] || TEXCACHE[4];
     const textureCanvas = TEX[hitTextureId];
     const textureWidth = textureCanvas
@@ -284,7 +287,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       : textureData.w | 0;
 
     //Convert to texel column and apply direction-based flip (no UV warping)
-    let textureColumnX = Math.floor(textureCoordinateU * textureWidth) | 0;
+    let textureColumnX = (textureCoordinateU * textureWidth) | 0; // Faster than Math.floor
     //Flip only by step/side rule to keep u monotonic across a wall face
     if (
       (wallSide === 0 && stepDirectionX > 0) ||
@@ -292,15 +295,17 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     ) {
       textureColumnX = textureWidth - textureColumnX - 1;
     }
-    if (textureColumnX < 0) {
-      textureColumnX = 0;
-    }
-    if (textureColumnX >= textureWidth) {
-      textureColumnX = textureWidth - 1;
-    }
+    //Fast clamp to texture bounds
+    textureColumnX =
+      textureColumnX < 0
+        ? 0
+        : textureColumnX >= textureWidth
+        ? textureWidth - 1
+        : textureColumnX;
 
     //Project wall height to screen space (no corner softening)
-    const projectionDistance = Math.max(PROJ_NEAR, perpendicularDistance);
+    const projectionDistance =
+      perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; // Faster than Math.max
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
 
     //Soft height limit for close walls
