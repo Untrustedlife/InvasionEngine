@@ -112,13 +112,16 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const rayDirectionX = dirX + planeX * cameraPlaneX;
     const rayDirectionY = dirY + planeY * cameraPlaneX;
 
+    const rayDirXRecip = 1 / (rayDirectionX || 1e-9);
+    const rayDirYRecip = 1 / (rayDirectionY || 1e-9);
+
     //DDA setup - current map position
     let currentMapX = player.x | 0;
     let currentMapY = player.y | 0;
 
-    //Distance to cross one grid cell
-    const deltaDistanceX = Math.abs(1 / (rayDirectionX || 1e-9));
-    const deltaDistanceY = Math.abs(1 / (rayDirectionY || 1e-9));
+    //Distance to cross one grid cell (inline abs() for performance (called 320+ times per frame))
+    const deltaDistanceX = rayDirXRecip < 0 ? -rayDirXRecip : rayDirXRecip;
+    const deltaDistanceY = rayDirYRecip < 0 ? -rayDirYRecip : rayDirYRecip;
 
     //Step direction and distance to next grid line
     let stepDirectionX, stepDirectionY, sideDistanceX, sideDistanceY;
