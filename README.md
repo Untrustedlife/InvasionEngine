@@ -13,6 +13,23 @@ Gameplay feels smoother
 
 Use this as a base to build your own free, open-source raycaster games!
 
+# How to Build
+
+To contribute to this project, you should build it locally to test your changes first!
+
+**Steps:**
+
+1. First **Clone the repository**
+2. Then Run `npm install`
+3. Then **Start the development server:**
+   - On **Windows:**  
+     `npm run serve`
+   - On **Linux:**  
+     `npm run linuxserve`
+
+This will automatically build the project, start a local server, and open it up in your browser so you can test it quickly and immediately.
+We value ease of use here ;) heh
+
 # How to Stop Browsers From Caching Our HTML Pages (By Untrustedlife (08/23/2025))
 
 ## The Problem
