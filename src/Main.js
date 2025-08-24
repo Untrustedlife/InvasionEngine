@@ -521,26 +521,3 @@ function loop(now) {
 }
 
 init();
-
-//TOFIX: This breaks rendering right now lol, not sure why. Probably something to do with the canvas context.
-window.addEventListener("keydown", (e) => {
-  if (e.code !== "KeyQ") {
-    return;
-  }
-  //Toggle between native and 0.75x internal resolution
-  const nativeW = 960;
-  const nativeH = 540;
-  const downscale = canvas.width === nativeW ? 0.75 : 1.0;
-  //Resize buffer; CSS stays the same since attributes define layout size
-  canvas.width = Math.round(nativeW * downscale);
-  canvas.height = Math.round(nativeH * downscale);
-  ctx.imageSmoothingEnabled = false;
-  //Rebuild vignette for new buffer size
-  buildVignette();
-  //Reset vignette smoothing so it doesn't interpolate across resolutions
-  vignetteLeftAlphaSmoothed = 0;
-  vignetteRightAlphaSmoothed = 0;
-  //Note: WIDTH/HEIGHT exports are captured at import time. For full dynamic
-  //toggling you’d plumb WIDTH/HEIGHT reads directly from canvas; here we keep
-  //the quick toggle primarily to reduce work while testing on the fly.
-});
