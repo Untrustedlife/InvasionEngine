@@ -283,10 +283,9 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
 
   //Function to map screen column to texture X coordinate
   const mapScreenColumnToTextureX = (screenColumn) =>
-    Math.floor(
-      ((screenColumn - projection.drawStartX) * sprite.img.width) /
-        totalSpriteWidth
-    );
+    (((screenColumn - projection.drawStartX) * sprite.img.width) /
+      totalSpriteWidth) |
+    0;
 
   //Batch contiguous visible columns to minimize draw calls
   let currentRunStart = -1;

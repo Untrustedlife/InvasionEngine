@@ -367,11 +367,7 @@ export function placeSprites(assets) {
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
-    for (
-      let i = 0;
-      i < rollDice(2) * Math.floor(gameStateObject.MAP_H / 20);
-      i++
-    ) {
+    for (let i = 0; i < rollDice(2) * ((gameStateObject.MAP_H / 20) | 0); i++) {
       const bt = randomEmptyTile(1.0);
       sprites.push({
         x: bt.x + 0.5,
@@ -413,7 +409,7 @@ export function placeSprites(assets) {
   });
   for (
     let i = 0;
-    i < (1 + Math.floor(wave / 3)) * Math.floor(gameStateObject.MAP_H / 20);
+    i < 1 + ((wave / 3) | 0) * ((gameStateObject.MAP_H / 20) | 0);
     i++
   ) {
     if (
@@ -436,7 +432,7 @@ export function placeSprites(assets) {
     }
   }
   const wolfCount = Math.min(
-    (2 + (wave - 1) * 2) * Math.floor(gameStateObject.MAP_H / 20),
+    (2 + (wave - 1) * 2) * ((gameStateObject.MAP_H / 20) | 0),
     8
   );
   for (let i = 0; i < wolfCount; i++) {
@@ -705,9 +701,8 @@ export function updateAI(dt) {
       }
     }
     if (dist < 0.6 && s.hurtCD <= 0) {
-      player.health = Math.floor(
-        Math.max(0, player.health - REALMDRONE_DAMAGE)
-      );
+      player.health = Math.max(0, player.health - REALMDRONE_DAMAGE) | 0;
+
       updateBars();
       addMsg("Drone bite!");
       SFX.hurt();

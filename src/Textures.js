@@ -51,7 +51,7 @@ function paintBrick() {
       const shade = (Math.sin(x * 0.18) + Math.cos(y * 0.12)) * 0.06;
       const base = mortar
         ? "#222222"
-        : brick[(Math.floor(x / 16) + Math.floor(y / 16)) % brick.length];
+        : brick[(((x / 16) | 0) + ((y / 16) | 0)) % brick.length];
       setPx(img, x, y, shadeHex(base, shade));
     }
   }
