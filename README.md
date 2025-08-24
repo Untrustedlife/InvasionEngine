@@ -24,7 +24,7 @@ This makes it really annoying to both test locally and in the github pages site,
 
 ### Part 1: Meta Tags
 
-Put these in all HTML head sections:
+Make sure you (The contributor heh) put these in all HTML head sections:
 
 ```html
 <meta
@@ -45,12 +45,12 @@ What each one does:
 
 _Best practice, not strictly necessary, but easy to add when switching major versions_
 
-For cache-busting, add version numbers to your JS, CSS, or other file references in your HTML, like this:
+For cache-busting, we add version numbers to all JS, CSS, or other file references in the HTML, like this:
 
 - `main.css?v=1.2`
 - `script.js?v=1.2`
 
-The browser treats `main.css?v=1.2` and `main.css?v=1.3` as different files.  
-So when you update the version number, users are forced to download the updated file the next time they load the game.
+The browser treats `main.css?v=1.1` and `main.css?v=1.2` as different files.  
+So when we update the version number, users are forced to download the updated file the next time they load the game.
 
 _This isn’t strictly required, and was mainly used as a safeguard for players who visited before proper `<head>` tags were added._
