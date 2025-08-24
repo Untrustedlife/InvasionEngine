@@ -8,7 +8,6 @@ import {
   FAR_PLANE,
   FOG_START_FRAC,
   FOG_COLOR,
-  MAX_SLICE_FACTOR,
 } from "./Constants.js";
 import { TEXCACHE, TEX } from "./Textures.js";
 import { player } from "./Player.js";
@@ -16,41 +15,6 @@ import { gameStateObject } from "./Map.js";
 
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
-
-//Draw textured wall column using ImageData (fallback method)
-//srcY/srcH select the portion of the source column to map to the visible segment
-function drawColumn(g, x, y0, y1, col, shade, srcY, srcH) {
-  const h = y1 - y0;
-  if (h <= 0) {
-    return;
-  } //nothing to draw
-
-  //step is how many source texel rows we advance per destination pixel
-  const step = (srcH || col.h) / h;
-
-  //ty accumulates the source Y (in texel space). We sample using floor(ty).
-  let ty = srcY || 0;
-
-  //Allocate a 1xH RGBA buffer. We'll fill it and blit in one putImageData.
-  const img = g.createImageData(1, h);
-
-  //Unrolled loops are unnecessary; Canvas will copy this block efficiently.
-  for (let y = 0; y < h; y++) {
-    //si = source index into the pre-sliced column's RGBA array.
-    //Bitwise OR 0 works as fast floor for non-negative numbers.
-    const si = ((ty | 0) * 4) | 0; // bitwise or (For positive)  is same as math.floor
-    ty += step;
-
-    //Apply multiplicative shade to RGB. Clamp via "| 0" to int 0..255.
-    img.data[y * 4] = (col.data[si] * shade) | 0; //R
-    img.data[y * 4 + 1] = (col.data[si + 1] * shade) | 0; //G
-    img.data[y * 4 + 2] = (col.data[si + 2] * shade) | 0; //B
-    img.data[y * 4 + 3] = 255; //A (opaque walls)
-  }
-
-  //One blit for the entire column at the required screen position.
-  g.putImageData(img, x, y0);
-}
 
 //Faster wall slice draw: sample a 1px-wide column from the source texture
 //and scale to the destination height using drawImage. Apply uniform shading
@@ -303,18 +267,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         ? textureWidth - 1
         : textureColumnX;
 
-    //Project wall height to screen space (no corner softening)
+    //Project wall height to screen space
     const projectionDistance =
       perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; // Faster than Math.max
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
-
-    //Soft height limit for close walls
-    const maxWallHeight = (HEIGHT * MAX_SLICE_FACTOR) | 0;
-    /*
-    if (wallLineHeight > maxWallHeight) {
-      wallLineHeight = maxWallHeight + ((wallLineHeight - maxWallHeight) >> 2);
-    }
-    */
 
     //Compute unclipped vertical segment and derive texture source window for any clipping
     const unclippedStartY = ((HEIGHT - wallLineHeight) / 2) | 0;
@@ -351,32 +307,18 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
     }
 
-    //Draw wall column using appropriate method
-    if (textureCanvas) {
-      drawWallColumnImg(
-        ctx,
-        screenColumnX,
-        drawStartY,
-        drawEndY,
-        textureCanvas,
-        textureColumnX,
-        shadeAmount,
-        sourceY,
-        sourceHeight
-      );
-    } else {
-      const imageColumn = textureData.cols[textureColumnX];
-      drawColumn(
-        ctx,
-        screenColumnX,
-        drawStartY,
-        drawEndY,
-        imageColumn,
-        shadeAmount,
-        sourceY,
-        sourceHeight
-      );
-    }
+    //Draw wall column using fast canvas method
+    drawWallColumnImg(
+      ctx,
+      screenColumnX,
+      drawStartY,
+      drawEndY,
+      textureCanvas,
+      textureColumnX,
+      shadeAmount,
+      sourceY,
+      sourceHeight
+    );
 
     //Apply distance fog
     if (FAR_PLANE > 0 && perpendicularDistance > FAR_PLANE * FOG_START_FRAC) {
