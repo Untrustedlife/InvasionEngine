@@ -129,6 +129,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       stepDirectionX = 1;
       sideDistanceX = (currentMapX + 1.0 - player.x) * deltaDistanceX;
     }
+
     if (rayDirectionY < 0) {
       stepDirectionY = -1;
       sideDistanceY = (player.y - currentMapY) * deltaDistanceY;
@@ -217,6 +218,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const isFrontFacing =
       incidenceForward >= FRONT_INCIDENCE &&
       Math.abs(cameraPlaneX) <= CAMERA_CENTER;
+
     const distanceForUV =
       isFrontFacing && perpendicularDistance < UV_NEAR_DISTANCE
         ? UV_NEAR_DISTANCE
