@@ -279,7 +279,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         ? 0.999999
         : textureCoordinateU + 1e-6;
 
-    //Select texture based on material ID (optimized lookup)
+    //Select texture based on material ID
     const textureData = TEXCACHE[hitTextureId] || TEXCACHE[4];
     const textureCanvas = TEX[hitTextureId];
     const textureWidth = textureCanvas
