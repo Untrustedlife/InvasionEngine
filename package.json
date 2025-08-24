@@ -11,7 +11,7 @@
     "linuxserve": "npm run build && python3 -m http.server -d dist",
     "serve": "npm run build && start \"\" powershell -NoProfile -WindowStyle Hidden -Command \"Start-Process http://localhost:5500/\" && python -m http.server 5500 -d dist",
     "zip": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Compress-Archive -Path dist\\* -DestinationPath game.zip -Force\"",
-    "deployToGithubPages": "gh-pages -d dist -m 'Deploy to gh-pages'"
+    "deployToGithubPages": "gh-pages -d dist -r https://github.com/Untrustedlife/BackroomsTower.git"
   },
   "author": "",
   "license": "ISC",
