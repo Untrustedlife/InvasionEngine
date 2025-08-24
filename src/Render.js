@@ -38,7 +38,7 @@ function drawColumn(g, x, y0, y1, col, shade, srcY, srcH) {
   for (let y = 0; y < h; y++) {
     //si = source index into the pre-sliced column's RGBA array.
     //Bitwise OR 0 works as fast floor for non-negative numbers.
-    const si = (Math.floor(ty) * 4) | 0;
+    const si = ((ty | 0) * 4) | 0;
     ty += step;
 
     //Apply multiplicative shade to RGB. Clamp via "| 0" to int 0..255.
@@ -277,21 +277,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     );
 
     //Select texture based on material ID
-    const textureData =
-      hitTextureId === 1
-        ? TEXCACHE[1]
-        : hitTextureId === 2
-        ? TEXCACHE[2]
-        : hitTextureId === 3
-        ? TEXCACHE[3]
-        : hitTextureId === 5
-        ? TEXCACHE[5]
-        : hitTextureId === 6
-        ? TEXCACHE[6]
-        : hitTextureId === 7
-        ? TEXCACHE[7]
-        : TEXCACHE[4];
-
+    const textureData = TEXCACHE[hitTextureId] || TEXCACHE[4];
     const textureCanvas = TEX[hitTextureId];
     const textureWidth = textureCanvas
       ? textureCanvas.width | 0
@@ -349,7 +335,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       (drawStartY - unclippedStartY) *
       (textureHeight / Math.max(1, wallLineHeight));
     const sourceHeight =
-        visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
+      visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
 
     //Distance shading with Y-side darkening
     let shadeAmount =
