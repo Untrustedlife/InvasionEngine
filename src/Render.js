@@ -57,7 +57,7 @@ function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
   );
   //Apply multiplicative shade using multiply composite for speed
   if (shade < 0.999) {
-    const clampedShade = shade < 0 ? 0 : shade > 1 ? 1 : shade;
+    const clampedShade = shade < 0 ? 0 : shade;
     const colorValue = (clampedShade * 255) | 0;
     g.globalCompositeOperation = "multiply";
     g.fillStyle = `rgb(${colorValue},${colorValue},${colorValue})`;
