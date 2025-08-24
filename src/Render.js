@@ -74,8 +74,8 @@ export function drawSpriteColumn(g, x, y0, y1, img, texX, _shade) {
 }
 //Main raycasting function - casts rays using DDA algorithm and draws textured walls
 //Fills zBuffer for sprite occlusion and draws sky/floor gradients
-//Cache frequently used constants to avoid repeated calculations
 const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
+
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
 
@@ -113,6 +113,17 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const cameraPlaneX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
     const rayDirectionX = dirX + planeX * cameraPlaneX;
     const rayDirectionY = dirY + planeY * cameraPlaneX;
+
+    //Skip rays with near-zero direction immediately
+    if (
+      rayDirectionX < 1e-8 &&
+      rayDirectionX > -1e-8 &&
+      rayDirectionY < 1e-8 &&
+      rayDirectionY > -1e-8
+    ) {
+      zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
+      continue;
+    }
 
     const rayDirXRecip = 1 / (rayDirectionX || 1e-9);
     const rayDirYRecip = 1 / (rayDirectionY || 1e-9);
