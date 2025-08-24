@@ -43,10 +43,14 @@ What each one does:
 
 ### Part 2: Version Numbers
 
-Add version numbers to all js/css/etc files like this in the html:
+_Best practice, not strictly necessary, but easy to add when switching major versions_
+
+For cache-busting, add version numbers to your JS, CSS, or other file references in your HTML, like this:
 
 - `main.css?v=1.2`
 - `script.js?v=1.2`
 
-The browser thinks `main.css?v=1.2` is totally different from `main.css?v=1.3`
-So when you change the version number, everyone downloads the new file when they run the game.
+The browser treats `main.css?v=1.2` and `main.css?v=1.3` as different files.  
+So when you update the version number, users are forced to download the updated file the next time they load the game.
+
+_This isn’t strictly required, and was mainly used as a safeguard for players who visited before proper `<head>` tags were added._
