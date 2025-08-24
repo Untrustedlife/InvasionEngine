@@ -1,0 +1,117 @@
+/* ===========================================
+   CSS VARIABLES - Edit colors and sizes here
+   =========================================== */
+
+:root {
+  /* ===========================================
+     FOREST FANTASY COLOR PALETTE
+     =========================================== */
+
+  /* Primary Dark Backgrounds */
+  --forest-shadow: #0f1610; /* Deepest dark - main backgrounds */
+  --forest-floor: #1a2118; /* Secondary dark background */
+  --tree-bark-dark: #2a2518; /* Dark panel backgrounds */
+  --tree-bark: #3a3125; /* Main panel backgrounds */
+
+  /* Natural Forest Tones */
+  --moss-green-dark: #1e3a1e; /* Dark forest green accents */
+  --moss-green: #2d5a2d; /* Main forest green */
+  --moss-green-light: #4a6b4a; /* Lighter forest green */
+  --earth-brown: #3d2f1a; /* Rich soil brown */
+  --weathered-wood: #4a3820; /* Aged wood color */
+  --leather-brown: #5c4a35; /* Worn leather tones */
+
+  /* Special Colors */
+  --realmchild-red: #fe6660; /* Corruption/danger - use sparingly! */
+  --realmchild-red-dark: #cc5550; /* Darker version for borders */
+  --steel-gray: #6a7075; /* Weapons, tools, inactive elements */
+  --moonlight: #d4d8dc; /* Primary text color */
+  --moonlight-dim: #a8b2bc; /* Secondary text color */
+  --warning-amber: #cc8800; /* Warning states */
+  --success-green: #4a8f4a; /* Success states */
+  /* For terminal */
+  --nodeos-color: #04650d;
+  --nodeos-node-color: #20b2db;
+
+  /* ===========================================
+     TYPOGRAPHY
+     =========================================== */
+
+  /* Font Families - Terminal/Monospace Style */
+  --font-title: "Courier New", "Consolas", "Monaco", monospace; /* For main titles */
+  --font-heading: "Courier New", "Consolas", "Monaco", monospace; /* For headings */
+  --font-body: "Courier New", "Consolas", "Monaco", monospace; /* For body text */
+
+  /* Font Sizes */
+  --text-xs: 12px; /* Very small text */
+  --text-sm: 14px; /* Small text */
+  --text-base: 16px; /* Normal text */
+  --text-lg: 18px; /* Large text */
+  --text-xl: 20px; /* Extra large text */
+  --text-2xl: 24px; /* Headings */
+  --text-3xl: 32px; /* Big headings */
+  --text-4xl: 40px; /* Main titles */
+
+  /* ===========================================
+     SPACING & SIZING
+     =========================================== */
+
+  /* Padding & Margins */
+  --space-xs: 4px; /* Tiny spacing */
+  --space-sm: 8px; /* Small spacing */
+  --space-md: 12px; /* Medium spacing */
+  --space-lg: 16px; /* Large spacing */
+  --space-xl: 20px; /* Extra large spacing */
+  --space-2xl: 24px; /* Very large spacing */
+  --space-3xl: 32px; /* Huge spacing */
+
+  /* Border Radius */
+  --radius-sm: 4px; /* Small rounded corners */
+  --radius-md: 8px; /* Medium rounded corners */
+  --radius-lg: 12px; /* Large rounded corners */
+
+  /* Border Widths */
+  --border-thin: 1px; /* Thin borders */
+  --border-normal: 2px; /* Normal borders */
+  --border-thick: 3px; /* Thick borders */
+
+  /* ===========================================
+     EFFECTS & SHADOWS
+     =========================================== */
+
+  /* Box Shadows */
+  --shadow-sm: 0 2px 4px rgba(15, 22, 16, 0.3);
+  --shadow-md: 0 4px 8px rgba(15, 22, 16, 0.4);
+  --shadow-lg: 0 8px 16px rgba(15, 22, 16, 0.5);
+  --shadow-xl: 0 12px 24px rgba(15, 22, 16, 0.6);
+
+  /* Text Shadows */
+  --text-shadow-sm: 1px 1px 2px rgba(15, 22, 16, 0.8);
+  --text-shadow-md: 2px 2px 4px rgba(15, 22, 16, 0.8);
+
+  /* Transition Duration */
+  --transition-fast: 0.15s; /* Quick transitions */
+  --transition-normal: 0.25s; /* Normal transitions */
+  --transition-slow: 0.4s; /* Slow transitions */
+}
+
+/* ===========================================
+   EASY CUSTOMIZATION NOTES
+   =========================================== 
+   
+   TO CHANGE THE MAIN THEME COLOR:
+   - Edit --moss-green and related moss colors
+   
+   TO CHANGE DANGER/CORRUPTION ELEMENTS:
+   - Edit --realmchild-red
+   
+   TO ADJUST DARKNESS/LIGHTNESS:
+   - Edit the --forest-shadow and --forest-floor colors
+   
+   TO CHANGE TEXT READABILITY:
+   - Edit --moonlight and --moonlight-dim
+   
+   TO ADJUST COMPONENT SIZES:
+   - Edit the --space-* variables
+   
+   =========================================== */

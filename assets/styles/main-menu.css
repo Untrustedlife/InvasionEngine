@@ -1,0 +1,285 @@
+/* ===========================================
+   NODEOS V33 TERMINAL - Apple II Style/NodeOS CRT
+   =========================================== */
+
+/* ===========================================
+   CRT SCREEN SETUP
+   =========================================== */
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: "Courier New", monospace;
+}
+
+/* CRT Monitor Bezel */
+.menu-container {
+  width: 640px;
+  height: 640px;
+  background: #000;
+  border: 20px solid #333;
+  border-radius: 20px;
+  box-shadow: inset 0 0 50px rgba(0, 255, 0, 0.1), 0 0 100px rgba(0, 0, 0, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+/* CRT Screen Glow */
+.menu-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 255, 0, 0.05) 0%,
+    rgba(0, 255, 0, 0.02) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Scanlines Effect */
+.menu-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+  pointer-events: none;
+  animation: scanlines 0.1s linear infinite;
+}
+
+@keyframes scanlines {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(2px);
+  }
+}
+
+/* ===========================================
+   TERMINAL CONTENT
+   =========================================== */
+
+.terminal-content {
+  padding: 40px;
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  line-height: 1.4;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* OS Header */
+.os-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--nodeos-color);
+  padding-bottom: 10px;
+}
+
+.os-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: var(--nodeos-color);
+}
+
+.os-version {
+  font-size: 12px;
+  color: var(--nodeos-node-color);
+  margin: 0;
+}
+
+/* Terminal Prompt */
+.terminal-prompt {
+  margin: 20px 0 10px 0;
+  color: var(--nodeos-color);
+}
+
+.cursor {
+  display: inline-block;
+  background: var(--nodeos-color);
+  width: 8px;
+  height: 16px;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Game Title with Text Scrawl */
+.title {
+  font-family: "Courier New", monospace;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--nodeos-color);
+  margin: 20px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--nodeos-color);
+  animation: typewriter 3s steps(20) 1s forwards, blink-cursor 1s infinite;
+  width: 0;
+}
+
+@keyframes typewriter {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes blink-cursor {
+  0%,
+  50% {
+    border-color: var(--nodeos-color);
+  }
+  51%,
+  100% {
+    border-color: transparent;
+  }
+}
+
+.subtitle {
+  color: var(--nodeos-node-color);
+  font-size: 14px;
+  margin: 10px 0 30px 0;
+  opacity: 0;
+  animation: fade-in 1s ease 4s forwards;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Terminal Menu Commands */
+.menu-buttons {
+  margin: 30px 0;
+  opacity: 0;
+  animation: fade-in 1s ease 5s forwards;
+}
+
+.menu-command {
+  display: block;
+  color: var(--nodeos-color);
+  background: none;
+  border: none;
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  text-align: left;
+  padding: 8px 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.1s;
+}
+
+.menu-command:hover {
+  color: #000;
+  background: var(--nodeos-color);
+  padding-left: 10px;
+}
+
+.menu-command:active {
+  color: var(--nodeos-color);
+  background: #003300;
+}
+
+.menu-command::before {
+  content: "> ";
+  color: var(--nodeos-color);
+}
+
+/* Terminal Info */
+.terminal-info {
+  margin-top: 40px;
+  font-size: 12px;
+  color: var(--nodeos-node-color);
+  opacity: 0;
+  animation: fade-in 1s ease 6s forwards;
+}
+
+/* System Status */
+.system-status {
+  position: absolute;
+  bottom: 20px;
+  left: 40px;
+  right: 40px;
+  font-size: 10px;
+  color: var(--nodeos-color);
+  border-top: 1px solid var(--nodeos-node-color);
+  padding-top: 10px;
+  opacity: 0.8;
+  animation: fade-in 1s ease 7s forwards;
+}
+
+.system-status span {
+  margin-right: 20px;
+}
+
+/* ===========================================
+   RESPONSIVE - Keep square aspect ratio
+   =========================================== */
+
+@media (max-width: 700px) {
+  .menu-container {
+    width: 90vmin;
+    height: 90vmin;
+  }
+
+  .terminal-content {
+    padding: 20px;
+    font-size: 14px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .terminal-content {
+    padding: 15px;
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .menu-command {
+    font-size: 14px;
+  }
+}

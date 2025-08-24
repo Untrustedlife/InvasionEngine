@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Changelog</title>
+    <link rel="stylesheet" href="styles/_variables.css" />
+    <link rel="stylesheet" href="styles/changelog.css" />
+  </head>
+  <body>
+    <div class="terminal-container">
+      <div class="terminal-content">
+        <!-- OS Header -->
+        <div class="os-header">
+          <h1 class="os-title">Changelog</h1>
+          <p class="os-version">CHANGE LOG</p>
+        </div>
+
+        <div class="terminal-prompt">
+          ]CHANGELOG<span class="cursor"></span>
+        </div>
+
+        <!-- Back Button -->
+        <div class="nav-controls">
+          <a href="../index.html" class="back-button">← RETURN TO TERMINAL</a>
+        </div>
+
+        <!-- Changelog Content Area -->
+        <div class="changelog-viewer">
+          <div class="changelog-header">
+            <div class="system-info">
+              CHANGE LOG
+              <br />
+              CLASSIFICATION: Development
+              <br />
+              FORMAT: DC.YY.MM.DD (YEAR.MONTH.DAY)
+            </div>
+          </div>
+
+          <!-- Scrollable Changelog Content -->
+          <div class="changelog-content">
+            <!-- CHANGELOG ENTRIES - Easy to copy/paste new ones here -->
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">08.23.2025</span>
+                <span class="entry-version">v1.2</span>
+              </div>
+              <div class="entry-content">
+                <h3>Changes:</h3>
+                <ul>
+                  <li>
+                    Deaths screen is now more akin to dark souls death screen.
+                  </li>
+                  <li>Removed all lore references to RLDR etc</li>
+                  <li>Changed game name to Anachronistic Towerclimb</li>
+                </ul>
+                <h3>Bug Fixes:</h3>
+                <ul>
+                  <li>Minimap now sizes based on map size.</li>
+                </ul>
+                <h3>GAME FEATURES:</h3>
+                <ul>
+                  <li>
+                    Renamed html file to prevent caching when playing other
+                    games made with this same engine.
+                  </li>
+                  <li>Also quivers now grant +5 instead of +3 arrows.</li>
+                  <li>
+                    Reduced collision radius from 0.35 -> 2 so you get stuck on
+                    doors less.
+                  </li>
+                  <li>Player now has 6-12 health at start always.</li>
+                  <li>
+                    UI now uses green instead of yellow as the "main" color.
+                  </li>
+                  <li>New map! The Gallery!</li>
+                  <li>New map! The Long Hallways!</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">08.22.2025</span>
+                <span class="entry-version">v1.1</span>
+              </div>
+              <div class="entry-content">
+                <h3>Changes:</h3>
+                <ul>
+                  <li>Fixed a bunch of rendering bugs.</li>
+                  <li>Reduced version number to 1.1</li>
+                </ul>
+                <h3>GAME FEATURES:</h3>
+                <ul>
+                  <li>Can now load sprites as actual image files :D.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">08.22.2025</span>
+                <span class="entry-version">v1.0</span>
+              </div>
+              <div class="entry-content">
+                <h3>INITIAL RELEASE:</h3>
+                <ul>
+                  <li>Copied Realmchild Invasion Source Code</li>
+                </ul>
+                <h3>GAME FEATURES:</h3>
+                <ul>
+                  <li>
+                    Added backrooms wallpaper and ability to load walls from
+                    textures:D
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 
+            EASY COPY-PASTE TEMPLATE:
+            
+            <div class="changelog-entry">
+              <div class="entry-header">
+                <span class="entry-date">DC.YY.MM.DD</span>
+                <span class="entry-version">NODE vX.X</span>
+              </div>
+              <div class="entry-content">
+                <h3>SECTION TITLE:</h3>
+                <ul>
+                  <li>Change description</li>
+                  <li>Another change</li>
+                </ul>
+              </div>
+            </div>
+            
+            -->
+          </div>
+        </div>
+
+        <!-- System Status Bar -->
+        <div class="system-status">
+          <span>CHANGELOG READY</span>
+          <span id="entry-count">ENTRIES: --</span>
+          <span id="last-update">LAST UPDATE: --</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      //Auto-populate changelog status information
+      document.addEventListener("DOMContentLoaded", function () {
+        //Count changelog entries
+        const entries = document.querySelectorAll(".changelog-entry");
+        const entryCount = entries.length;
+
+        //Get the latest date (first entry's date)
+        let lastUpdate = "--";
+        if (entries.length > 0) {
+          const firstEntryDate = entries[0].querySelector(".entry-date");
+          if (firstEntryDate) {
+            lastUpdate = firstEntryDate.textContent.trim();
+          }
+        }
+
+        //Update status bar
+        document.getElementById(
+          "entry-count"
+        ).textContent = `ENTRIES: ${entryCount}`;
+        document.getElementById(
+          "last-update"
+        ).textContent = `LAST UPDATE: ${lastUpdate}`;
+      });
+    </script>
+  </body>
+</html>

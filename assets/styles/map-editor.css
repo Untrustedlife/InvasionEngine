@@ -1,0 +1,491 @@
+/* ===========================================
+   NODEOS V33 MAP EDITOR - Terminal Interface
+   =========================================== */
+
+/* This is the SIMPLIFIED CSS for the map editor.
+   The key principle: DON'T BREAK THE CANVAS COORDINATES!
+   Keep terminal styling but maintain functional layout. */
+
+/* ===========================================
+   BASIC LAYOUT - Simple full screen
+   =========================================== */
+
+/* Body styling - matches game controller exactly */
+@keyframes scanlines {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(2px);
+  }
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #000;
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Main terminal container - matches game dimensions exactly */
+.terminal-container {
+  width: min(98vw, 1920px);
+  height: 90vh;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border: 4px solid var(--nodeos-color);
+  padding: 10px;
+  box-sizing: border-box;
+  /* IMPORTANT: Remove overflow restrictions that cause scrolling */
+  overflow: visible;
+  position: relative;
+}
+
+.terminal-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 255, 0, 0.05) 0%,
+    rgba(0, 255, 0, 0.02) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Scanlines Effect - Applied as overlay, not to container itself */
+.terminal-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+  pointer-events: none;
+  animation: scanlines 0.1s linear infinite;
+}
+
+/* Inner content - simple and clean */
+.terminal-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===========================================
+   HEADER SECTION - Minimal NodeOS header
+   =========================================== */
+
+/* OS header styling - compressed to save space */
+.os-header {
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--nodeos-color);
+  padding-bottom: 5px;
+}
+
+.os-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+  color: var(--nodeos-color);
+}
+
+.os-version {
+  font-size: 11px;
+  color: var(--nodeos-node-color);
+  margin: 0;
+}
+
+/* Terminal prompt line - smaller to save space */
+.terminal-prompt {
+  margin: 8px 0 5px 0;
+  color: var(--nodeos-color);
+  font-size: 12px;
+}
+
+/* Blinking cursor animation */
+.cursor {
+  display: inline-block;
+  background: var(--nodeos-color);
+  width: 8px;
+  height: 12px;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ===========================================
+   MAIN LAYOUT - Simple 3-column grid
+   =========================================== */
+
+/* Main editor layout - DON'T use flex: 1, that breaks things! */
+.editor-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 10px;
+  height: calc(100% - 120px); /* Fixed height, no flex stretching */
+  min-height: 400px;
+}
+
+/* ===========================================
+   PANELS - Simple terminal windows
+   =========================================== */
+
+/* Standard terminal panel styling */
+.terminal-panel {
+  background: #000;
+  border: 2px solid var(--nodeos-color);
+  padding: 10px;
+  overflow: auto;
+  font-size: 11px;
+  position: relative;
+}
+
+/* Canvas panel - CRITICAL: Don't use flex on this! */
+.canvas-panel {
+  background: #000;
+  border: 2px solid var(--nodeos-color);
+  padding: 10px;
+  /* NO FLEX! Just normal block layout */
+  overflow: visible;
+}
+
+/* Panel headers - compressed */
+.panel-header {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--nodeos-color);
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--nodeos-node-color);
+  padding-bottom: 3px;
+}
+
+/* Section headers - smaller */
+.section-header {
+  font-size: 10px;
+  color: var(--nodeos-node-color);
+  margin: 10px 0 5px 0;
+  text-transform: uppercase;
+}
+
+/* ===========================================
+   FORM CONTROLS - Compact styling
+   =========================================== */
+
+/* Control rows - compact */
+.control-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+/* Control groups */
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Button rows */
+.button-row {
+  display: flex;
+  gap: 5px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+/* All inputs - compact terminal style */
+input[type="number"],
+input[type="text"],
+input {
+  background: #000;
+  border: 1px solid var(--nodeos-color);
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  padding: 3px;
+  width: 70px;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--nodeos-node-color);
+}
+
+/* Labels - small and compact */
+label {
+  font-size: 10px;
+  color: var(--nodeos-node-color);
+  text-transform: uppercase;
+}
+
+/* ===========================================
+   BUTTONS - Compact terminal style
+   =========================================== */
+
+/* All buttons - small and clean */
+button {
+  background: #000;
+  border: 1px solid var(--nodeos-color);
+  color: var(--nodeos-node-color);
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  padding: 3px 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+button:hover {
+  background: var(--nodeos-color);
+  color: #000;
+}
+
+button:active {
+  background: var(--nodeos-node-color);
+}
+
+/* ===========================================
+   CANVAS AREA - CRITICAL: Don't break this!
+   =========================================== */
+
+/* Canvas controls - compact */
+.canvas-controls {
+  margin-bottom: 8px;
+}
+
+/* MAIN DRAWING CANVAS - The most important part!
+   DO NOT apply any sizing or layout changes that break coordinates! */
+canvas#editor {
+  background: #000;
+  border: 2px solid var(--nodeos-node-color);
+  cursor: crosshair;
+  margin: 5px 0;
+  /* CRITICAL: Let the canvas keep its exact size from JavaScript */
+  display: block;
+  /* No width/height/flex changes - they break click coordinates! */
+}
+
+canvas:focus {
+  outline: 1px solid var(--nodeos-color);
+}
+
+/* Status bar - compact */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--nodeos-node-color);
+  margin-top: 5px;
+  border-top: 1px solid var(--nodeos-node-color);
+  padding-top: 3px;
+}
+
+/* ===========================================
+   PALETTE LIST - Compact scrollable
+   =========================================== */
+
+/* Scrollable tile list */
+.palette-list {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--nodeos-node-color);
+  padding: 3px;
+  margin: 5px 0;
+}
+
+/* Individual palette items */
+.palItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px;
+  border: 1px solid transparent;
+  margin: 1px 0;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.palItem:hover {
+  border-color: var(--nodeos-node-color);
+}
+
+.palItem[data-selected="true"] {
+  background: var(--nodeos-node-color);
+  color: #000;
+}
+
+/* ===========================================
+   SPECIAL ELEMENTS - Compact versions
+   =========================================== */
+
+/* ID badge */
+.id-badge {
+  background: #000;
+  border: 1px solid var(--nodeos-color);
+  color: var(--nodeos-color);
+  padding: 3px 6px;
+  font-size: 10px;
+  text-align: center;
+  min-width: 50px;
+}
+
+/* Terminal text - smaller */
+.terminal-text {
+  font-size: 10px;
+  color: var(--nodeos-node-color);
+  margin: 5px 0;
+  line-height: 1.2;
+}
+
+/* Textarea - compact */
+textarea#io {
+  width: 100%;
+  height: 80px;
+  background: #000;
+  border: 1px solid var(--nodeos-color);
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  padding: 3px;
+  resize: vertical;
+  margin: 5px 0;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--nodeos-node-color);
+}
+
+/* Back link */
+.back-link {
+  margin-top: 10px;
+}
+
+.back-link a {
+  color: var(--nodeos-color);
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.back-link a:hover {
+  color: var(--nodeos-node-color);
+}
+
+/* ===========================================
+   SYSTEM STATUS - Bottom bar
+   =========================================== */
+
+/* Bottom status - compressed */
+.system-status {
+  position: absolute;
+  bottom: 5px;
+  left: 15px;
+  right: 15px;
+  font-size: 9px;
+  color: var(--nodeos-color);
+  border-top: 1px solid var(--nodeos-node-color);
+  padding-top: 3px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ===========================================
+   RESPONSIVE - Keep it simple
+   =========================================== */
+
+/* Mobile - stack vertically but keep canvas functional */
+@media (max-width: 900px) {
+  .terminal-container {
+    width: 98vw;
+    height: 98vh;
+    padding: 5px;
+  }
+
+  .editor-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 5px;
+    height: calc(100% - 80px);
+  }
+
+  .canvas-panel {
+    order: -1; /* Canvas first on mobile */
+  }
+
+  button {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
+  input {
+    width: 50px;
+    font-size: 10px;
+  }
+}
+
+/* ===========================================
+   SCROLLBARS - Clean terminal style
+   =========================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nodeos-node-color);
+  border: 1px solid var(--nodeos-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nodeos-color);
+}
+
+/* ===========================================
+   ACCESSIBILITY - Clean focus states
+   =========================================== */
+
+button:focus,
+input:focus,
+canvas:focus {
+  outline: 1px solid var(--nodeos-color);
+  outline-offset: 1px;
+}
+
+::selection {
+  background: var(--nodeos-color);
+  color: #000;
+}

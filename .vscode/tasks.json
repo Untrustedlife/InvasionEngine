@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "serve-python-http-5500",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "http.server", "5500"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "endsPattern": "^Serving HTTP on .*$"
+        }
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared",
+        "clear": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "serve-python-http-5500-dist",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "http.server", "5500"],
+      "options": {
+        "cwd": "${workspaceFolder}/dist"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "endsPattern": "^Serving HTTP on .*$"
+        }
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared",
+        "clear": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    }
+  ]
+}
