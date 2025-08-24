@@ -74,26 +74,28 @@ export function drawSpriteColumn(g, x, y0, y1, img, texX, _shade) {
 }
 //Main raycasting function - casts rays using DDA algorithm and draws textured walls
 //Fills zBuffer for sprite occlusion and draws sky/floor gradients
+//Cache frequently used constants to avoid repeated calculations
+const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
 
   //Draw sky gradient (top half)
-  const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT / 2);
+  const sky = ctx.createLinearGradient(0, 0, 0, HALF_HEIGHT);
   sky.addColorStop(0, gameStateObject.cielingColorFront || "#6495ED");
   if (gameStateObject.cielingColorBack) {
     sky.addColorStop(0.5, gameStateObject.cielingColorBack || "#6495ED");
   }
   sky.addColorStop(0.9, FOG_COLOR);
   ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT / 2);
+  ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
 
   //Draw floor gradient (bottom half)
-  const floor = ctx.createLinearGradient(0, HEIGHT, 0, HEIGHT / 2);
+  const floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
   floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
   floor.addColorStop(0.85, gameStateObject.floorColorBack || "#03210A");
   floor.addColorStop(0.95, FOG_COLOR);
   ctx.fillStyle = floor;
-  ctx.fillRect(0, HEIGHT / 2, WIDTH, HEIGHT / 2);
+  ctx.fillRect(0, HALF_HEIGHT, WIDTH, HALF_HEIGHT);
 
   //Add atmospheric haze to prevent banding on empty rays
   const backgroundFogGradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);

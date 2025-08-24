@@ -263,10 +263,9 @@ export function checkExit() {
 }
 
 export function pickSpriteAtCenter(basis) {
-  const center =
-    (window.devicePixelRatio
-      ? Math.round(document.getElementById("view").width / 2)
-      : document.getElementById("view").width / 2) | 0; //conservative center
+  //I wanted to move this outside of the function but was paranoid that it would act weird if window is resized. (Might be able to?)
+  const HALF_WIDTH = document.getElementById("view").width >> 1;
+  const center = HALF_WIDTH | 0; //conservative center
   const depth = zBuffer[center] || 1e9;
   let best = null;
   let bestDepth = 1e9;
