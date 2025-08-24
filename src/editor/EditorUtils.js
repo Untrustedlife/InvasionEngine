@@ -97,7 +97,7 @@ export function defaultColor(tileId) {
 export function autoNameFor(tileId) {
   const presetTileNames = {
     0: "empty",
-    1: "brick",
+    1: "backrooms_wall",
     2: "panel",
     3: "hedge",
     4: "door",
