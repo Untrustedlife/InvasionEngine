@@ -38,7 +38,7 @@ function drawColumn(g, x, y0, y1, col, shade, srcY, srcH) {
   for (let y = 0; y < h; y++) {
     //si = source index into the pre-sliced column's RGBA array.
     //Bitwise OR 0 works as fast floor for non-negative numbers.
-    const si = ((ty | 0) * 4) | 0; // Faster than Math.floor
+    const si = ((ty | 0) * 4) | 0; // bitwise or (For positive)  is same as math.floor
     ty += step;
 
     //Apply multiplicative shade to RGB. Clamp via "| 0" to int 0..255.
@@ -266,10 +266,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let textureCoordinateU;
     if (wallSide === 0) {
       //x-side (vertical wall): use fractional part of Y
-      textureCoordinateU = hitPositionY - (hitPositionY | 0); // Faster than Math.floor
+      textureCoordinateU = hitPositionY - (hitPositionY | 0); // bitwise or (For positive)  is same as math.floor
     } else {
       //y-side (horizontal wall): use fractional part of X
-      textureCoordinateU = hitPositionX - (hitPositionX | 0); // Faster than Math.floor
+      textureCoordinateU = hitPositionX - (hitPositionX | 0); // bitwise or (For positive)  is same as math.floor
     }
     //Fast clamp to [0, 0.999999] range
     textureCoordinateU =
@@ -286,8 +286,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       ? textureCanvas.width | 0
       : textureData.w | 0;
 
-    //Convert to texel column and apply direction-based flip (no UV warping)
-    let textureColumnX = (textureCoordinateU * textureWidth) | 0; // Faster than Math.floor
+    //Convert to texel column and apply direction-based flip
+    let textureColumnX = (textureCoordinateU * textureWidth) | 0; // bitwise or (For positive)  is same as math.floor
     //Flip only by step/side rule to keep u monotonic across a wall face
     if (
       (wallSide === 0 && stepDirectionX > 0) ||
