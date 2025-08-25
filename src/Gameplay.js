@@ -202,19 +202,22 @@ export function autoPickup() {
     if (!s.alive) {
       continue;
     }
-    if (!["key", "food", "arrows"].includes(s.type)) {
+    const d = Math.hypot(s.x - player.x, s.y - player.y);
+    if (d >= 0.6) {
       continue;
     }
-    const d = Math.hypot(s.x - player.x, s.y - player.y);
-    if (d < 0.6) {
-      s.alive = false;
-      if (s.type === "key") {
+
+    switch (s.type) {
+      case "key":
+        s.alive = false;
         player.hasBlueKey = true;
         SFX.door();
         addMsg("Realmchild Growths Destroyed! Find the exit!");
         removeAllFlesh();
-      }
-      if (s.type === "food") {
+        break;
+
+      case "food":
+        s.alive = false;
         if (player.health >= player.maxHealth) {
           addMsg(`Became Stronger`);
           player.maxHealth += 1;
@@ -233,13 +236,16 @@ export function autoPickup() {
         }
         updateBars();
         SFX.pickup();
-      }
-      if (s.type === "arrows") {
+        break;
+      case "arrows":
+        s.alive = false;
         player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
         updateBars();
         SFX.pickup();
         addMsg(`Arrows +${ARROWS_FROM_QUIVER}`);
-      }
+        break;
+      default:
+        break;
     }
   }
 }
