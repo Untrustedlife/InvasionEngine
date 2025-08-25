@@ -149,7 +149,7 @@ export function fire() {
   }
 
   switch (hit.type) {
-    case "wolf":
+    case "drone":
       if (fired) {
         hit.alive = false;
         addMsg("Drone Squashed!");
@@ -455,7 +455,7 @@ export function placeSprites(assets) {
       x: t.x + 0.5,
       y: t.y + 0.5,
       img: wolfIdle,
-      type: "wolf",
+      type: "drone",
       alive: true,
       dist: 0,
       vx: 0,
@@ -697,7 +697,7 @@ export function updateAI(dt) {
     }
     switch (s.type) {
       //Could replace with something cleaner like an AI function on the sprite object but this is fine for now
-      case "wolf":
+      case "drone":
         const dx = player.x - s.x;
         const dy = player.y - s.y;
         const dist = Math.hypot(dx, dy);
