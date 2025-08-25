@@ -1,12 +1,7 @@
 //Main game loop and rendering orchestrator
 //Handles frame loop, wall/sprite rendering with z-buffer occlusion, HUD, and game state
 import { canvas } from "./Dom.js";
-import {
-  FAR_PLANE,
-  FOG_START_FRAC,
-  VIGNETTE_NEAR_START,
-  VIGNETTE_NEAR_END,
-} from "./Constants.js";
+import { FAR_PLANE, FOG_START_FRAC } from "./Constants.js";
 import { ctx, WIDTH, HEIGHT, cMini } from "./Dom.js";
 import { cameraBasis } from "./Camera.js";
 import { castWalls, zBuffer } from "./Render.js";
@@ -44,58 +39,6 @@ initAsyncTextures();
 
 //Wire inputs
 wireInput(canvas);
-
-//Vignette overlay system - side darkening based on wall proximity
-let vignetteLeftImg = null;
-let vignetteRightImg = null;
-let vignetteLeftAlphaSmoothed = 0;
-let vignetteRightAlphaSmoothed = 0;
-
-function buildVignette() {
-  const w = WIDTH | 0;
-  const h = HEIGHT | 0;
-  const off = document.createElement("canvas");
-  off.width = w;
-  off.height = h;
-  const g = off.getContext("2d");
-  g.imageSmoothingEnabled = false;
-
-  const cx = w * 0.5;
-  const cy = h * 0.5;
-  const rInner = Math.min(cx, cy) * 0;
-  const rOuter = Math.hypot(cx, cy);
-  const grad = g.createRadialGradient(cx, cy, rInner, cx, cy, rOuter);
-  grad.addColorStop(0.0, "rgba(0,0,0,0)");
-  grad.addColorStop(0.5, "rgba(0,0,0,1)");
-  g.fillStyle = grad;
-  g.fillRect(0, 0, w, h);
-
-  //Build side vignette overlays
-  const left = document.createElement("canvas");
-  left.width = w;
-  left.height = h;
-  const gl = left.getContext("2d");
-  gl.imageSmoothingEnabled = false;
-  const gradL = gl.createLinearGradient(0, 0, w * 0.5, 0);
-  gradL.addColorStop(0.35, "rgba(0,0,0,1)");
-  gradL.addColorStop(1.0, "rgba(0,0,0,0)");
-  gl.fillStyle = gradL;
-  gl.fillRect(0, 0, w * 0.5, h);
-  vignetteLeftImg = left;
-
-  const right = document.createElement("canvas");
-  right.width = w;
-  right.height = h;
-  const gr = right.getContext("2d");
-  gr.imageSmoothingEnabled = false;
-  const gradR = gr.createLinearGradient(w, 0, w * 0.5, 0);
-  gradR.addColorStop(0.35, "rgba(0,0,0,1)");
-  gradR.addColorStop(1.0, "rgba(0,0,0,0)");
-  gr.fillStyle = gradR;
-  gr.fillRect(w * 0.5, 0, w * 0.5, h);
-  vignetteRightImg = right;
-}
-buildVignette();
 
 //FPS counter
 let smoothFps = 0;
@@ -193,9 +136,6 @@ function castAndDraw(nowSec) {
 
   //Draw weapon HUD in bottom-right corner
   drawWeaponHUD();
-
-  //Apply dynamic vignette effects based on wall proximity
-  applyProximityVignette();
 }
 
 //Calculate squared distance from player to each sprite for depth sorting
@@ -366,36 +306,6 @@ function drawWeaponHUD() {
   );
 }
 
-//Apply vignette effects based on proximity to walls
-function applyProximityVignette() {
-  if (!vignetteLeftImg || !vignetteRightImg) {
-    return;
-  }
-
-  //Sample wall distances in different screen regions
-  const wallDistances = sampleWallDistancesInRegions();
-
-  //Convert distances to closeness factors
-  const closenessFactors = {
-    center: calculateCloseness(wallDistances.center),
-    left: calculateCloseness(wallDistances.left),
-    right: calculateCloseness(wallDistances.right),
-  };
-
-  //Determine vignette alpha values based on wall proximity
-  const vignetteAlphas = calculateVignetteAlphas(closenessFactors);
-
-  //Smooth the alpha transitions
-  vignetteLeftAlphaSmoothed =
-    vignetteLeftAlphaSmoothed * 0.85 + vignetteAlphas.left * 0.15;
-  vignetteRightAlphaSmoothed =
-    vignetteRightAlphaSmoothed * 0.85 + vignetteAlphas.right * 0.15;
-
-  //Render vignette overlays
-  drawVignetteOverlay(vignetteLeftImg, vignetteLeftAlphaSmoothed);
-  drawVignetteOverlay(vignetteRightImg, vignetteRightAlphaSmoothed);
-}
-
 //Sample minimum wall distances in left, center, and right screen regions
 function sampleWallDistancesInRegions() {
   const sideBandWidthFraction = 0.28; //each side takes ~28% of screen width
@@ -429,70 +339,6 @@ function sampleWallDistancesInRegions() {
     left: findMinDistance(leftRegionStart, leftRegionEnd),
     right: findMinDistance(rightRegionStart, rightRegionEnd),
   };
-}
-
-//Convert wall distance to closeness factor (0 = far, 1 = very close)
-function calculateCloseness(wallDistance) {
-  const nearDistanceThreshold = Math.max(VIGNETTE_NEAR_END, 1e-6);
-  const farDistanceThreshold = Math.max(
-    nearDistanceThreshold + 1e-6,
-    VIGNETTE_NEAR_START
-  );
-
-  if (!isFinite(wallDistance)) {
-    return 0;
-  }
-
-  const lerpFactor =
-    (wallDistance - nearDistanceThreshold) /
-    (farDistanceThreshold - nearDistanceThreshold);
-  return Math.max(0, Math.min(1, 1 - lerpFactor));
-}
-
-//Determine vignette alpha values based on wall closeness patterns
-function calculateVignetteAlphas(closenessFactors) {
-  const {
-    center: centerCloseness,
-    left: leftCloseness,
-    right: rightCloseness,
-  } = closenessFactors;
-
-  let leftAlpha = 0;
-  let rightAlpha = 0;
-
-  const bothSidesCloseness = Math.min(leftCloseness, rightCloseness);
-  const maxSideCloseness = Math.max(leftCloseness, rightCloseness);
-  const closenessDifferenceThreshold = 0.05;
-
-  if (bothSidesCloseness > 0.5) {
-    //Player is in a corridor - darken both sides
-    leftAlpha = bothSidesCloseness;
-    rightAlpha = bothSidesCloseness;
-  } else if (leftCloseness > rightCloseness + closenessDifferenceThreshold) {
-    //Wall primarily on left side
-    leftAlpha = maxSideCloseness;
-    rightAlpha = 0;
-  } else if (rightCloseness > leftCloseness + closenessDifferenceThreshold) {
-    //Wall primarily on right side
-    rightAlpha = maxSideCloseness;
-    leftAlpha = 0;
-  } else {
-    //Ambiguous or slightly close on both sides
-    leftAlpha = maxSideCloseness;
-    rightAlpha = maxSideCloseness;
-  }
-
-  return { left: leftAlpha, right: rightAlpha };
-}
-
-//Draw a vignette overlay with the specified alpha
-function drawVignetteOverlay(vignetteImage, alpha) {
-  if (vignetteImage && alpha > 0.001) {
-    ctx.save();
-    ctx.globalAlpha = Math.min(1, alpha);
-    ctx.drawImage(vignetteImage, 0, 0);
-    ctx.restore();
-  }
 }
 
 let last = performance.now();

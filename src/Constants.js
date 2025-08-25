@@ -22,11 +22,3 @@ export const FOG_COLOR = "#101b2e";
 export const ARROWS_FROM_QUIVER = 5;
 export const HEALTH_FROM_FOOD = 10;
 export const REALMDRONE_DAMAGE = 3.33;
-
-//Vignette effect parameters
-export const VIGNETTE_BASE = 0.0;
-export const VIGNETTE_NEAR_BOOST = 0;
-export const VIGNETTE_NEAR_START = 0;
-export const VIGNETTE_NEAR_END = 0.0;
-export const VIGNETTE_NEAR_SCALE = 0.0;
-export const VIGNETTE_SHIFT_FRAC = 0.0;
