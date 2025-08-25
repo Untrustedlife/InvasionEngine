@@ -137,63 +137,72 @@ export function fire() {
     SFX.shot();
     fired = true;
   }
+
   const basis = cameraBasis();
   const hit = pickSpriteAtCenter(basis);
-  if (hit) {
-    if (hit.type === "wolf") {
+
+  if (!hit) {
+    if (!fired) {
+      addMsg("No arrows. Look for quivers.");
+    }
+    return;
+  }
+
+  switch (hit.type) {
+    case "wolf":
       if (fired) {
         hit.alive = false;
-        addMsg("Drone defeated!");
+        addMsg("Drone Squashed!");
         SFX.killedDrone();
       } else {
         addMsg("No arrows.");
       }
-    }
-    if (hit.type === "barrel") {
+      break;
+
+    case "barrel":
       if (fired) {
         hit.alive = false;
         splashDamage(hit.x, hit.y, 2.5);
         addMsg("Kaboom!");
         SFX.explode();
       }
-    }
-    if (hit.type === "key") {
+      break;
+
+    case "key":
       hit.alive = false;
       player.hasBlueKey = true;
       SFX.door();
       addMsg("Realmchild Growths Destroyed! Find the exit!");
       removeAllFlesh();
-    }
-    if (hit.type === "food") {
+      break;
+
+    case "food": {
       hit.alive = false;
-      if (player.health >= player.maxHealth) {
+      const wasMax = player.health >= player.maxHealth;
+      if (wasMax) {
         player.maxHealth += 1;
-        player.health = clamp(
-          player.health + HEALTH_FROM_FOOD,
-          0,
-          player.maxHealth
-        );
-        addMsg(`Became Stronger.`);
-      } else {
-        player.health = clamp(
-          player.health + HEALTH_FROM_FOOD,
-          0,
-          player.maxHealth
-        );
-        addMsg(`Health restored.`);
       }
+      player.health = clamp(
+        player.health + HEALTH_FROM_FOOD,
+        0,
+        player.maxHealth
+      );
+      addMsg(wasMax ? "Became Stronger." : "Health restored.");
       updateBars();
       SFX.pickup();
+      break;
     }
-    if (hit.type === "arrows") {
+
+    case "arrows":
       hit.alive = false;
       player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
       updateBars();
       addMsg(`Arrows +${ARROWS_FROM_QUIVER}`);
       SFX.pickup();
-    }
-  } else if (!fired) {
-    addMsg("No arrows. Look for quivers.");
+      break;
+
+    default:
+      break;
   }
 }
 
@@ -686,36 +695,40 @@ export function updateAI(dt) {
     if (!s.alive) {
       continue;
     }
-    if (s.type !== "wolf") {
-      continue;
-    }
-    const dx = player.x - s.x;
-    const dy = player.y - s.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist > 0.3) {
-      const sp = 0.9 * dt;
-      const ux = dx / dist;
-      const uy = dy / dist;
-      const nx = s.x + ux * sp;
-      const ny = s.y + uy * sp;
-      if (!isSolidTile(nx, s.y)) {
-        s.x = nx;
-      }
-      if (!isSolidTile(s.x, ny)) {
-        s.y = ny;
-      }
-    }
-    if (dist < 0.6 && s.hurtCD <= 0) {
-      player.health = Math.max(0, player.health - REALMDRONE_DAMAGE) | 0;
+    switch (s.type) {
+      //Could replace with something cleaner like an AI function on the sprite object but this is fine for now
+      case "wolf":
+        const dx = player.x - s.x;
+        const dy = player.y - s.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.3) {
+          const sp = 0.9 * dt;
+          const ux = dx / dist;
+          const uy = dy / dist;
+          const nx = s.x + ux * sp;
+          const ny = s.y + uy * sp;
+          if (!isSolidTile(nx, s.y)) {
+            s.x = nx;
+          }
+          if (!isSolidTile(s.x, ny)) {
+            s.y = ny;
+          }
+        }
+        if (dist < 0.6 && s.hurtCD <= 0) {
+          player.health = Math.max(0, player.health - REALMDRONE_DAMAGE) | 0;
 
-      updateBars();
-      addMsg("Drone bite!");
-      SFX.hurt();
-      s.hurtCD = 0.8;
-      checkGameOver();
-    }
-    if (s.hurtCD > 0) {
-      s.hurtCD -= dt;
+          updateBars();
+          addMsg("Drone bite!");
+          SFX.hurt();
+          s.hurtCD = 0.8;
+          checkGameOver();
+        }
+        if (s.hurtCD > 0) {
+          s.hurtCD -= dt;
+        }
+        break;
+      default:
+        break;
     }
   }
 }
