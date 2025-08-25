@@ -429,7 +429,7 @@ export async function initAsyncTextures() {
 }
 //Backrooms wallpaper
 async function paintBackroomsWallpaper() {
-  const c = await loadWallTexture("backrooms_wallpaper.jpg");
+  const c = await loadWallTexture("OfficeWall.png");
   return c;
 }
 //
