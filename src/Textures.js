@@ -401,35 +401,65 @@ async function loadWallTexture(imageName) {
     img.src = imagePathReal;
   });
 }
-
-//Load multiple wall textures and add them to TEX/TEXCACHE arrays
-async function loadWallTextures(textureList) {
-  const promises = textureList.map(async (texPath, index) => {
-    try {
-      return await loadWallTexture(texPath);
-    } catch (error) {
-      console.warn(`Failed to load texture ${texPath}:`, error);
-      return paintBrick(); //Fallback to brick texture (Should add gmod missing file texture lmao)
-    }
-  });
-  return Promise.all(promises);
-}
 //#endregion
 
-//#region Backrooms Textures
+//#region New Textures
+
 // Load the wallpaper asynchronously and update TEX/TEXCACHE
 export async function initAsyncTextures() {
   try {
-    const c = await paintBackroomsWallpaper();
-    TEX[1] = c; // replace placeholder at index 1
+    let imagesToReplace = [
+      { index: 1, image: "OfficeWall.png" },
+      // Add more textures to replace if needed
+    ];
+    await loadImagesToReplaceTextures(imagesToReplace);
     rebuildTextureCache();
   } catch (err) {
     console.warn("Failed to init backrooms wallpaper:", err);
   }
 }
-//Backrooms wallpaper
-async function paintBackroomsWallpaper() {
-  const c = await loadWallTexture("OfficeWall.png");
-  return c;
+/**
+ * Loads and replaces wall textures from an array of descriptors.
+ *
+ * @async
+ * @function loadImagesToReplaceTextures
+ * @param {{ index: number, image: string }[]} descriptors
+ *   Array of texture names to load.
+ * @returns {Promise<void>} Resolves when all textures have been attempted.
+ *
+ * @example
+ * await loadImagesToReplaceTextures([
+ *   { index: 0, image: 'textures/stone.jpg' },
+ * //Also supports images that don't replace existing textures
+ *   {image: 'textures/brick.png' },
+ * ]);
+ */
+async function loadImagesToReplaceTextures(descriptors) {
+  if (!Array.isArray(descriptors)) {
+    console.warn(
+      "Expected an array of { index, image } objects. In loadImagesToReplaceTextures"
+    );
+    return;
+  }
+  const promises = descriptors.map(async (desc, i) => {
+    const { index, image } = desc || {};
+    try {
+      const tex = await loadWallTexture(image);
+      if (index && index >= 0 && index < TEX.length) {
+        TEX[index] = tex;
+      } else {
+        //Textures added that dont replace are just appended
+        TEX.push(tex);
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to load texture "${image}" for index ${index} and dont support replacing with cool gmod missing texture:`,
+        error
+      );
+    }
+  });
+
+  await Promise.all(promises);
 }
+
 //
