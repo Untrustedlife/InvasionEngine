@@ -40,7 +40,7 @@ function setPx(imageData, pixelX, pixelY, hexColor) {
 //Gray stone bricks with mortar lines
 function paintBrick() {
   const c = makeTex();
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
   const w = c.width;
   const h = c.height;
   const img = g.createImageData(w, h);
@@ -62,7 +62,7 @@ function paintBrick() {
 //Cut stone blocks with rough texture
 function paintPanel() {
   const c = makeTex();
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
   const w = c.width;
   const h = c.height;
   const img = g.createImageData(w, h);
@@ -87,7 +87,7 @@ function paintPanel() {
 //Leafy hedge wall texture
 function paintTech() {
   const c = makeTex();
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
   const w = c.width;
   const h = c.height;
   const img = g.createImageData(w, h);
@@ -113,7 +113,7 @@ function paintTech() {
 //Wooden door with iron bands
 function paintDoor(color = "#5b4b2a") {
   const c = makeTex();
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
   const w = c.width;
   const h = c.height;
   const img = g.createImageData(w, h);
@@ -148,7 +148,7 @@ function paintDoor(color = "#5b4b2a") {
 //Exit portal with magical glow
 function paintExit() {
   const c = makeTex();
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
   const w = c.width,
     h = c.height;
 
@@ -185,7 +185,7 @@ function paintExit() {
 //Blue door with runes
 function paintBlueDoor() {
   const c = paintDoor("#6a4a2a");
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
 
   g.fillStyle = "#103b5f";
   g.fillRect(28, 8, 8, 48);
@@ -199,7 +199,7 @@ function paintBlueDoor() {
 //Organic membrane barrier
 function paintField() {
   const c = makeTex();
-  const g = c.getContext("2d");
+  const g = c.getContext("2d", { willReadFrequently: true });
   const w = c.width;
   const h = c.height;
   const img = g.createImageData(w, h);
@@ -391,7 +391,7 @@ async function loadWallTexture(imageName) {
     const img = new Image();
     img.onload = () => {
       const canvas = makeTex(64, 64); //Use existing makeTex function
-      const context = canvas.getContext("2d");
+      const context = canvas.getContext("2d", { willReadFrequently: true });
       context.imageSmoothingEnabled = false;
       context.drawImage(img, 0, 0, 64, 64); //Force to 64x64
       resolve(canvas);
