@@ -139,7 +139,7 @@ div.help {
 .minimap {
   position: absolute !important;
   top: 10px !important;
-  left: 10px !important;
+  right: 10px !important;
   border: 2px solid var(--nodeos-color) !important;
   background: #000 !important;
   display: none !important;
