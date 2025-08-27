@@ -56,11 +56,11 @@ export function drawMinimap(sprites) {
       } //flesh
 
       mctx.fillStyle = color;
-      mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px gutters
+      mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px padding between tiles
     }
   }
 
-  // Sprites (relative to same window)
+  // Sprites
   for (const s of sprites) {
     if (!s.alive) {
       continue;
