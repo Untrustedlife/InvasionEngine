@@ -6,15 +6,7 @@ import { ctx, WIDTH, HEIGHT, cMini } from "./Dom.js";
 import { cameraBasis } from "./Camera.js";
 import { castWalls, zBuffer } from "./Render.js";
 import { projectSprite } from "./Projection.js";
-import {
-  sprites,
-  wolfIdle,
-  barrel,
-  enchantedKey,
-  food,
-  arrowQuiver,
-  bow,
-} from "./Sprites.js";
+import { sprites, bow, loadAsyncSprites } from "./Sprites.js";
 import { player } from "./Player.js";
 import { drawMinimap } from "./Minimap.js";
 import {
@@ -33,9 +25,6 @@ import {
 import { rollDice, getRandomElementFromArray } from "./UntrustedUtils.js";
 import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
-
-//Initialize override textures
-initAsyncTextures();
 
 //Wire inputs
 wireInput(canvas);
@@ -99,7 +88,9 @@ export function ChangeMapLevel(specificLevel = -1) {
   player.y = chosenMapDefinition.startPos.y;
 }
 
-function init() {
+async function init() {
+  await loadAsyncSprites();
+  await initAsyncTextures();
   ChangeMapLevel(0);
   //assets pack
   resetLevel();
@@ -365,4 +356,4 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-init();
+await init().catch(console.error);

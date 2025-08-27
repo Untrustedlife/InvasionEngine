@@ -97,23 +97,13 @@ async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
   });
 }
 
-//Color palettes for ASCII sprites
-export const wolfPalette = {
-  B: "#2c1810", //Dark brown
-  b: "#5c3d2e", //Medium brown
-  g: "#7a6b5c", //Light brown/grey
-  G: "#a89080", //Lighter brown
-  k: "#080508", //Black
-  w: "#e8e0d5", //White/cream
-  W: "#f5f0e8", //Bright white
-  r: "#8b4513", //Saddle brown
-  y: "#ffeb9c", //Light yellow for eyes
-};
+export let bow, wolfIdle, arrowQuiver, enchantedKey, food, barrel;
 
-//Drone. '.' are transparent; letters reference wolfPalette. (Used to be wqolf lol)
-//The third argument (3) scales the sprite 3x from its ASCII pixel size.
-export const wolfIdle = makeSprite(
-  `
+//We could maybe make some kind of asset lookup table for this later insetad of it all being defined as variables
+export async function loadAsyncSprites() {
+  //Ascii Sprites (Legacy versions)
+  wolfIdle = wolfIdle = makeSprite(
+    `
   ................................
   ..............BB..BB............
   .............BbbbbbbB...........
@@ -140,21 +130,22 @@ export const wolfIdle = makeSprite(
   ........BBBbbbbbbbbbbbbBBB......
   ................................
   `,
-  wolfPalette,
-  4
-);
+    {
+      B: "#2c1810", //Dark brown
+      b: "#5c3d2e", //Medium brown
+      g: "#7a6b5c", //Light brown/grey
+      G: "#a89080", //Lighter brown
+      k: "#080508", //Black
+      w: "#e8e0d5", //White/cream
+      W: "#f5f0e8", //Bright white
+      r: "#8b4513", //Saddle brown
+      y: "#ffeb9c", //Light yellow for eyes
+    },
+    4
+  );
 
-export const barrelPalette = {
-  k: "#0a0f10",
-  g: "#1b5c3a",
-  G: "#2e874f",
-  s: "#7fffd4",
-  b: "#0e1620",
-};
-
-//Explosive barrel prop. Scaled 3x.
-export const barrel = makeSprite(
-  `
+  barrel = makeSprite(
+    `
   ............
   ....bbbb....
   ..bbGGGGbb..
@@ -176,24 +167,17 @@ export const barrel = makeSprite(
   ............
   ............
   `,
-  barrelPalette,
-  3
-);
-
-//Food pickup (bread and apple).
-export const food = await makeSpriteLoad("apple.png", 3);
-
-export const keyPalette = {
-  k: "#5a4500", //Dark outline for gold key
-  g: "#FFD700", //Gold
-  G: "#FFA500", //Orange gold
-  s: "#FFF5CC", //Soft highlight
-  b: "#4169E1", //Royal blue magic
-  B: "#87CEEB", //Sky blue magic
-};
-//Enchanted key. Scaled 4x so it reads clearly at distance.
-export const enchantedKey = makeSprite(
-  `
+    {
+      k: "#0a0f10",
+      g: "#1b5c3a",
+      G: "#2e874f",
+      s: "#7fffd4",
+      b: "#0e1620",
+    },
+    3
+  );
+  enchantedKey = makeSprite(
+    `
   ................
   .....B....B.....
   ....BBBBBBBB....
@@ -227,20 +211,18 @@ export const enchantedKey = makeSprite(
   .....GG..GG.....
   .....GGggGG.....
   `,
-  keyPalette,
-  4
-);
-
-export const quiverPalette = {
-  b: "#100904", //Darker leather/border brown
-  d: "#8f715b",
-  f: "#5a3b1a", //Leather
-  r: "#DC143C", //Red fletching
-  s: "#000000", //Silver arrowhead
-  w: "#4d260a", //Brown wood
-};
-export const arrowQuiver = makeSprite(
-  `
+    {
+      k: "#5a4500", //Dark outline for gold key
+      g: "#FFD700", //Gold
+      G: "#FFA500", //Orange gold
+      s: "#FFF5CC", //Soft highlight
+      b: "#4169E1", //Royal blue magic
+      B: "#87CEEB", //Sky blue magic
+    },
+    4
+  );
+  arrowQuiver = makeSprite(
+    `
   ............r...
   ............rr..
   ...........w..r.
@@ -258,20 +240,19 @@ export const arrowQuiver = makeSprite(
   ...sss..........
   ................
   `,
-  quiverPalette,
-  3
-)
+    {
+      b: "#100904", //Darker leather/border brown
+      d: "#8f715b",
+      f: "#5a3b1a", //Leather
+      r: "#DC143C", //Red fletching
+      s: "#000000", //Silver arrowhead
+      w: "#4d260a", //Brown wood
+    },
+    3
+  );
 
-//Player Bow
-export const bowPalette = {
-  b: "#5a3b1a", // Darker leather/border brown
-  f: "#B8860B", // Dark gold fletching
-  r: "#DC143C", // Red fletching
-  s: "#C0C0C0", // Silver arrowhead
-  w: "#8B4513", // Brown wood
-};
-export const bow = makeSprite(
-  `
+  bow = bow = makeSprite(
+    `
   ................................................................
   ................................................................
   ................................................................
@@ -337,9 +318,18 @@ export const bow = makeSprite(
   ...................................wwwwww.............ffff.bbbs.
   ...................................wwwwwww..............ff...bs.
   `,
-  bowPalette,
-  3
-);;
+    {
+      b: "#5a3b1a", // Darker leather/border brown
+      f: "#B8860B", // Dark gold fletching
+      r: "#DC143C", // Red fletching
+      s: "#C0C0C0", // Silver arrowhead
+      w: "#8B4513", // Brown wood
+    },
+    3
+  );
 
+  //Image sprites
+  food = await makeSpriteLoad("apple.png", 3);
+}
 //Runtime list of active sprites (enemies, pickups, effects)
 export const sprites = [];
