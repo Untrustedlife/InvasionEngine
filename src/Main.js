@@ -25,7 +25,7 @@ import {
 import { rollDice, getRandomElementFromArray } from "./UntrustedUtils.js";
 import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
-
+let last = performance.now();
 //Wire inputs
 wireInput(canvas);
 
@@ -332,7 +332,6 @@ function sampleWallDistancesInRegions() {
   };
 }
 
-let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
