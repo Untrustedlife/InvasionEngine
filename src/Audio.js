@@ -107,7 +107,7 @@ export const SFX = {
     beep({ freq: 140, dur: 0.12, type: "sawtooth", vol: 0.2, slide: -50 });
   },
 
-  killedDrone: () => {
+  killedEntity: () => {
     const detune = Math.random() * 16 - 8; //small variation
 
     //Rubbery body (downward glide)

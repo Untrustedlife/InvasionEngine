@@ -9,18 +9,33 @@ import { gameStateObject } from "./Map.js";
 export function drawMinimap(sprites) {
   mctx.clearRect(0, 0, cMini.width, cMini.height);
 
-  const scale = 8; //pixels per world tile
-  cMini.width = 2 + gameStateObject.MAP_W * scale + 2;
-  cMini.height = 2 + gameStateObject.MAP_H * scale + 2;
+  const SCALE = 6; // pixels per tile
+  const VIEW = 20; // tiles shown per side
+  const PAD = 2; // border
+  const HALF = Math.floor(VIEW / 2);
+  //Fast floor since these can't be negative AFAIK
+  const startX = Math.max(
+    0,
+    Math.min((player.x | 0) - HALF, gameStateObject.MAP_W - VIEW)
+  );
+  const startY = Math.max(
+    0,
+    Math.min((player.y | 0) - HALF, gameStateObject.MAP_H - VIEW)
+  );
+  cMini.width = PAD + VIEW * SCALE + PAD;
+  cMini.height = PAD + VIEW * SCALE + PAD;
   //Draw map tiles with material-based colors
-  for (let y = 0; y < gameStateObject.MAP_H; y++) {
-    for (let x = 0; x < gameStateObject.MAP_W; x++) {
-      const cell = gameStateObject.MAP[y][x];
+  for (let y = 0; y < VIEW; y++) {
+    for (let x = 0; x < VIEW; x++) {
+      const mapY = startY + y;
+      const mapX = startX + x;
+      // Safe lookup (treat OOB as empty)
+      const cell = gameStateObject.MAP[mapY]?.[mapX] ?? 0;
 
       let color = "#0c1220"; //empty/floor
       if (cell === 1) {
-        color = "#ECDE60";
-      } //backrooms wallapper
+        color = "#ECDE60"; //wallpaper
+      } //brick (red)
       else if (cell === 2) {
         color = "#707a88";
       } //Gray stone (blue-gray)
@@ -41,47 +56,48 @@ export function drawMinimap(sprites) {
       } //flesh
 
       mctx.fillStyle = color;
-      mctx.fillRect(2 + x * scale, 2 + y * scale, scale - 1, scale - 1); //1px gutters
+      mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px gutters
     }
   }
 
-  //Draw alive sprites as 4x4 colored squares
+  // Sprites (relative to same window)
   for (const s of sprites) {
     if (!s.alive) {
       continue;
     }
+    const sx = PAD + (s.x - startX) * SCALE;
+    const sy = PAD + (s.y - startY) * SCALE;
 
     mctx.fillStyle =
-      s.type === "demon"
-        ? "#ff6a6a"
+      s.type === "entity"
+        ? "#ffeb9c"
         : s.type === "barrel"
         ? "#57d694"
         : s.type === "key"
         ? "#6aa2ff"
-        : s.type === "med"
-        ? "#f5f1c9"
-        : s.type === "ammo"
-        ? "#9cf58d"
+        : s.type === "food"
+        ? "#7fffd4"
+        : s.type === "arrows"
+        ? "#DC143C"
         : "#ffffff";
 
-    mctx.fillRect(2 + s.x * scale - 2, 2 + s.y * scale - 2, 4, 4);
+    mctx.fillRect(sx - 2, sy - 2, 4, 4);
   }
 
-  //Draw player circle and facing line
+  // Player (same origin)
+  const px = PAD + (player.x - startX) * SCALE;
+  const py = PAD + (player.y - startY) * SCALE;
+
   mctx.fillStyle = "#e7f3ff";
   mctx.beginPath();
-  mctx.arc(2 + player.x * scale, 2 + player.y * scale, 2.5, 0, TAU);
+  mctx.arc(px, py, 2.5, 0, TAU);
   mctx.fill();
 
-  const dirX = Math.cos(player.a);
-  const dirY = Math.sin(player.a);
-
+  const dirX = Math.cos(player.a),
+    dirY = Math.sin(player.a);
   mctx.strokeStyle = "#78f3d3";
   mctx.beginPath();
-  mctx.moveTo(2 + player.x * scale, 2 + player.y * scale);
-  mctx.lineTo(
-    2 + (player.x + dirX * 1.5) * scale,
-    2 + (player.y + dirY * 1.5) * scale
-  );
+  mctx.moveTo(px, py);
+  mctx.lineTo(px + dirX * 1.5 * SCALE, py + dirY * 1.5 * SCALE);
   mctx.stroke();
 }

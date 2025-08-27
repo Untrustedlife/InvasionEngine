@@ -11,7 +11,7 @@ import {
   cMini,
 } from "./Dom.js";
 import { clamp } from "./Utils.js";
-import { rollDice } from "./UntrustedUtils.js";
+import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
 import { drawSpriteColumn, zBuffer } from "./Render.js";
@@ -24,7 +24,7 @@ import {
   ARROWS_FROM_QUIVER,
   FAR_PLANE,
   HEALTH_FROM_FOOD,
-  REALMDRONE_DAMAGE,
+  ENTITY_DAMAGE,
 } from "./Constants.js";
 import {
   sprites,
@@ -149,11 +149,16 @@ export function fire() {
   }
 
   switch (hit.type) {
-    case "drone":
+    case "entity":
       if (fired) {
         hit.alive = false;
-        addMsg("Drone Squashed!");
-        SFX.killedDrone();
+        let murderMessages = [
+          "Entity murdered!",
+          "Entity destroyed!",
+          "Entity purged!",
+        ];
+        addMsg(chooseRandomElementFromArray(murderMessages));
+        SFX.killedEntity();
       } else {
         addMsg("No arrows.");
       }
@@ -455,7 +460,7 @@ export function placeSprites(assets) {
       x: t.x + 0.5,
       y: t.y + 0.5,
       img: wolfIdle,
-      type: "drone",
+      type: "entity",
       alive: true,
       dist: 0,
       vx: 0,
@@ -697,7 +702,7 @@ export function updateAI(dt) {
     }
     switch (s.type) {
       //Could replace with something cleaner like an AI function on the sprite object but this is fine for now
-      case "drone":
+      case "entity":
         const dx = player.x - s.x;
         const dy = player.y - s.y;
         const dist = Math.hypot(dx, dy);
@@ -715,10 +720,10 @@ export function updateAI(dt) {
           }
         }
         if (dist < 0.6 && s.hurtCD <= 0) {
-          player.health = Math.max(0, player.health - REALMDRONE_DAMAGE) | 0;
+          player.health = Math.max(0, player.health - ENTITY_DAMAGE) | 0;
 
           updateBars();
-          addMsg("Drone bite!");
+          addMsg("Entity attacks!");
           SFX.hurt();
           s.hurtCD = 0.8;
           checkGameOver();

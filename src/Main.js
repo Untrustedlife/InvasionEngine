@@ -22,7 +22,7 @@ import {
   placeSprites,
   updateBars,
 } from "./Gameplay.js";
-import { rollDice, getRandomElementFromArray } from "./UntrustedUtils.js";
+import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
 let last = performance.now();
@@ -62,7 +62,7 @@ export function ChangeMapLevel(specificLevel = -1) {
       chosenMapDefinition = mapDef;
     }
   } else {
-    chosenMapDefinition = getRandomElementFromArray(mapDefinitions);
+    chosenMapDefinition = chooseRandomElementFromArray(mapDefinitions);
   }
 
   EXIT_POS.x = chosenMapDefinition.exitPos.x;

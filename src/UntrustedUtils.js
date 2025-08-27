@@ -5,7 +5,7 @@
  * @returns {T} A random element from the array.
  * @throws Will throw an error if the array is empty or not an array.
  */
-export function getRandomElementFromArray(array) {
+export function chooseRandomElementFromArray(array) {
   if (!Array.isArray(array) || array.length === 0) {
     throw new Error("Array must be non-empty.");
   }
