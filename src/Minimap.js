@@ -68,6 +68,7 @@ export function drawMinimap(sprites) {
     const sx = PAD + (s.x - startX) * SCALE;
     const sy = PAD + (s.y - startY) * SCALE;
 
+    //If we create "main" sprite objects we should add tehse to them so we dont need a weird if statement
     mctx.fillStyle =
       s.type === "entity"
         ? "#ffeb9c"
