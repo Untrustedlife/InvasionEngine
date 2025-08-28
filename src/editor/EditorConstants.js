@@ -22,7 +22,7 @@ export const DEFAULT_TILES = [
   { id: 4, name: "door", color: "#996633" },
   { id: 5, name: "exit", color: "#FFE300" },
   { id: 6, name: "blue_door", color: "#3561ff" },
-  { id: 7, name: "[NODEOSERROR] Flesh", color: "#FE6660" },
+  { id: 7, name: "Forcefield", color: "#00FFFF" },
   { id: -1, name: "infoPlayerStart", color: "#00FF00" },
   { id: -2, name: "infoPlayerExit", color: "#FF0000" },
 ];

@@ -52,8 +52,8 @@ export function drawMinimap(sprites) {
         color = " #3561ff";
       } //blue door (passable)
       else if (cell === 7) {
-        color = "#FE6660";
-      } //flesh
+        color = "#00FFFF";
+      } //forcefield
 
       mctx.fillStyle = color;
       mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px padding between tiles

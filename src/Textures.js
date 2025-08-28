@@ -196,120 +196,83 @@ function paintBlueDoor() {
   return c;
 }
 
-//Organic membrane barrier
+//Forcefield? Not sure why i put so much effort into this, th emath is confusing an dits a mess.
 function paintField() {
   const c = makeTex();
   const g = c.getContext("2d", { willReadFrequently: true });
-  const w = c.width;
-  const h = c.height;
+  const w = c.width,
+    h = c.height;
   const img = g.createImageData(w, h);
-  //helper: sRGB blend between two hex colors
-  const blendHex = (a, b, t) => {
-    const ca = parseInt(a.slice(1), 16);
-    const cb = parseInt(b.slice(1), 16);
-    const ar = (ca >> 16) & 255,
-      ag = (ca >> 8) & 255,
-      ab = ca & 255;
-    const br = (cb >> 16) & 255,
-      bg = (cb >> 8) & 255,
-      bb = cb & 255;
-    const r = (ar + (br - ar) * t) | 0;
-    const g2 = (ag + (bg - ag) * t) | 0;
-    const b2 = (ab + (bb - ab) * t) | 0;
-    return `#${((r << 16) | (g2 << 8) | b2).toString(16).padStart(6, "0")}`;
-  };
-  //deterministic RNG for feature placement
-  let seed = 1337;
-  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0xffffffff;
-  //fatty lobules (round lightened blobs)
-  const lobules = [];
-  for (let i = 0; i < 7; i++) {
-    lobules.push({
-      x: 6 + rnd() * (w - 12),
-      y: 6 + rnd() * (h - 12),
-      r: 5 + rnd() * 9,
-    });
-  }
-  //fatty tubules (elongated lightened streaks)
-  const tubules = [];
-  for (let i = 0; i < 4; i++) {
-    const sx = rnd() * w,
-      sy = rnd() * h;
-    const ang = rnd() * Math.PI * 2;
-    const len = 20 + rnd() * 28;
-    const ex = sx + Math.cos(ang) * len;
-    const ey = sy + Math.sin(ang) * len;
-    const rad = 2.0 + rnd() * 2.5;
-    tubules.push({ sx, sy, ex, ey, rad });
-  }
-  //distance from point to segment helper
-  const distToSeg = (px, py, x1, y1, x2, y2) => {
-    const vx = x2 - x1,
-      vy = y2 - y1;
-    const wx = px - x1,
-      wy = py - y1;
-    const vv = vx * vx + vy * vy || 1;
-    let t = (wx * vx + wy * vy) / vv;
-    t = t < 0 ? 0 : t > 1 ? 1 : t;
-    const dx = x1 + t * vx - px;
-    const dy = y1 + t * vy - py;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
+  const BASE = "#00D9FF"; //base field color
+  const GRID = 5; //lattice spacing (smaller = tighter grid)
+  const GRID_AMP = 0.6; //how strong the hex-ish lattice is
+  const EDGE_AMP = 0.1; //edge brightening
+  const GRAIN_AMP = 0.04; //tiny sparkle (set to 0 to disable)
+
+  //cos(60°)=0.5, sin(60°)=~0.8660254
+  const A = 0.5;
+  const B = 0.8660254;
+  const cx = w * 0.5,
+    cy = h * 0.5;
+  const minDim = Math.min(w, h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      //base undulation and roughness
-      const undA = Math.sin(x * 0.23) * 0.07 + Math.cos(y * 0.19) * 0.06;
-      const undB =
-        Math.sin((x + y) * 0.09) * 0.05 + Math.cos((x - y) * 0.08) * 0.04;
-      const stria =
-        Math.sin(x * 0.6 + y * 0.15) * 0.02 +
-        Math.cos(x * 0.2 - y * 0.5) * 0.015;
-      const grain = (((x * 31) ^ (y * 17)) & 31) / 255 - 0.03;
-      const pulse = undA + undB + stria;
-      //start from flesh base
-      let dynBase = "#00FFFF";
-      //fatty lobules (pale pus-yellow tint towards centers)
-      let lobLight = 0;
-      for (let i = 0; i < lobules.length; i++) {
-        const dx = x - lobules[i].x,
-          dy = y - lobules[i].y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < lobules[i].r) {
-          lobLight = Math.max(lobLight, 1 - d / lobules[i].r);
-        }
-      }
-      if (lobLight > 0) {
-        dynBase = blendHex(dynBase, "#f3e08a", Math.min(0.45, lobLight * 0.6));
-      }
-      //fatty tubules (elongated light brighten)
-      let tubLight = 0;
-      for (let i = 0; i < tubules.length; i++) {
-        const d = distToSeg(
-          x,
-          y,
-          tubules[i].sx,
-          tubules[i].sy,
-          tubules[i].ex,
-          tubules[i].ey
-        );
-        const t = 1 - Math.min(1, d / tubules[i].rad);
-        if (t > 0) {
-          tubLight = Math.max(tubLight, t);
-        }
-      }
-      if (tubLight > 0) {
-        dynBase = blendHex(dynBase, "#f3d37a", Math.min(0.5, tubLight * 0.8));
-      }
-      //pores/pits: sparse darker dots
-      const pore = (x * 13 + y * 29) % 211 === 0 || ((x + y * 5) & 63) === 7;
-      const poreAmt = pore ? -0.3 : 0;
-      //occasional glossy highlight specks
-      const spec = (x * 7 - y * 11) % 197 === 0 ? 0.16 : 0;
-      const amt = pulse + grain + poreAmt + spec;
-      setPx(img, x, y, shadeHex(dynBase, amt));
+      //make stripes,
+      //and brighten near stripe centers with (1 - |sin|).
+      const u0 = x / GRID;
+      const u1 = (x * A + y * B) / GRID;
+      const u2 = (x * A - y * B) / GRID;
+
+      const l0 = 1 - Math.abs(Math.sin(Math.PI * u0));
+      const l1 = 1 - Math.abs(Math.sin(Math.PI * u1));
+      const l2 = 1 - Math.abs(Math.sin(Math.PI * u2));
+      //get a hex-like net of bright lines.
+      const lattice = (l0 + l1 + l2) / 3; //0..1
+      //A few simple sine mixes to feel “alive”.
+      const wobble =
+        Math.sin(x * 0.15) * 0.2 +
+        Math.sin(y * 0.12) * 0.18 +
+        Math.sin((x + y) * 0.07) * 0.16 +
+        Math.sin((x - y) * 0.06) * 0.12;
+      //Subtle standing waves centered in the tile.
+      const dx = x - cx,
+        dy = y - cy;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      const ring = Math.sin(r * ((2 * Math.PI) / (minDim * 0.33))); //~3 rings
+      //Brighter near the border; simple linear ramp.
+      let edge = 1 - Math.min(x, y, w - 1 - x, h - 1 - y) / (minDim * 0.5);
+      if (edge < 0) edge = 0;
+      //Cheap, deterministic sparkle—small and safe.
+      const grain = ((x * 13 + y * 17) % 23) / 23 - 0.5;
+      const amt = lattice * GRID_AMP + edge * EDGE_AMP + grain * GRAIN_AMP;
+
+      setPx(img, x, y, shadeHex(BASE, amt));
     }
   }
+
   g.putImageData(img, 0, 0);
+  g.globalAlpha = 0.35;
+  g.strokeStyle = "#6FEAFF";
+  g.lineWidth = 1;
+  for (let i = 0; i < 9; i++) {
+    g.beginPath();
+    const y0 = 3 + i * Math.floor(h / 10);
+    g.moveTo(2, y0);
+    for (let x = 2; x < w - 2; x += 6) {
+      const yv =
+        y0 +
+        Math.sin((x + i * 7) * 0.35) * 2.5 +
+        Math.sin((x * 0.5 - i * 9) * 0.12) * 1.5;
+      g.lineTo(x, yv);
+    }
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+  //Soft cyan frame to sell the “contained field” look.
+  g.strokeStyle = "#20B2DB";
+  g.lineWidth = 2;
+  g.strokeRect(1, 1, w - 2, h - 2);
+
   return c;
 }
 

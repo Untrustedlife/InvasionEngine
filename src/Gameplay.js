@@ -184,7 +184,7 @@ export function fire() {
         0,
         player.maxHealth
       );
-      addMsg(wasMax ? "Became Stronger." : "Health restored.");
+      addMsg(wasMax ? "Ranger Became Stronger." : "Health restored.");
       updateBars();
       SFX.pickup();
       break;
@@ -225,7 +225,7 @@ export function autoPickup() {
       case "food":
         s.alive = false;
         if (player.health >= player.maxHealth) {
-          addMsg(`Became Stronger`);
+          addMsg(`Ranger Became Stronger`);
           player.maxHealth += 1;
           player.health = clamp(
             player.health + HEALTH_FROM_FOOD,
@@ -264,7 +264,7 @@ export function checkExit() {
     py = player.y | 0;
   if (gameStateObject.MAP[py][px] === 5) {
     SFX.portal();
-    addMsg(`You escaped! Wave ${wave} cleared.`);
+    addMsg(`Floor ${wave} cleared.`);
     setWave(wave + 1);
     exitPending = true;
     setTimeout(() => {
@@ -657,7 +657,7 @@ export function resetLevel(changeMap = false) {
   const assets = { wolfIdle, barrel, enchantedKey, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
-  addMsg(`Wave ${wave}: Find the enchanted key.`);
+  addMsg(`Floor ${wave}: Find the keycard.`);
 }
 
 export function resetLevelInOrder(changeMap = false) {
@@ -678,7 +678,7 @@ export function resetLevelInOrder(changeMap = false) {
   const assets = { wolfIdle, barrel, enchantedKey, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
-  addMsg(`Wave ${wave}: Find the enchanted key.`);
+  addMsg(`Floor ${wave}: Find the keycard.`);
 }
 
 export function hardReset() {
