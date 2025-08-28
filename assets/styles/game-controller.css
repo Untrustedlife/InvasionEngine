@@ -154,20 +154,17 @@ div.help {
 /* ===========================================
    GAME LOG - Roguelike style message scroller
    =========================================== */
-
-/*Left side message log like old roguelike games */
-/* Collapsible side log inside #game */
 .game-log {
   position: absolute;
   top: 10px;
-  left: 10px;
-  width: 320px;
+  left: 35px;
+  right: 175px;
   max-height: calc(100% - 120px);
   background: #000;
   border: 2px solid var(--nodeos-color);
   color: var(--nodeos-node-color);
   font-family: "Courier New", monospace;
-  font-size: 12px;
+  font-size: 15px;
   padding: 8px 10px 10px 10px;
   box-sizing: border-box;
   pointer-events: auto;
@@ -176,6 +173,7 @@ div.help {
 .game-log .log-items {
   max-height: 60vh;
   overflow-y: auto;
+  text-align: center;
 }
 
 .game-log .log-items div {
@@ -185,8 +183,7 @@ div.help {
 
 /* Collapsed state: show only last 3 lines and narrow width */
 .game-log.collapsed {
-  width: 320px;
-  padding-top: 34px; /* room for handle */
+  right: 175px;
 }
 .game-log.collapsed .log-items {
   max-height: 3.9em; /* ~3 lines */
@@ -196,7 +193,9 @@ div.help {
 
 /* Log handle button */
 .log-handle {
+  z-index: 10;
   position: absolute;
+  font-size: 20px;
   top: -2px;
   right: -2px;
   background: #000;
