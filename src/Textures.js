@@ -204,7 +204,7 @@ function paintField() {
     h = c.height;
   const img = g.createImageData(w, h);
   const BASE = "#00D9FF"; //base field color
-  const GRID = 5; //lattice spacing (smaller = tighter grid)
+  const GRID = 5; //HEX lattice spacing (smaller = tighter grid)
   const GRID_AMP = 0.6; //how strong the hex-ish lattice is
   const EDGE_AMP = 0.1; //edge brightening
   const GRAIN_AMP = 0.04; //tiny sparkle (set to 0 to disable)
@@ -234,11 +234,7 @@ function paintField() {
         Math.sin(y * 0.12) * 0.18 +
         Math.sin((x + y) * 0.07) * 0.16 +
         Math.sin((x - y) * 0.06) * 0.12;
-      //Subtle standing waves centered in the tile.
-      const dx = x - cx,
-        dy = y - cy;
-      const r = Math.sqrt(dx * dx + dy * dy);
-      const ring = Math.sin(r * ((2 * Math.PI) / (minDim * 0.33))); //~3 rings
+
       //Brighter near the border; simple linear ramp.
       let edge = 1 - Math.min(x, y, w - 1 - x, h - 1 - y) / (minDim * 0.5);
       if (edge < 0) edge = 0;
@@ -267,11 +263,13 @@ function paintField() {
     }
     g.stroke();
   }
-  g.globalAlpha = 1;
+
+  //Uncomment this Gwen if you want a "frame" around teh forcefield
+  /*g.globalAlpha = 1;
   //Soft cyan frame to sell the “contained field” look.
   g.strokeStyle = "#20B2DB";
   g.lineWidth = 2;
-  g.strokeRect(1, 1, w - 2, h - 2);
+  g.strokeRect(1, 1, w - 2, h - 2);*/
 
   return c;
 }
