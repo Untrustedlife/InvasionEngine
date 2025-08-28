@@ -95,19 +95,11 @@ export function move(dt) {
   if (keys.has("ArrowRight")) {
     player.a += rot;
   }
-  if (keys.has("ArrowUp")) {
+  if (keys.has("ArrowUp") || keys.has("KeyW")) {
     mx += dirX * spd;
     my += dirY * spd;
   }
-  if (keys.has("ArrowDown")) {
-    mx -= dirX * spd;
-    my -= dirY * spd;
-  }
-  if (keys.has("KeyW")) {
-    mx += dirX * spd;
-    my += dirY * spd;
-  }
-  if (keys.has("KeyS")) {
+  if (keys.has("ArrowDown") || keys.has("KeyS")) {
     mx -= dirX * spd;
     my -= dirY * spd;
   }
