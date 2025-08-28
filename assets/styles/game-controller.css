@@ -155,10 +155,11 @@ div.help {
    GAME LOG - Roguelike style message scroller
    =========================================== */
 .game-log {
+  z-index: 1;
   position: absolute;
   top: 0px;
   left: 0px;
-  right: 100px;
+  right: 7%; /* FPS always takes up around 7% of teh screen (found this via trial and error)*/
   max-height: calc(100% - 120px);
   background: #000;
   font-family: "Courier New", monospace;
@@ -180,7 +181,8 @@ div.help {
 }
 
 .game-log.collapsed {
-  right: 175px;
+  z-index: 1;
+  right: 7%; /* FPS always takes up around 7% of teh scren (found this via trial and error)*/
   mask-image: linear-gradient(180deg, #000 25%, transparent);
   background: linear-gradient(180deg, #000 25%, transparent);
 }
