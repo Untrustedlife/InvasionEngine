@@ -228,12 +228,6 @@ function paintField() {
       const l2 = 1 - Math.abs(Math.sin(Math.PI * u2));
       //get a hex-like net of bright lines.
       const lattice = (l0 + l1 + l2) / 3; //0..1
-      //A few simple sine mixes to feel “alive”.
-      const wobble =
-        Math.sin(x * 0.15) * 0.2 +
-        Math.sin(y * 0.12) * 0.18 +
-        Math.sin((x + y) * 0.07) * 0.16 +
-        Math.sin((x - y) * 0.06) * 0.12;
 
       //Brighter near the border; simple linear ramp.
       let edge = 1 - Math.min(x, y, w - 1 - x, h - 1 - y) / (minDim * 0.5);
