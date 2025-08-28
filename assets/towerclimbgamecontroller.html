@@ -78,14 +78,12 @@
       (function () {
         const log = document.getElementById("gameLog");
         const btn = document.getElementById("logHandle");
-        let expanded = false;
         if (!log || !btn) return;
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          const nowOpen = log.classList.toggle("collapsed");
-          btn.setAttribute("aria-expanded", String(!nowOpen));
-          expanded = !expanded;
-          btn.textContent = expanded ? "COLLAPSE LOG" : "EXPAND LOG";
+          const nowClosed = log.classList.toggle("collapsed");
+          btn.setAttribute("aria-expanded", String(!nowClosed));
+          btn.textContent = !nowClosed ? "COLLAPSE LOG" : "EXPAND LOG";
         });
       })();
     </script>
