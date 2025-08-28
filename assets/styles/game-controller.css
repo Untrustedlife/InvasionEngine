@@ -197,7 +197,7 @@ div.help {
   position: absolute;
   font-size: 20px;
   top: -2px;
-  right: -2px;
+  left: -2px;
   background: #000;
   color: var(--nodeos-node-color);
   border: 2px solid var(--nodeos-color);

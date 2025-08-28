@@ -267,7 +267,7 @@ function paintField() {
       const grain = (((x * 31) ^ (y * 17)) & 31) / 255 - 0.03;
       const pulse = undA + undB + stria;
       //start from flesh base
-      let dynBase = "#FE6660";
+      let dynBase = "#00FFFF";
       //fatty lobules (pale pus-yellow tint towards centers)
       let lobLight = 0;
       for (let i = 0; i < lobules.length; i++) {
@@ -310,25 +310,6 @@ function paintField() {
     }
   }
   g.putImageData(img, 0, 0);
-  //semi-transparent vein lines
-  g.globalAlpha = 0.5; //keep existing color choice
-  g.strokeStyle = "#9F0000";
-  g.lineWidth = 1;
-  for (let i = 0; i < 10; i++) {
-    g.beginPath();
-    const y0 = 2 + i * 8;
-    g.moveTo(2, y0);
-    for (let x = 2; x < w - 2; x += 8) {
-      const yv = y0 + Math.sin((x + i * 7) * 0.4) * 3 + (i % 2 ? 2 : -2);
-      g.lineTo(x, yv);
-    }
-    g.stroke();
-  }
-  g.globalAlpha = 1;
-  //darker border to frame the membrane
-  g.strokeStyle = "#7E1A09"; //keep existing border color
-  g.lineWidth = 2;
-  g.strokeRect(1, 1, w - 2, h - 2);
   return c;
 }
 

@@ -169,7 +169,7 @@ export function fire() {
       hit.alive = false;
       player.hasBlueKey = true;
       SFX.door();
-      addMsg("Realmchild Growths Destroyed! Find the exit!");
+      addMsg("Keycard found! Find the exit!");
       removeAllFlesh();
       break;
 
@@ -218,7 +218,7 @@ export function autoPickup() {
         s.alive = false;
         player.hasBlueKey = true;
         SFX.door();
-        addMsg("Realmchild Growths Destroyed! Find the exit!");
+        addMsg("Keycard found! Find the exit!");
         removeAllFlesh();
         break;
 
