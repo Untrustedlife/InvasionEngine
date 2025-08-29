@@ -19,7 +19,7 @@ import { projectSprite } from "./Projection.js";
 import { gameStateObject, EXIT_POS, START_POS, mapDefinitions } from "./Map.js";
 import { player, collisionRadius, wave, setWave } from "./Player.js";
 import { isSolidTile, collide } from "./Collision.js";
-import { ChangeMapLevel } from "./Main.js";
+import { ChangeMapLevel, tryCooldown } from "./Main.js";
 import {
   ARROWS_FROM_QUIVER,
   FAR_PLANE,
@@ -35,6 +35,7 @@ import {
   arrowQuiver,
   bow,
 } from "./Sprites.js";
+import { entityTypes, spawnEntity } from "./Entities.js";
 
 //Used so that you are forced to play through all levels before it randomizes
 let order = 0;
@@ -141,21 +142,6 @@ export function fire() {
   }
 
   switch (hit.type) {
-    case "entity":
-      if (fired) {
-        hit.alive = false;
-        let murderMessages = [
-          "Entity murdered!",
-          "Entity destroyed!",
-          "Entity purged!",
-        ];
-        addMsg(chooseRandomElementFromArray(murderMessages));
-        SFX.killedEntity();
-      } else {
-        addMsg("No arrows.");
-      }
-      break;
-
     case "barrel":
       if (fired) {
         hit.alive = false;
@@ -164,7 +150,6 @@ export function fire() {
         SFX.explode();
       }
       break;
-
     case "key":
       hit.alive = false;
       player.hasBlueKey = true;
@@ -189,7 +174,6 @@ export function fire() {
       SFX.pickup();
       break;
     }
-
     case "arrows":
       hit.alive = false;
       player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
@@ -197,8 +181,10 @@ export function fire() {
       addMsg(`Arrows +${ARROWS_FROM_QUIVER}`);
       SFX.pickup();
       break;
-
     default:
+      if (hit.onHit) {
+        hit.onHit(hit, fired);
+      }
       break;
   }
 }
@@ -212,7 +198,6 @@ export function autoPickup() {
     if (d >= 0.6) {
       continue;
     }
-
     switch (s.type) {
       case "key":
         s.alive = false;
@@ -251,6 +236,9 @@ export function autoPickup() {
         addMsg(`Arrows +${ARROWS_FROM_QUIVER}`);
         break;
       default:
+        if (s.onTouch) {
+          s.onTouch(s);
+        }
         break;
     }
   }
@@ -374,7 +362,7 @@ export function buildForcefieldRing() {
 }
 
 export function placeSprites(assets) {
-  const { barrel, enchantedKey, food, arrowQuiver, wolfIdle } = assets;
+  const { barrel, enchantedKey, food, arrowQuiver } = assets;
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
@@ -448,20 +436,9 @@ export function placeSprites(assets) {
   );
   for (let i = 0; i < wolfCount; i++) {
     const t = randomEmptyTile(3.5);
-    sprites.push({
-      x: t.x + 0.5,
-      y: t.y + 0.5,
-      img: wolfIdle,
-      type: "entity",
-      alive: true,
-      dist: 0,
-      vx: 0,
-      vy: 0,
-      hurtCD: 0,
-      ground: true,
-      scale: 0.5,
-      floorBias: 5,
-    });
+    sprites.push(
+      spawnEntity(entityTypes.entity, { x: t.x + 0.5, y: t.y + 0.5 })
+    );
   }
 }
 
@@ -654,7 +631,7 @@ export function resetLevel(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { wolfIdle, barrel, enchantedKey, food, arrowQuiver };
+  const assets = { barrel, enchantedKey, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
@@ -675,7 +652,7 @@ export function resetLevelInOrder(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { wolfIdle, barrel, enchantedKey, food, arrowQuiver };
+  const assets = { barrel, enchantedKey, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
@@ -688,44 +665,12 @@ export function hardReset() {
 }
 
 export function updateAI(dt) {
-  for (const s of sprites) {
-    if (!s.alive) {
+  for (const entity of sprites) {
+    if (!entity.alive) {
       continue;
     }
-    switch (s.type) {
-      //Could replace with something cleaner like an AI function on the sprite object but this is fine for now
-      case "entity":
-        const dx = player.x - s.x;
-        const dy = player.y - s.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist > 0.3) {
-          const sp = 0.9 * dt;
-          const ux = dx / dist;
-          const uy = dy / dist;
-          const nx = s.x + ux * sp;
-          const ny = s.y + uy * sp;
-          if (!isSolidTile(nx, s.y)) {
-            s.x = nx;
-          }
-          if (!isSolidTile(s.x, ny)) {
-            s.y = ny;
-          }
-        }
-        if (dist < 0.6 && s.hurtCD <= 0) {
-          player.health = Math.max(0, player.health - ENTITY_DAMAGE) | 0;
-
-          updateBars();
-          addMsg("Entity attacks!");
-          SFX.hurt();
-          s.hurtCD = 0.8;
-          checkGameOver();
-        }
-        if (s.hurtCD > 0) {
-          s.hurtCD -= dt;
-        }
-        break;
-      default:
-        break;
+    if (entity.ai) {
+      entity.ai(entity, dt);
     }
   }
 }

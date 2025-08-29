@@ -26,6 +26,18 @@ import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
 let last = performance.now();
+
+const coolDowns = new Map();
+export function tryCooldown(key, intervalMS) {
+  const now = last,
+    next = coolDowns.get(key) ?? 0;
+  if (now < next) {
+    return false;
+  }
+  coolDowns.set(key, now + intervalMS);
+  return true;
+}
+
 //Wire inputs
 wireInput(canvas);
 
