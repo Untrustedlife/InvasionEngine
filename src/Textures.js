@@ -347,6 +347,7 @@ export async function initAsyncTextures() {
     let imagesToReplace = [
       { index: 1, image: "OfficeWall.png" },
       { index: 6, image: "OfficeDoor.png" },
+      { index: 4, image: "OfficeDoor2.png" },
       // Add more textures to replace if needed
     ];
     await loadImagesToReplaceTextures(imagesToReplace);
