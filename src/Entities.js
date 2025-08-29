@@ -16,7 +16,7 @@ Benefits:
 - Safe (templates are frozen; no accidental shared state)
 - Easy save/load (store {id, type, x, y, hp…} + relink behavior on load)
 - Easy to debug (plain objects; no complex inheritance chains)
-If we ever move to TypeScript, we can layer interfaces/types on top of this.
+If we ever move to TypeScript, we can layer interfaces/types/classes on top of this.
 */
 
 //#region TYPES
@@ -144,6 +144,6 @@ export function spawnEntity(
 
   if (overrides) {
     Object.assign(e, overrides);
-  } //tweaks per spawn (E.G for a boss)
+  } //tweaks per spawn (E.G for a friendly entity or boss)
   return e;
 }
