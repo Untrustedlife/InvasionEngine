@@ -16,7 +16,7 @@ import { gameStateObject } from "./Map.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
 
-//Faster wall slice draw: sample a 1px-wide column from the source texture
+//Wall slice draw: sample a 1px-wide column from the source texture
 //and scale to the destination height using drawImage. Apply uniform shading
 //via Canvas2D filter brightness for speed. This avoids per-pixel ImageData work.
 //srcY/srcH select the portion of the source column to map to the visible segment
