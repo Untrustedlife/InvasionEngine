@@ -128,7 +128,7 @@ export const ENTITY_BEHAVIOR = {
       }
     },
     onTouch(entity) {
-      if (tryCooldown(entityTypes.entity, 10000)) {
+      if (tryCooldown(entityTypes.barrel, 10000)) {
         addMsg("Shooting this barrel may yield useful results...");
       }
     },
