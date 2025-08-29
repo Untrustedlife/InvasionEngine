@@ -17,6 +17,11 @@ Benefits:
 - Easy save/load (store {id, type, x, y, hp…} + relink behavior on load)
 - Easy to debug (plain objects; no complex inheritance chains)
 If we ever move to TypeScript, we can layer interfaces/types/classes on top of this.
+
+Edit:
+We might be bale to move the object definitiosn for each type to their own type associated file and just ...type for each one. 
+Then we could also move functions out of "gameplay" and into these files so we don't need to export them.
+
 */
 
 //#region TYPES
@@ -56,6 +61,7 @@ import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { tryCooldown } from "./Main.js";
 
 export const ENTITY_BEHAVIOR = {
+  //Entity
   [entityTypes.entity]: {
     ai(entity, dt) {
       if (!entity.alive) {
@@ -110,6 +116,7 @@ export const ENTITY_BEHAVIOR = {
       }
     },
   },
+  //Barrel
   [entityTypes.barrel]: {
     onHit(entity, fired) {
       if (fired) {
