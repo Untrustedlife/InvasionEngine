@@ -44,7 +44,7 @@ import { player, wave } from "./Player.js";
 import { updateBars, addMsg, checkGameOver } from "./Gameplay.js";
 import { SFX } from "./Audio.js";
 import { ENTITY_DAMAGE } from "./Constants.js";
-import { rollDice } from "./UntrustedUtils.js";
+import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { tryCooldown } from "./Main.js";
 
 export const ENTITY_BEHAVIOR = {
@@ -133,7 +133,9 @@ export function spawnEntity(
   e.alive = true;
   e.hurtCD = 0;
 
-  //This is messy but i can't come up with anything better rn
+  //This is messy but i can't come up with anything better rn due to how asynchronous loading works
+  //Could maybe do a promise system but that seems like overkill
+  //Maybe later if we have more entities
   switch (id) {
     case entityTypes.entity:
       e.img = wolfIdle;
