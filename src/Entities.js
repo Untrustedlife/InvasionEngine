@@ -38,7 +38,6 @@ export const ENTITY_TEMPLATES = {
     floorBias: 3,
   },
   [entityTypes.barrel]: {
-    img: barrel,
     type: entityTypes.barrel,
     ground: true,
     scale: 0.5,
