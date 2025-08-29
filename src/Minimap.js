@@ -5,6 +5,7 @@ import { cMini, mctx } from "./Dom.js";
 import { player } from "./Player.js";
 import { TAU } from "./Utils.js";
 import { gameStateObject } from "./Map.js";
+import { entityTypes } from "./Entities.js";
 //Draw minimap: tiles -> sprites -> player (draw order matters)
 export function drawMinimap(sprites) {
   mctx.clearRect(0, 0, cMini.width, cMini.height);
@@ -70,9 +71,9 @@ export function drawMinimap(sprites) {
 
     //If we create "main" sprite objects we should add tehse to them so we dont need a weird if statement
     mctx.fillStyle =
-      s.type === "entity"
+      s.type === entityTypes.entity
         ? "#ffeb9c"
-        : s.type === "barrel"
+        : s.type === entityTypes.barrel
         ? "#57d694"
         : s.type === "key"
         ? "#6aa2ff"

@@ -22,6 +22,7 @@ If we ever move to TypeScript, we can layer interfaces/types/classes on top of t
 //#region TYPES
 export const entityTypes = Object.freeze({
   entity: "entity",
+  barrel: "barrel",
 });
 
 export const ENTITY_TEMPLATES = {
@@ -30,6 +31,13 @@ export const ENTITY_TEMPLATES = {
     ground: true,
     scale: 0.66,
     floorBias: 3,
+  },
+  [entityTypes.barrel]: {
+    img: barrel,
+    type: entityTypes.barrel,
+    ground: true,
+    scale: 0.5,
+    floorBias: 5,
   },
 };
 Object.freeze(ENTITY_TEMPLATES);
@@ -41,7 +49,7 @@ for (const k in ENTITY_TEMPLATES) {
 //#region BEHAVIOR
 import { isSolidTile } from "./Collision.js";
 import { player, wave } from "./Player.js";
-import { updateBars, addMsg, checkGameOver } from "./Gameplay.js";
+import { updateBars, addMsg, checkGameOver, splashDamage } from "./Gameplay.js";
 import { SFX } from "./Audio.js";
 import { ENTITY_DAMAGE } from "./Constants.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
@@ -102,6 +110,23 @@ export const ENTITY_BEHAVIOR = {
       }
     },
   },
+  [entityTypes.barrel]: {
+    onHit(entity, fired) {
+      if (fired) {
+        entity.alive = false;
+        splashDamage(entity.x, entity.y, 2.5);
+        addMsg("Kaboom!");
+        SFX.explode();
+      } else {
+        addMsg("No arrows.");
+      }
+    },
+    onTouch(entity) {
+      if (tryCooldown(entityTypes.entity, 10000)) {
+        addMsg("Shooting this barrel may yield useful results...");
+      }
+    },
+  },
   // ...
 };
 Object.freeze(ENTITY_BEHAVIOR);
@@ -112,7 +137,7 @@ for (const k in ENTITY_BEHAVIOR) {
 //#endregion
 //Id as entityType
 let nextId = 0;
-import { wolfIdle } from "./Sprites.js";
+import { wolfIdle, barrel } from "./Sprites.js";
 
 export function spawnEntity(
   id,
@@ -127,8 +152,8 @@ export function spawnEntity(
 
   // Minimal mutable state (copy only what changes)
   e.id = nextId++;
-  e.x = position.x + 0.5;
-  e.y = position.y + 0.5;
+  e.x = position.x;
+  e.y = position.y;
   e.dist = 0;
   e.alive = true;
   e.hurtCD = 0;
@@ -139,6 +164,9 @@ export function spawnEntity(
   switch (id) {
     case entityTypes.entity:
       e.img = wolfIdle;
+      break;
+    case entityTypes.barrel:
+      e.img = barrel;
       break;
   }
 

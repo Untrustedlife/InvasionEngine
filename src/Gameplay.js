@@ -142,14 +142,6 @@ export function fire() {
   }
 
   switch (hit.type) {
-    case "barrel":
-      if (fired) {
-        hit.alive = false;
-        splashDamage(hit.x, hit.y, 2.5);
-        addMsg("Kaboom!");
-        SFX.explode();
-      }
-      break;
     case "key":
       hit.alive = false;
       player.hasBlueKey = true;
@@ -362,23 +354,15 @@ export function buildForcefieldRing() {
 }
 
 export function placeSprites(assets) {
-  const { barrel, enchantedKey, food, arrowQuiver } = assets;
+  const { enchantedKey, food, arrowQuiver } = assets;
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
     for (let i = 0; i < rollDice(2) * ((gameStateObject.MAP_H / 20) | 0); i++) {
       const bt = randomEmptyTile(1.0);
-      sprites.push({
-        x: bt.x + 0.5,
-        y: bt.y + 0.5,
-        img: barrel,
-        type: "barrel",
-        alive: true,
-        dist: 0,
-        ground: true,
-        scale: 0.5,
-        floorBias: 5,
-      });
+      sprites.push(
+        spawnEntity(entityTypes.barrel, { x: bt.x + 0.5, y: bt.y + 0.5 })
+      );
     }
   }
 
@@ -631,7 +615,7 @@ export function resetLevel(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { barrel, enchantedKey, food, arrowQuiver };
+  const assets = { enchantedKey, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
@@ -652,7 +636,7 @@ export function resetLevelInOrder(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { barrel, enchantedKey, food, arrowQuiver };
+  const assets = { enchantedKey, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
