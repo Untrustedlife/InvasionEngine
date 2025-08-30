@@ -3,6 +3,7 @@
 import { WIDTH, HEIGHT } from "./Dom.js";
 import { clamp } from "./Utils.js";
 import { player } from "./Player.js";
+import { PLAYER_HEIGHT } from "./Constants.js";
 
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
@@ -127,7 +128,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
   //Calculate floor bias for ground sprites based on size and scale
   const relativeSizeFactor = finalSpriteHeight / HEIGHT;
   const effectiveFloorBias =
-    (sprite.floorBias ?? 0) * worldScale * relativeSizeFactor;
+    (sprite.floorBias ?? 0) * worldScale * relativeSizeFactor / PLAYER_HEIGHT;
   const scaleLockAmount = Math.min(0.9, Math.max(0.2, worldScale));
 
   const verticalPosition = sprite.ground
