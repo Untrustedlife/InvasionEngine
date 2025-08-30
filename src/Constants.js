@@ -15,7 +15,7 @@ export const MAX_SLICE_FACTOR = 1.4;
 export const RENDER_SCALE = 0.95;
 
 // scale (0-2) 2 means camera is on floor, 1 mean camera is on celing
-export const PLAYER_HEIGHT = 0.75; 
+export const PLAYER_HEIGHT = 0.75;
 
 //Fog effect configuration
 export const FOG_START_FRAC = 0.6; //fog starts at 60% of FAR_PLANE

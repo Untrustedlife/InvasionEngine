@@ -127,8 +127,14 @@ export function projectSprite(sprite, cameraBasisVectors) {
 
   //Calculate floor bias for ground sprites based on size and scale
   const relativeSizeFactor = finalSpriteHeight / HEIGHT;
+  // Sprites still look a bit off at extreme player heights. Ideally we’d offset by half a sprites height based on whether the player is
+  // closer to the ceiling (push down) or the floor (push up) to mak eit perfect.
+  // For now this uses (2 - player.calculatePlayerHeight()), which is “good enough” for now.
   const effectiveFloorBias =
-    (sprite.floorBias ?? 0) * worldScale * relativeSizeFactor / PLAYER_HEIGHT;
+    (sprite.floorBias ?? 0) *
+    worldScale *
+    relativeSizeFactor *
+    (2 - PLAYER_HEIGHT);
   const scaleLockAmount = Math.min(0.9, Math.max(0.2, worldScale));
 
   const verticalPosition = sprite.ground
