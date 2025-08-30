@@ -149,19 +149,19 @@ export async function loadAsyncSprites() {
   ............
   ....bbbb....
   ..bbGGGGbb..
-  .bGGGGGGGGb.
+  .bssssssssb.
   .bGGgGGgGGb.
-  .bGGGGGGGGb.
+  .bssssssssb.
   .bGgGGGGgGb.
-  .bGGGGGGGGb.
+  .bssssssssb.
   .bGGgGGgGGb.
-  .bGGGGGGGGb.
+  .bssssssssb.
   .bGgGGGGgGb.
-  .bGGGGGGGGb.
+  .bssssssssb.
   .bGGgGGgGGb.
-  .bGGGGGGGGb.
+  .bssssssssb.
   .bGGgGGgGGb.
-  .bGGGGGGGGb.
+  .bssssssssb.
   ..bbGGGGbb..
   ....bbbb....
   ............
@@ -169,9 +169,9 @@ export async function loadAsyncSprites() {
   `,
     {
       k: "#0a0f10",
-      g: "#1b5c3a",
-      G: "#2e874f",
-      s: "#7fffd4",
+      g: "#FA5053",
+      G: "#CD1C18",
+      s: "#950606",
       b: "#0e1620",
     },
     3

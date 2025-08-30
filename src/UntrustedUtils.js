@@ -35,3 +35,14 @@ export function rollDice(x) {
 export function rollDiceTwo(x) {
   return Math.floor(Math.random() * x);
 }
+
+/**
+ * Lerps between start and end by t (0 to 1).
+ * @param {number} start
+ * @param {number} end
+ * @param {number} t
+ * @returns
+ */
+export function lerp(start, end, t) {
+  return start + (end - start) * t;
+}

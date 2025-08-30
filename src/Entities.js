@@ -53,11 +53,12 @@ for (const k in ENTITY_TEMPLATES) {
 //#region BEHAVIOR
 import { isSolidTile } from "./Collision.js";
 import { player, wave } from "./Player.js";
-import { updateBars, addMsg, checkGameOver, splashDamage } from "./Gameplay.js";
+import { updateBars, addMsg, checkGameOver } from "./Gameplay.js";
 import { SFX } from "./Audio.js";
 import { ENTITY_DAMAGE } from "./Constants.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { tryCooldown } from "./Main.js";
+import { createExplosionEffect, createFlashScreenEffect } from "./Effects.js";
 
 export const ENTITY_BEHAVIOR = {
   //Entity
@@ -89,6 +90,7 @@ export const ENTITY_BEHAVIOR = {
         addMsg("Entity attacks!");
         SFX.hurt();
         entity.hurtCD = 0.8;
+        createFlashScreenEffect({ color: "	#740707", duration: 0.5 });
         checkGameOver();
       }
       if (entity.hurtCD > 0) {
@@ -143,7 +145,7 @@ for (const k in ENTITY_BEHAVIOR) {
 //#endregion
 //Id as entityType
 let nextId = 0;
-import { wolfIdle, barrel } from "./Sprites.js";
+import { wolfIdle, barrel, sprites } from "./Sprites.js";
 
 export function spawnEntity(
   id,
@@ -180,4 +182,22 @@ export function spawnEntity(
     Object.assign(e, overrides);
   } //tweaks per spawn (E.G for a friendly entity or boss)
   return e;
+}
+
+export function splashDamage(x, y, radius) {
+  // Create visual effect for the explosion radius
+  createExplosionEffect(x, y, radius);
+  for (const s of sprites) {
+    if (!s.alive) {
+      continue;
+    }
+    const d = Math.hypot(s.x - x, s.y - y);
+    if (d < radius) {
+      if (s.type === itemTypes.barrel) {
+        s.alive = false;
+        splashDamage(s.x, s.y, 2.5);
+      }
+      s.alive = false;
+    }
+  }
 }

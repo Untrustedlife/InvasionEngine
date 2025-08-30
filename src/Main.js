@@ -25,6 +25,7 @@ import {
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
+import { updateVisualEffects, renderVisualEffects } from "./Effects.js";
 let last = performance.now();
 
 const coolDowns = new Map();
@@ -139,6 +140,9 @@ function castAndDraw(nowSec) {
 
   //Draw weapon HUD in bottom-right corner
   drawWeaponHUD();
+
+  //Render visual effects (explosion radius feedback)
+  renderVisualEffects(ctx, cameraBasisVectors, WIDTH, HEIGHT, player);
 }
 
 //Calculate squared distance from player to each sprite for depth sorting
@@ -353,6 +357,7 @@ function loop(now) {
   //Update player state and world interactions (pure game logic)
   move(dt);
   updateAI(dt);
+  updateVisualEffects(dt);
   autoPickup();
   //Render the 3D scene
   castAndDraw(now / 1000);

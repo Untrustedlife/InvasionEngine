@@ -286,17 +286,6 @@ export function pickSpriteAtCenter(basis) {
   return best;
 }
 
-export function splashDamage(x, y, r) {
-  for (const s of sprites) {
-    if (!s.alive) {
-      continue;
-    }
-    const d = Math.hypot(s.x - x, s.y - y);
-    if (d < r) {
-      s.alive = false;
-    }
-  }
-}
 
 export function randomEmptyTile(minDist = 2.0) {
   let tries = 0;
