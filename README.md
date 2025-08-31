@@ -1,4 +1,4 @@
-A simple, open-source roguelike raycaster you can play right in your browser, featuring liminal space exploration.
+A professional level, open-source roguelike raycaster you can play right in your browser, featuring liminal space exploration.
 Built in collaboration with WildRose and powered by an engine developed by Untrustedlife as the foundation.
 
 This version has already diverged a lot from the original:
