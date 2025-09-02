@@ -98,9 +98,7 @@ export function drawSpriteColumn(g, x, y0, y1, img, texX, _shade) {
 //Fills zBuffer for sprite occlusion and draws sky/floor gradients
 const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
 
-export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
-  const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
-
+export function castCieling(ctx) {
   //Draw sky gradient (top half)
   const sky = ctx.createLinearGradient(0, 0, 0, HALF_HEIGHT);
   sky.addColorStop(0, gameStateObject.cielingColorFront || "#6495ED");
@@ -110,7 +108,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   sky.addColorStop(0.9, FOG_COLOR);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
+}
 
+export function castFloors(ctx) {
   //Draw floor gradient (bottom half)
   const floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
   floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
@@ -118,7 +118,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   floor.addColorStop(0.95, FOG_COLOR);
   ctx.fillStyle = floor;
   ctx.fillRect(0, HALF_HEIGHT, WIDTH, HALF_HEIGHT);
+}
 
+export function castHaze(ctx) {
   //Add atmospheric haze to prevent banding on empty rays
   const backgroundFogGradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
   backgroundFogGradient.addColorStop(0.0, "rgba(16,27,46,0.08)");
@@ -128,6 +130,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   ctx.fillStyle = backgroundFogGradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.restore();
+}
+
+export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
+  const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
 
   //Cast one ray per screen column
   for (let screenColumnX = 0; screenColumnX < WIDTH; screenColumnX++) {
@@ -313,7 +319,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
 
     //Compute unclipped vertical segment and derive texture source window for any clipping
-    const unclippedStartY = ((HEIGHT - (wallLineHeight * PLAYER_HEIGHT)) / 2) | 0;
+    const unclippedStartY = ((HEIGHT - wallLineHeight * PLAYER_HEIGHT) / 2) | 0;
     const unclippedEndY = unclippedStartY + wallLineHeight;
     let drawStartY = unclippedStartY;
     let drawEndY = unclippedEndY;

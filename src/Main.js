@@ -4,7 +4,13 @@ import { canvas } from "./Dom.js";
 import { FAR_PLANE, FOG_START_FRAC } from "./Constants.js";
 import { ctx, WIDTH, HEIGHT, cMini } from "./Dom.js";
 import { cameraBasis } from "./Camera.js";
-import { castWalls, zBuffer } from "./Render.js";
+import {
+  castWalls,
+  zBuffer,
+  castFloors,
+  castCieling,
+  castHaze,
+} from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, bow, loadAsyncSprites } from "./Sprites.js";
 import { player } from "./Player.js";
@@ -120,6 +126,13 @@ async function init() {
 //Main 3D scene rendering with z-buffer occlusion
 function castAndDraw(nowSec) {
   const cameraBasisVectors = cameraBasis();
+
+  castCieling(ctx);
+
+  castFloors(ctx);
+
+  castHaze(ctx);
+
   castWalls(
     nowSec,
     cameraBasisVectors,
