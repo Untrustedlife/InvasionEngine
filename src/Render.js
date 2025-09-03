@@ -126,10 +126,8 @@ export function castHaze(ctx) {
   backgroundFogGradient.addColorStop(0.0, "rgba(16,27,46,0.08)");
   backgroundFogGradient.addColorStop(0.5, "rgba(16,27,46,0.16)");
   backgroundFogGradient.addColorStop(1.0, "rgba(16,27,46,0.20)");
-  ctx.save();
   ctx.fillStyle = backgroundFogGradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.restore();
 }
 
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
