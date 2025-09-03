@@ -42,7 +42,6 @@ function setPx(imageData, pixelX, pixelY, hexColor) {
 
 */
 
-
 export const TEX = [null];
 
 //Convert texture to column-major format for fast vertical sampling
@@ -81,6 +80,35 @@ function rebuildTextureCache() {
   });
 }
 
+//In RC Invasion this is only length 21 with 0.05 increments, but we want smoother shading since our walls are way bigger,
+// this is still WAY mor eoptimized then doing it per wall per frame every frame even if we reach int0 82 shade levels
+// Eliminates 115k+ expensive operations per second
+
+export const SHADE_LEVELS = Array.from({ length: 82 }, (_, i) => i * 0.0125);
+export const SHADED_TEX = {};
+
+function precomputeShading() {
+  //Build pre-shaded versions of all textures at startup so we can just grab the images at runtime and avoid extra drawImage calls (Can probably do the same for sprites...)
+  for (let texId = 1; texId < TEX.length; texId++) {
+    if (!TEX[texId]) {
+      continue;
+    }
+    SHADED_TEX[texId] = {};
+    for (const shadeLevel of SHADE_LEVELS) {
+      const shadedCanvas = document.createElement("canvas");
+      shadedCanvas.width = TEX[texId].width;
+      shadedCanvas.height = TEX[texId].height;
+      const g = shadedCanvas.getContext("2d");
+      g.drawImage(TEX[texId], 0, 0);
+      const colorValue = (shadeLevel * 255) | 0;
+      g.globalCompositeOperation = "multiply";
+      g.fillStyle = `rgb(${colorValue},${colorValue},${colorValue})`;
+      g.fillRect(0, 0, shadedCanvas.width, shadedCanvas.height);
+      SHADED_TEX[texId][shadeLevel] = shadedCanvas;
+    }
+  }
+}
+
 //Load a 64x64 wall texture image from assets/gfx (forced) and return a canvas
 async function loadWallTexture(imageName) {
   const imagePathReal = `../assets/gfx/${imageName}`;
@@ -115,6 +143,7 @@ export async function initAsyncTextures() {
     ];
     await loadImagesToTex(imagesToReplace);
     rebuildTextureCache();
+    precomputeShading();
   } catch (err) {
     console.warn("Failed to init backrooms wallpaper:", err);
   }
@@ -146,19 +175,19 @@ async function loadImagesToTex(descriptors) {
   const promises = descriptors.map(async (desc, i) => {
     const { index, image } = desc || {};
     try {
-      //Generate empty promises to be replaced once texture loads
-      for(let i = 0; i < descriptors.length; i++){
-	TEX.push(new Promise((resolve, reject) => {}));
-      }
       const tex = await loadWallTexture(image);
       if (index && index >= 0 && index < TEX.length) {
         TEX[index] = tex;
-      } 
+      } else {
+        TEX.push(tex);
+      }
+      return tex;
     } catch (error) {
       console.warn(
         `Failed to load texture "${image}" for index ${index} and dont support replacing with cool gmod missing texture:`,
         error
       );
+      return null;
     }
   });
 

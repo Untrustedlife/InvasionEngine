@@ -10,10 +10,10 @@ import {
   FOG_COLOR,
   PLAYER_HEIGHT,
 } from "./Constants.js";
-import { TEXCACHE, TEX } from "./Textures.js";
+import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
 import { player } from "./Player.js";
 import { gameStateObject } from "./Map.js";
-
+import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
 
@@ -21,22 +21,37 @@ export const zBuffer = new Float32Array(WIDTH);
 //and scale to the destination height using drawImage. Apply uniform shading
 //via Canvas2D filter brightness for speed. This avoids per-pixel ImageData work.
 //srcY/srcH select the portion of the source column to map to the visible segment
-function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
+function drawWallColumnImg(
+  g,
+  x,
+  y0,
+  y1,
+  texCanvas,
+  texX,
+  shade,
+  srcY,
+  srcH,
+  texId
+) {
   const columnHeight = y1 - y0;
+
   if (columnHeight <= 0) {
     return;
   }
-  g.save();
+
   //Draw the column slice
   const rawSourceY = srcY || 0;
+
   const clampedSourceY =
     rawSourceY < 0
       ? 0
       : rawSourceY > texCanvas.height
       ? texCanvas.height
       : rawSourceY;
+
   const rawSourceHeight = srcH || texCanvas.height;
   const maxAllowedHeight = texCanvas.height - clampedSourceY;
+
   const clampedSourceHeight =
     rawSourceHeight < 0
       ? 0
@@ -44,8 +59,12 @@ function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
       ? maxAllowedHeight
       : rawSourceHeight;
 
+  //Use pre-shaded texture
+  // This can make animated textures act a bit weird. In RC Invasion I skip it
+  // for texture 7 (the animated one). Here it’s fine, I’m pushing a bit more perf.
+  const closestShade = nearestIndexInAscendingOrder(SHADE_LEVELS, shade);
   g.drawImage(
-    texCanvas,
+    SHADED_TEX[texId][SHADE_LEVELS[closestShade]],
     texX,
     clampedSourceY,
     1,
@@ -55,15 +74,6 @@ function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
     1,
     columnHeight
   );
-  //Apply multiplicative shade using multiply composite for speed
-  if (shade < 0.999) {
-    const clampedShade = shade < 0 ? 0 : shade;
-    const colorValue = (clampedShade * 255) | 0;
-    g.globalCompositeOperation = "multiply";
-    g.fillStyle = `rgb(${colorValue},${colorValue},${colorValue})`;
-    g.fillRect(x, y0, 1, columnHeight);
-  }
-  g.restore();
 }
 
 //Draw sprite column with alpha blending - preserves transparency
@@ -337,7 +347,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       textureColumnX,
       shadeAmount,
       sourceY,
-      sourceHeight
+      sourceHeight,
+      hitTextureId
     );
 
     //Apply distance fog
