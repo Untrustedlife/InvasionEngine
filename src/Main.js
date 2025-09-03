@@ -169,6 +169,7 @@ function calculateSpriteDistances() {
 
 //Render all sprites that are visible and in front of walls
 function renderVisibleSprites(cameraTransform) {
+  ctx.save();
   for (const sprite of sprites) {
     if (!sprite.alive) {
       continue;
@@ -189,7 +190,9 @@ function renderVisibleSprites(cameraTransform) {
 
     //Render sprite with optimized column batching
     renderSpriteWithBatching(sprite, projection, shadingInfo);
+    ctx.filter = "none"; //reset filter for next sprite
   }
+  ctx.restore();
 }
 
 //Calculate sprite brightness based on distance and fog
@@ -226,8 +229,6 @@ function calculateSpriteShading(projection) {
 
 //Render sprite using batched column drawing for performance
 function renderSpriteWithBatching(sprite, projection, shadingInfo) {
-  ctx.save();
-
   //Apply brightness filter once per sprite
   if (shadingInfo.quantizedShade < 0.999) {
     ctx.filter = `brightness(${shadingInfo.quantizedShade})`;
@@ -303,8 +304,6 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
       currentRunStart = -1;
     }
   }
-
-  ctx.restore();
 }
 
 //Draw the bow weapon in the HUD
