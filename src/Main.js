@@ -127,6 +127,9 @@ async function init() {
 function castAndDraw(nowSec) {
   const cameraBasisVectors = cameraBasis();
 
+  //Ensure crisp pixel-perfect scaling for the entire frame
+  ctx.imageSmoothingEnabled = false;
+
   castCieling(ctx);
 
   castFloors(ctx);
@@ -144,9 +147,6 @@ function castAndDraw(nowSec) {
   //Sort sprites back-to-front by distance from player for proper alpha blending
   calculateSpriteDistances();
   sprites.sort((spriteA, spriteB) => spriteB.dist - spriteA.dist);
-
-  //Ensure crisp pixel-perfect scaling for the entire frame
-  ctx.imageSmoothingEnabled = false;
 
   //Render all visible sprites with depth testing and batched shading
   renderVisibleSprites(cameraBasisVectors);

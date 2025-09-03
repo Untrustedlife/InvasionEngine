@@ -2,7 +2,6 @@
 import { RENDER_SCALE } from "./Constants.js";
 export const canvas = document.getElementById("view");
 export const ctx = canvas.getContext("2d");
-ctx.imageSmoothingEnabled = false;
 //Respect internal render scale; CSS size remains via HTML attributes
 if (RENDER_SCALE && RENDER_SCALE !== 1) {
   canvas.width = Math.max(1, Math.round(canvas.width * RENDER_SCALE));

@@ -30,31 +30,6 @@ function placeGrounded(spriteHeight, floorBias = 0, scaleLockFraction = 0.5) {
   const perspectiveBottomY =
     horizonLineY + (spriteHeight >> 1) + (adjustedFloorBias | 0);
 
-  //Calculate transition range for floor locking effect
-  /*const transitionStartFraction = Math.max(
-    0.2,
-    Math.min(0.8, scaleLockFraction - 0.15)
-  );
-  /*const transitionEndFraction = Math.max(
-    transitionStartFraction + 0.08,
-    Math.min(0.95, scaleLockFraction + 0.15)
-  );*/
-  //const transitionStartPixels = HEIGHT * transitionStartFraction;
-  //const transitionEndPixels = HEIGHT * transitionEndFraction;
-
-  //Calculate floor lock interpolation factor
-  //const floorLockFactor = 0;
-
-  /*
-  if (spriteHeight >= transitionStartPixels) {
-    floorLockFactor = Math.min(
-      1,
-      (spriteHeight - transitionStartPixels) /
-        Math.max(1, transitionEndPixels - transitionStartPixels)
-    );
-  }
-  */
-
   //Interpolate between perspective position and floor-locked position
   const finalBottomY = perspectiveBottomY;
   let spriteTopY = finalBottomY - spriteHeight;

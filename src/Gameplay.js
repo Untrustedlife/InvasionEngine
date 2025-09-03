@@ -14,7 +14,7 @@ import { clamp } from "./Utils.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
-import { drawSpriteColumn, zBuffer } from "./Render.js";
+import { zBuffer } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { gameStateObject, EXIT_POS, START_POS, mapDefinitions } from "./Map.js";
 import { player, collisionRadius, wave, setWave } from "./Player.js";
@@ -285,7 +285,6 @@ export function pickSpriteAtCenter(basis) {
   }
   return best;
 }
-
 
 export function randomEmptyTile(minDist = 2.0) {
   let tries = 0;

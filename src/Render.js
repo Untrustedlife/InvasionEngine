@@ -27,7 +27,6 @@ function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
     return;
   }
   g.save();
-  g.imageSmoothingEnabled = false;
   //Draw the column slice
   const rawSourceY = srcY || 0;
   const clampedSourceY =
@@ -69,31 +68,7 @@ function drawWallColumnImg(g, x, y0, y1, texCanvas, texX, shade, srcY, srcH) {
 
 //Draw sprite column with alpha blending - preserves transparency
 const SPRITE_Y_ORIGIN_BOTTOM = false;
-export function drawSpriteColumn(g, x, y0, y1, img, texX, _shade) {
-  //Ensure increasing order
-  if (y1 < y0) {
-    const t = y0;
-    y0 = y1;
-    y1 = t;
-  }
 
-  //Convert to canvas top-origin if needed
-  let yTop = y0;
-  const h = y1 - y0;
-  if (SPRITE_Y_ORIGIN_BOTTOM) {
-    const H = g.canvas.height | 0;
-    yTop = H - y1; //top in canvas space
-    //h stays (y1-y0)
-  }
-
-  if (h <= 0) {
-    return;
-  }
-
-  //Note: caller is responsible for setting any filter (batched per-sprite).
-  g.imageSmoothingEnabled = false; //nearest-neighbor upscaling
-  g.drawImage(img, texX, 0, 1, img.height, x, yTop, 1, h);
-}
 //Main raycasting function - casts rays using DDA algorithm and draws textured walls
 //Fills zBuffer for sprite occlusion and draws sky/floor gradients
 const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
@@ -246,7 +221,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     } else {
       perpendicularDistance = sideDistanceY - deltaDistanceY;
     }
-    perpendicularDistance = Math.max(NEAR, perpendicularDistance);
+    perpendicularDistance =
+      NEAR > perpendicularDistance ? NEAR : perpendicularDistance;
 
     //For UVs: keep front-wall stabilization only; no side pushing
     const UV_NEAR_DISTANCE = 0.0; //front-facing stabilization (center)
@@ -338,7 +314,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         : textureData.h || TEX[hitTextureId]?.height || 64) | 0;
     const sourceY =
       (drawStartY - unclippedStartY) *
-      (textureHeight / Math.max(1, wallLineHeight));
+      (textureHeight / (wallLineHeight > 1 ? wallLineHeight : 1));
     const sourceHeight =
       visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
 
