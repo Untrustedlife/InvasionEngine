@@ -30,7 +30,7 @@ import {
   sprites,
   wolfIdle,
   barrel,
-  enchantedKey,
+  keycard1,
   food,
   arrowQuiver,
   bow,
@@ -336,7 +336,7 @@ export function buildForcefieldRing() {
 }
 
 export function placeSprites(assets) {
-  const { enchantedKey, food, arrowQuiver } = assets;
+  const { keycard1, food, arrowQuiver } = assets;
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
@@ -352,7 +352,7 @@ export function placeSprites(assets) {
   sprites.push({
     x: kt.x + 0.5,
     y: kt.y + 0.5,
-    img: enchantedKey,
+    img: keycard1,
     type: "key",
     alive: true,
     dist: 0,
@@ -457,7 +457,7 @@ export function tickMsg(dt) {
     if (msgTimer <= 0) {
       msg.textContent = player.hasBlueKey
         ? "Find the exit."
-        : "Find the enchanted key.";
+        : "Find the key card.";
     }
   }
 }
@@ -597,7 +597,7 @@ export function resetLevel(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { enchantedKey, food, arrowQuiver };
+  const assets = { keycard1, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
@@ -618,7 +618,7 @@ export function resetLevelInOrder(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { enchantedKey, food, arrowQuiver };
+  const assets = { keycard1, food, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
