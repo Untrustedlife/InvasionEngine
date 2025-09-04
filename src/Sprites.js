@@ -207,7 +207,7 @@ export async function loadAsyncSprites() {
   );
 
   //Image sprites
-  food = await makeSpriteLoad("apple.png", 3);
+  food = await makeSpriteLoad("noodles.png", 3);
   bow = await makeSpriteLoad("bow.png", 3);
   pitchfork = await makeSpriteLoad("pitchfork.png", 3);
   keycard1 = await makeSpriteLoad("keycard1.png", 3);
