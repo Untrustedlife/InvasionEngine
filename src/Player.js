@@ -5,7 +5,7 @@ export const player = {
   speed: 2,
   rotSpeed: 2.6,
   health: 6,
-  maxHealth: 6,
+  maxHealth: 20,
   ammo: 1,
   hasBlueKey: false,
   tenacity: 20,

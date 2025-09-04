@@ -1,7 +1,7 @@
 //Main game loop and rendering orchestrator
 //Handles frame loop, wall/sprite rendering with z-buffer occlusion, HUD, and game state
 import { canvas } from "./Dom.js";
-import { FAR_PLANE, FOG_START_FRAC } from "./Constants.js";
+import { FAR_PLANE, FOG_START_FRAC, START_HEALTH } from "./Constants.js";
 import { ctx, WIDTH, HEIGHT, cMini } from "./Dom.js";
 import { cameraBasis } from "./Camera.js";
 import {
@@ -114,7 +114,7 @@ async function init() {
   //assets pack
   resetLevel();
   //D&D Style starting health
-  player.maxHealth = 6 + rollDice(6);
+  player.maxHealth = START_HEALTH + rollDice(6);
   player.health = player.maxHealth;
   player.ammo = 5 + rollDice(5);
 

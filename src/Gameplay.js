@@ -25,6 +25,7 @@ import {
   FAR_PLANE,
   HEALTH_FROM_FOOD,
   ENTITY_DAMAGE,
+  MELEE_RANGE,
 } from "./Constants.js";
 import {
   sprites,
@@ -132,6 +133,10 @@ export function fire() {
   const hit = pickSpriteAtCenter(basis);
 
   if (!hit) {
+    return;
+  }
+  const p = projectSprite(hit, basis);
+  if(p.depth > MELEE_RANGE){
     return;
   }
 

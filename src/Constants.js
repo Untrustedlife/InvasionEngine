@@ -25,3 +25,5 @@ export const FOG_COLOR = "#101b2e";
 export const ARROWS_FROM_QUIVER = 5;
 export const HEALTH_FROM_FOOD = 10;
 export const ENTITY_DAMAGE = 3.33;
+export const MELEE_RANGE = 1.5;
+export const START_HEALTH = 20;
