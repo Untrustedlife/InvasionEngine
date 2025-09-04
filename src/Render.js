@@ -33,6 +33,9 @@ function drawWallColumnImg(
   srcH,
   texId
 ) {
+  if (!texId || !texCanvas) {
+    return;
+  }
   const columnHeight = y1 - y0;
 
   if (columnHeight <= 0) {
