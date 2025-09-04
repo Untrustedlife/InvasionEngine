@@ -42,7 +42,8 @@ function setPx(imageData, pixelX, pixelY, hexColor) {
 
 */
 
-export const TEX = [null];
+//preinitialize array of 7 empty textures and a 0th null for "nothing here"
+export const TEX = new Array(8).fill(null);
 
 //Convert texture to column-major format for fast vertical sampling
 export function cacheColumns(tex) {
