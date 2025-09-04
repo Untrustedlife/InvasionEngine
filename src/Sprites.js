@@ -102,7 +102,7 @@ export let bow, wolfIdle, arrowQuiver, enchantedKey, food, barrel;
 //We could maybe make some kind of asset lookup table for this later insetad of it all being defined as variables
 export async function loadAsyncSprites() {
   //Ascii Sprites (Legacy versions)
-  wolfIdle = wolfIdle = makeSprite(
+  wolfIdle = makeSprite(
     `
   ................................
   ..............BB..BB............
