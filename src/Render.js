@@ -33,7 +33,7 @@ function drawWallColumnImg(
   srcH,
   texId
 ) {
-  if (!texId || !texCanvas) {
+  if (!texCanvas) {
     return;
   }
   const columnHeight = y1 - y0;
