@@ -155,7 +155,7 @@ export function fire() {
         0,
         player.maxHealth
       );
-      addMsg(wasMax ? "Ranger Became Stronger." : "Health restored.");
+      addMsg(wasMax ? "Yummy!" : "Health restored.");
       updateBars();
       SFX.pickup();
       break;
