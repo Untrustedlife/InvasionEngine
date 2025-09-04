@@ -313,6 +313,8 @@ export function placeSprites(assets) {
     }
   }
 
+  //Spawn keycard
+
   let t = randomEmptyTile(4.0);
   sprites.push({
     x: t.x + 0.5,
@@ -326,9 +328,12 @@ export function placeSprites(assets) {
     floorBias: 35,
   });
 
-  t = randomEmptyTile(3.0);
-  spawnEntity(entityTypes.food, { x: t.x + 0.5, y: t.y + 0.5 });
+  //Spawn food
 
+  t = randomEmptyTile(4.0);
+  sprites.push(spawnEntity(entityTypes.food, { x: t.x + 0.5, y: t.y + 0.5 }));
+
+  //SPawn arrow quivers
   for (
     let i = 0;
     i < 1 + ((wave / 3) | 0) * ((gameStateObject.MAP_H / 20) | 0);
@@ -353,6 +358,8 @@ export function placeSprites(assets) {
       });
     }
   }
+
+  //Spawn enemies
   const wolfCount = Math.min(
     (2 + (wave - 1) * 2) * ((gameStateObject.MAP_H / 20) | 0),
     8

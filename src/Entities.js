@@ -62,11 +62,11 @@ import { isSolidTile } from "./Collision.js";
 import { player, wave } from "./Player.js";
 import { updateBars, addMsg, checkGameOver } from "./Gameplay.js";
 import { SFX } from "./Audio.js";
-import { ENTITY_DAMAGE } from "./Constants.js";
+import { ENTITY_DAMAGE, HEALTH_FROM_FOOD } from "./Constants.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { tryCooldown } from "./Main.js";
 import { createExplosionEffect, createFlashScreenEffect } from "./Effects.js";
-
+import { clamp } from "./Utils.js";
 export const ENTITY_BEHAVIOR = {
   //Entity
   [entityTypes.entity]: {
@@ -144,7 +144,7 @@ export const ENTITY_BEHAVIOR = {
   },
   [entityTypes.food]: {
     onTouch(entity) {
-      hit.alive = false;
+      entity.alive = false;
       const wasMax = player.health >= player.maxHealth;
       if (wasMax) {
         player.maxHealth += 1;
