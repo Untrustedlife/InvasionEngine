@@ -10,7 +10,44 @@ function makeTex(textureWidth = 64, textureHeight = 64) {
   return canvas;
 }
 
+<<<<<<< HEAD
 export const TEX = [null];
+=======
+/*
+//Shade hex color by amount using approximate gamma correction
+function shadeHex(hexColor, shadeAmount) {
+  const colorValue = parseInt(hexColor.slice(1), 16);
+  const redChannel = (colorValue >> 16) & 255;
+  const greenChannel = (colorValue >> 8) & 255;
+  const blueChannel = colorValue & 255;
+  const gammaCorrect = (channelValue) =>
+    clamp(((channelValue / 255) ** 2.2 + shadeAmount) * 255, 0, 255) | 0;
+  return `#${(
+    (gammaCorrect(redChannel) << 16) |
+    (gammaCorrect(greenChannel) << 8) |
+    gammaCorrect(blueChannel)
+  )
+    .toString(16)
+    .padStart(6, "0")}`;
+}
+*/
+
+/*
+//Set pixel color in ImageData at given coordinates
+function setPx(imageData, pixelX, pixelY, hexColor) {
+  const pixelIndex = (pixelY * imageData.width + pixelX) * 4;
+  const colorValue = parseInt(hexColor.slice(1), 16);
+  imageData.data[pixelIndex] = (colorValue >> 16) & 255; //Red
+  imageData.data[pixelIndex + 1] = (colorValue >> 8) & 255; //Green
+  imageData.data[pixelIndex + 2] = colorValue & 255; //Blue
+  imageData.data[pixelIndex + 3] = 255; //Alpha (opaque)
+}
+
+*/
+
+//preinitialize array of 7 empty textures and a 0th null for "nothing here"
+export const TEX = new Array(8).fill(null);
+>>>>>>> 76437361b3252418fea4a435cf0f134123af6db9
 
 //Convert texture to column-major format for fast vertical sampling
 export function cacheColumns(tex) {
