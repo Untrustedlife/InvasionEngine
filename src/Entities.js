@@ -28,6 +28,7 @@ Then we could also move functions out of "gameplay" and into these files so we d
 export const entityTypes = Object.freeze({
   entity: "entity",
   barrel: "barrel",
+  food: "food",
 });
 
 export const ENTITY_TEMPLATES = {
@@ -42,6 +43,12 @@ export const ENTITY_TEMPLATES = {
     ground: true,
     scale: 0.5,
     floorBias: 5,
+  },
+  [entityTypes.food]: {
+    type: entityTypes.food,
+    ground: true,
+    scale: 0.25,
+    floorBias: 35,
   },
 };
 Object.freeze(ENTITY_TEMPLATES);
@@ -135,6 +142,23 @@ export const ENTITY_BEHAVIOR = {
       }
     },
   },
+  [entityTypes.food]: {
+    onTouch(entity) {
+      hit.alive = false;
+      const wasMax = player.health >= player.maxHealth;
+      if (wasMax) {
+        player.maxHealth += 1;
+      }
+      player.health = clamp(
+        player.health + HEALTH_FROM_FOOD,
+        0,
+        player.maxHealth
+      );
+      addMsg(wasMax ? "Yummy!" : "Health restored.");
+      updateBars();
+      SFX.pickup();
+    },
+  },
   // ...
 };
 Object.freeze(ENTITY_BEHAVIOR);
@@ -145,7 +169,7 @@ for (const k in ENTITY_BEHAVIOR) {
 //#endregion
 //Id as entityType
 let nextId = 0;
-import { wolfIdle, barrel, sprites } from "./Sprites.js";
+import { wolfIdle, barrel, sprites, food } from "./Sprites.js";
 
 export function spawnEntity(
   id,
@@ -175,6 +199,9 @@ export function spawnEntity(
       break;
     case entityTypes.barrel:
       e.img = barrel;
+      break;
+    case entityTypes.food:
+      e.img = food;
       break;
   }
 

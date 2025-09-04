@@ -32,7 +32,6 @@ import {
   wolfIdle,
   barrel,
   keycard1,
-  food,
   arrowQuiver,
   bow,
 } from "./Sprites.js";
@@ -136,7 +135,7 @@ export function fire() {
     return;
   }
   const p = projectSprite(hit, basis);
-  if(p.depth > MELEE_RANGE){
+  if (p.depth > MELEE_RANGE) {
     return;
   }
 
@@ -148,23 +147,6 @@ export function fire() {
       addMsg("Keycard found! Find the exit!");
       removeAllFlesh();
       break;
-
-    case "food": {
-      hit.alive = false;
-      const wasMax = player.health >= player.maxHealth;
-      if (wasMax) {
-        player.maxHealth += 1;
-      }
-      player.health = clamp(
-        player.health + HEALTH_FROM_FOOD,
-        0,
-        player.maxHealth
-      );
-      addMsg(wasMax ? "Yummy!" : "Health restored.");
-      updateBars();
-      SFX.pickup();
-      break;
-    }
     case "arrows":
       hit.alive = false;
       player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
@@ -196,28 +178,6 @@ export function autoPickup() {
         SFX.door();
         addMsg("Keycard found! Find the exit!");
         removeAllFlesh();
-        break;
-
-      case "food":
-        s.alive = false;
-        if (player.health >= player.maxHealth) {
-          addMsg(`Ranger Became Stronger`);
-          player.maxHealth += 1;
-          player.health = clamp(
-            player.health + HEALTH_FROM_FOOD,
-            0,
-            player.maxHealth
-          );
-        } else {
-          player.health = clamp(
-            player.health + HEALTH_FROM_FOOD,
-            0,
-            player.maxHealth
-          );
-          addMsg(`Health +${HEALTH_FROM_FOOD}`);
-        }
-        updateBars();
-        SFX.pickup();
         break;
       case "arrows":
         s.alive = false;
@@ -341,22 +301,22 @@ export function buildForcefieldRing() {
 }
 
 export function placeSprites(assets) {
-  const { keycard1, food, arrowQuiver } = assets;
+  const { keycard1, arrowQuiver } = assets;
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
     for (let i = 0; i < rollDice(2) * ((gameStateObject.MAP_H / 20) | 0); i++) {
-      const bt = randomEmptyTile(1.0);
+      const t = randomEmptyTile(1.0);
       sprites.push(
-        spawnEntity(entityTypes.barrel, { x: bt.x + 0.5, y: bt.y + 0.5 })
+        spawnEntity(entityTypes.barrel, { x: t.x + 0.5, y: t.y + 0.5 })
       );
     }
   }
 
-  const kt = randomEmptyTile(4.0);
+  let t = randomEmptyTile(4.0);
   sprites.push({
-    x: kt.x + 0.5,
-    y: kt.y + 0.5,
+    x: t.x + 0.5,
+    y: t.y + 0.5,
     img: keycard1,
     type: "key",
     alive: true,
@@ -365,18 +325,10 @@ export function placeSprites(assets) {
     scale: 0.25,
     floorBias: 35,
   });
-  const mt = randomEmptyTile(3.0);
-  sprites.push({
-    x: mt.x + 0.5,
-    y: mt.y + 0.5,
-    img: food,
-    type: "food",
-    alive: true,
-    dist: 0,
-    ground: true,
-    scale: 0.25,
-    floorBias: 35,
-  });
+
+  t = randomEmptyTile(3.0);
+  spawnEntity(entityTypes.food, { x: t.x + 0.5, y: t.y + 0.5 });
+
   for (
     let i = 0;
     i < 1 + ((wave / 3) | 0) * ((gameStateObject.MAP_H / 20) | 0);
@@ -602,7 +554,7 @@ export function resetLevel(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { keycard1, food, arrowQuiver };
+  const assets = { keycard1, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
@@ -623,7 +575,7 @@ export function resetLevelInOrder(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { keycard1, food, arrowQuiver };
+  const assets = { keycard1, arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
