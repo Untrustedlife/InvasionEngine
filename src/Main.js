@@ -2,7 +2,7 @@
 //Handles frame loop, wall/sprite rendering with z-buffer occlusion, HUD, and game state
 import { canvas } from "./Dom.js";
 import { FAR_PLANE, FOG_START_FRAC, START_HEALTH } from "./Constants.js";
-import { ctx, WIDTH, HEIGHT, cMini } from "./Dom.js";
+import { ctx, WIDTH, HEIGHT, cMini, offscreen, vctx } from "./Dom.js";
 import { cameraBasis } from "./Camera.js";
 import {
   castWalls,
@@ -126,9 +126,6 @@ async function init() {
 //Main 3D scene rendering with z-buffer occlusion
 function castAndDraw(nowSec) {
   const cameraBasisVectors = cameraBasis();
-
-  //Ensure crisp pixel-perfect scaling for the entire frame
-  ctx.imageSmoothingEnabled = false;
 
   castCieling(ctx);
 
@@ -381,6 +378,7 @@ function loop(now) {
   tickGameOver(dt);
   //Overlay FPS last so it sits on top
   drawFPS(smoothFps);
+  vctx.drawImage(offscreen, 0, 0);
   requestAnimationFrame(loop);
 }
 

@@ -1,14 +1,28 @@
-//DOM acquisition helpers
-import { RENDER_SCALE } from "./Constants.js";
+//Set to
+//width=960 height=540 if you want to use the same scale as the original
+export const LOGICAL_W = 320;
+export const LOGICAL_H = 180;
+
 export const canvas = document.getElementById("view");
-export const ctx = canvas.getContext("2d");
-//Respect internal render scale; CSS size remains via HTML attributes
-if (RENDER_SCALE && RENDER_SCALE !== 1) {
-  canvas.width = Math.max(1, Math.round(canvas.width * RENDER_SCALE));
-  canvas.height = Math.max(1, Math.round(canvas.height * RENDER_SCALE));
-}
-export const WIDTH = canvas.width;
-export const HEIGHT = canvas.height;
+
+// Backing stores match the logical size
+canvas.width = LOGICAL_W;
+canvas.height = LOGICAL_H;
+
+export const WIDTH = LOGICAL_W; // use these in all math
+export const HEIGHT = LOGICAL_H;
+
+export const offscreen = new OffscreenCanvas(WIDTH, HEIGHT);
+
+// If you don’t call getImageData() a lot, drop willReadFrequently—it can hurt perf.
+export const ctx = offscreen.getContext("2d");
+//Ensure crisp pixel-perfect scaling for the entire frame
+ctx.imageSmoothingEnabled = false;
+// visible context
+export const vctx = canvas.getContext("2d");
+
+// Optional: if you ever change CSS size, keep pixels crisp
+vctx.imageSmoothingEnabled = false;
 
 export const cMini = document.getElementById("mini");
 export const mctx = cMini.getContext("2d");

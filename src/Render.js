@@ -8,7 +8,6 @@ import {
   FAR_PLANE,
   FOG_START_FRAC,
   FOG_COLOR,
-  PLAYER_HEIGHT,
 } from "./Constants.js";
 import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
 import { player } from "./Player.js";
@@ -306,7 +305,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
 
     //Compute unclipped vertical segment and derive texture source window for any clipping
-    const unclippedStartY = ((HEIGHT - wallLineHeight * PLAYER_HEIGHT) / 2) | 0;
+    const unclippedStartY =
+      ((HEIGHT - wallLineHeight * player.calculatePlayerHeight()) / 2) | 0;
     const unclippedEndY = unclippedStartY + wallLineHeight;
     let drawStartY = unclippedStartY;
     let drawEndY = unclippedEndY;

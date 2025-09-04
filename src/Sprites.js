@@ -26,9 +26,7 @@ export function makeSprite(pattern, palette, scale = 1) {
   const w = rows[0].length;
   const baselineFrac = 1;
 
-  const src = document.createElement("canvas");
-  src.width = w;
-  src.height = h;
+  const src = new OffscreenCanvas(w, h);
   const g = src.getContext("2d");
   g.imageSmoothingEnabled = false;
 
@@ -53,9 +51,7 @@ export function makeSprite(pattern, palette, scale = 1) {
 
   //Scale up with nearest-neighbor if requested
   if (scale !== 1) {
-    const out = document.createElement("canvas");
-    out.width = w * scale;
-    out.height = h * scale;
+    const out = new OffscreenCanvas(w * scale, h * scale);
     const gg = out.getContext("2d");
     gg.imageSmoothingEnabled = false;
     gg.drawImage(src, 0, 0, out.width, out.height);
@@ -78,11 +74,7 @@ async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const originalWidth = img.width;
-      const originalHeight = img.height;
-      canvas.width = originalWidth * scale;
-      canvas.height = originalHeight * scale;
+      const canvas = new OffscreenCanvas(img.width * scale, img.height * scale);
       const ctx = canvas.getContext("2d");
       ctx.imageSmoothingEnabled = false; // Pixel-perfect scaling
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -211,7 +203,6 @@ export async function loadAsyncSprites() {
   bow = await makeSpriteLoad("bow.png", 3);
   pitchfork = await makeSpriteLoad("pitchfork.png", 3);
   keycard1 = await makeSpriteLoad("keycard1.png", 3);
-
 }
 //Runtime list of active sprites (enemies, pickups, effects)
 export const sprites = [];

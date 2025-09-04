@@ -4,9 +4,7 @@ import { clamp } from "./Utils.js";
 
 //Create a canvas element with specified dimensions for texture generation
 function makeTex(textureWidth = 64, textureHeight = 64) {
-  const canvas = document.createElement("canvas");
-  canvas.width = textureWidth;
-  canvas.height = textureHeight;
+  const canvas = new OffscreenCanvas(textureWidth, textureHeight);
   return canvas;
 }
 
@@ -64,9 +62,10 @@ function precomputeShading() {
     }
     SHADED_TEX[texId] = {};
     for (const shadeLevel of SHADE_LEVELS) {
-      const shadedCanvas = document.createElement("canvas");
-      shadedCanvas.width = TEX[texId].width;
-      shadedCanvas.height = TEX[texId].height;
+      const shadedCanvas = new OffscreenCanvas(
+        TEX[texId].width,
+        TEX[texId].height
+      );
       const g = shadedCanvas.getContext("2d");
       g.drawImage(TEX[texId], 0, 0);
       const colorValue = (shadeLevel * 255) | 0;
@@ -141,7 +140,7 @@ async function loadImagesToTex(descriptors) {
     );
     return;
   }
-  
+
   const promises = descriptors.map(async (desc, i) => {
     const { index, image } = desc || {};
     try {

@@ -36,19 +36,19 @@ export const ENTITY_TEMPLATES = {
     type: entityTypes.entity,
     ground: true,
     scale: 0.66,
-    floorBias: 3,
+    floorBiasFrac: 0.2,
   },
   [entityTypes.barrel]: {
     type: entityTypes.barrel,
     ground: true,
-    scale: 0.5,
-    floorBias: 5,
+    scale: 0.66,
+    floorBiasFrac: 0.04,
   },
   [entityTypes.food]: {
     type: entityTypes.food,
     ground: true,
     scale: 0.25,
-    floorBias: 35,
+    floorBiasFrac: 0.04,
   },
 };
 Object.freeze(ENTITY_TEMPLATES);

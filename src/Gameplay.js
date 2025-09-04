@@ -325,7 +325,7 @@ export function placeSprites(assets) {
     dist: 0,
     ground: true,
     scale: 0.25,
-    floorBias: 35,
+    floorBiasFrac: 0.04,
   });
 
   //Spawn food
@@ -354,7 +354,7 @@ export function placeSprites(assets) {
         dist: 0,
         ground: true,
         scale: 0.25,
-        floorBias: 35,
+        floorBiasFrac: 0.04,
       });
     }
   }

@@ -10,6 +10,13 @@ export const player = {
   hasBlueKey: false,
   tenacity: 20,
   maxTenacity: 20,
+  height: 0.75,
+  calculatePlayerHeight: () => {
+    if (player.height < 0.01) {
+      return 0.01;
+    }
+    return player.height * 1;
+  },
 };
 export const collisionRadius = 0.2;
 export let wave = 1;

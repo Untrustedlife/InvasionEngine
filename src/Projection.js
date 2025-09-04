@@ -3,7 +3,6 @@
 import { WIDTH, HEIGHT } from "./Dom.js";
 import { clamp } from "./Utils.js";
 import { player } from "./Player.js";
-import { PLAYER_HEIGHT } from "./Constants.js";
 
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
@@ -21,33 +20,6 @@ function toCameraSpace(worldDeltaX, worldDeltaY, cameraBasisVectors) {
 //Calculate horizontal screen center position from camera-space coordinates
 function screenCenterX(cameraSpaceX, cameraSpaceY) {
   return Math.round((WIDTH >> 1) * (1 + cameraSpaceX / cameraSpaceY));
-}
-
-//Place ground sprite with perspective-correct floor alignment based on distance
-function placeGrounded(spriteHeight, floorBias = 0, scaleLockFraction = 0.5) {
-  const adjustedFloorBias = floorBias * 100;
-  const horizonLineY = HEIGHT >> 1;
-  const perspectiveBottomY =
-    horizonLineY + (spriteHeight >> 1) + (adjustedFloorBias | 0);
-
-  //Interpolate between perspective position and floor-locked position
-  const finalBottomY = perspectiveBottomY;
-  let spriteTopY = finalBottomY - spriteHeight;
-  if (spriteTopY < 0) {
-    spriteTopY = 0;
-  }
-  return { startY: spriteTopY, endY: finalBottomY };
-}
-
-//Place floating sprite centered on horizon line
-function placeFloating(spriteHeight) {
-  const horizonLineY = HEIGHT >> 1;
-  let spriteTopY = horizonLineY - (spriteHeight >> 1);
-  if (spriteTopY < 0) {
-    spriteTopY = 0;
-  }
-  const spriteBottomY = spriteTopY + spriteHeight;
-  return { startY: spriteTopY, endY: spriteBottomY };
 }
 
 //Transform world sprite to screen coordinates with floor alignment and scaling
@@ -102,19 +74,29 @@ export function projectSprite(sprite, cameraBasisVectors) {
 
   //Calculate floor bias for ground sprites based on size and scale
   const relativeSizeFactor = finalSpriteHeight / HEIGHT;
-  // Sprites still look a bit off at extreme player heights. Ideally we’d offset by half a sprites height based on whether the player is
-  // closer to the ceiling (push down) or the floor (push up) to make it actually perfect.
-  // For now this uses (2 - player.calculatePlayerHeight()), which is “good enough” for now. And looks fantastic for what it is.
-  const effectiveFloorBias =
-    (sprite.floorBias ?? 0) *
-    worldScale *
-    relativeSizeFactor *
-    (2 - PLAYER_HEIGHT);
-  const scaleLockAmount = Math.min(0.9, Math.max(0.2, worldScale));
+  // Use the same constants the walls use
+  const proj = HEIGHT; // matches projectHeight = HEIGHT / cameraSpaceY
+  const EYE = player.calculatePlayerHeight(); // <-- match wall formula exactly
+  const horizon = HEIGHT * 0.5; // add + proj*Math.tan(pitch) if you implement pitch
 
-  const verticalPosition = sprite.ground
-    ? placeGrounded(finalSpriteHeight, effectiveFloorBias, scaleLockAmount)
-    : placeFloating(finalSpriteHeight);
+  let startY, endY;
+
+  if (sprite.ground) {
+    // Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
+    const bias = sprite.floorBiasFrac ?? 0.04;
+    const bottomY =
+      horizon + (EYE * proj) / cameraSpaceY - bias * finalSpriteHeight;
+    const topY = bottomY - finalSpriteHeight;
+
+    startY = Math.round(topY);
+    endY = Math.round(bottomY);
+  } else {
+    const topY = Math.round(horizon - finalSpriteHeight * 0.5);
+    startY = Math.max(0, topY);
+    endY = Math.min(HEIGHT, topY + finalSpriteHeight);
+  }
+
+  const verticalPosition = { startY, endY };
 
   const drawStartX = Math.round(screenCenterPixelX - (finalSpriteWidth >> 1));
   const drawEndX = drawStartX + finalSpriteWidth;
