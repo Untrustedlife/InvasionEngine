@@ -12,7 +12,7 @@ import {
   castHaze,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
-import { sprites, bow, loadAsyncSprites } from "./Sprites.js";
+import { sprites, bow, pitchfork, loadAsyncSprites } from "./Sprites.js";
 import { player } from "./Player.js";
 import { drawMinimap } from "./Minimap.js";
 import {
@@ -308,20 +308,20 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
 
 //Draw the bow weapon in the HUD
 function drawWeaponHUD() {
-  const bowDisplayWidth = Math.round(WIDTH * 0.42);
-  const bowDisplayHeight = Math.round(
-    bowDisplayWidth * (bow.height / bow.width)
+  const weaponDisplayWidth = Math.round(WIDTH * 0.42);
+  const weaponDisplayHeight = Math.round(
+    weaponDisplayWidth * (bow.height / bow.width)
   );
   const hudMargin = Math.max(8, (WIDTH * 0.02) | 0);
-  const bowPositionX = WIDTH * 0.8 - bowDisplayWidth - hudMargin;
-  const bowPositionY = HEIGHT - bowDisplayHeight - hudMargin + 20;
+  const weaponPositionX = WIDTH * 0.8 - weaponDisplayWidth - hudMargin;
+  const weaponPositionY = HEIGHT - weaponDisplayHeight - hudMargin + 20;
 
   ctx.drawImage(
-    bow,
-    bowPositionX,
-    bowPositionY,
-    bowDisplayWidth,
-    bowDisplayHeight
+    pitchfork,
+    weaponPositionX,
+    weaponPositionY,
+    weaponDisplayWidth,
+    weaponDisplayHeight
   );
 }
 

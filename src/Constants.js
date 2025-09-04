@@ -12,7 +12,7 @@ export const FAR_PLANE = 15; //far clipping distance
 export const MAX_SLICE_FACTOR = 1.4;
 
 //Render scale (0-1) - lower = faster, upscaled by CSS
-export const RENDER_SCALE = 0.95;
+export const RENDER_SCALE = 1.0;
 
 // scale (0-2) 2 means camera is on floor, 1 mean camera is on celing
 export const PLAYER_HEIGHT = 0.75;

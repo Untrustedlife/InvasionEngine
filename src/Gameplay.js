@@ -124,20 +124,14 @@ export function move(dt) {
 
 export function fire() {
   let fired = false;
-  if (player.ammo > 0) {
-    player.ammo--;
-    updateBars();
-    SFX.shot();
-    fired = true;
-  }
+  updateBars();
+  SFX.shot();
+  fired = true;
 
   const basis = cameraBasis();
   const hit = pickSpriteAtCenter(basis);
 
   if (!hit) {
-    if (!fired) {
-      addMsg("No arrows. Look for quivers.");
-    }
     return;
   }
 
