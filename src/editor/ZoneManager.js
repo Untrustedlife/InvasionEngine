@@ -28,6 +28,7 @@ export class ZoneManager {
       cielingColorFront: "#271810",
       cielingColorBack: "#271810",
       floorColorBack: "#101b2e",
+      fogColor: "#101b2e",
     };
   }
 
@@ -417,6 +418,7 @@ export class ZoneManager {
       cielingColorFront: zone.cielingColorFront,
       cielingColorBack: zone.cielingColorBack,
       floorColorBack: zone.floorColorBack,
+      fogColor: zone.fogColor,
     }));
     if (zones.length === 0 || zones[0].color !== "#101b2e") {
       zones.unshift({
@@ -452,6 +454,7 @@ export class ZoneManager {
             zoneData.cielingColorBack || this.defaultZone.cielingColorBack,
           floorColorBack:
             zoneData.floorColorBack || this.defaultZone.floorColorBack,
+          fogColor: zoneData.fogColor || this.defaultZone.fogColor,
         };
         this.zones.push(zone);
       });

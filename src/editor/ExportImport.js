@@ -65,6 +65,7 @@ export class ExportImport {
       cielingColorFront: z.cielingColorFront ?? "",
       cielingColorBack: z.cielingColorBack ?? "",
       floorColorBack: z.floorColorBack ?? "",
+      fogColor: z.fogColor ?? "",
     }));
 
     const payload = {
