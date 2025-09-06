@@ -153,6 +153,7 @@ export function move(dt) {
     player.velY *= MAX_SPEED / newSpeed;
   }
 
+  //Apply velocity * dt after everything else to compute tentative position (for collisions)
   const nx = player.x + player.velX * dt,
     ny = player.y + player.velY * dt;
 
