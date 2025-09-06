@@ -100,13 +100,13 @@ export function move(dt) {
   let fdirX = -player.velX / speed;
   let fdirY = -player.velY / speed;
   
-  if(Math.abs(player.velX) < 0.001){ 
+  if(Math.abs(player.velX) < 0.002){ 
 	player.velX = 0.0
   }else{
   	player.velX += fdirX * friction * dt * dt;
   }
 
-  if(Math.abs(player.velY) < 0.001){ 
+  if(Math.abs(player.velY) < 0.002){ 
 	  player.velY = 0.0
   }else{
   	player.velY += fdirY * friction * dt * dt;
