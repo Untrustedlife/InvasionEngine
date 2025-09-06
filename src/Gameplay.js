@@ -96,7 +96,7 @@ export function move(dt) {
   }
 
   //linear drag (Idea is we can change friction based on zones later so we cna in fact have ice skating if we want)
-  const friction = 4.0;
+  const friction = 3.0;
 
   //apply drag first
   player.velX -= player.velX * friction * dt;
