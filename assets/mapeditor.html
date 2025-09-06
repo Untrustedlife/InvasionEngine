@@ -3,19 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Map Editor</title>
-
-    <!-- Prevent caching -->
     <meta
       http-equiv="Cache-Control"
       content="no-cache, no-store, must-revalidate"
     />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <title>Map Editor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="styles/_variables.css?v=1.2" />
-    <link rel="stylesheet" href="styles/map-editor.css?v=1.2" />
+    <link rel="stylesheet" href="styles/_variables.css?v=1.9" />
+    <link rel="stylesheet" href="styles/map-editor.css?v=1.9" />
   </head>
   <body>
     <div class="terminal-container">
@@ -34,7 +32,7 @@
 
         <div class="editor-layout">
           <!-- LEFT: Tileset Panel -->
-          <section class="terminal-panel">
+          <section class="terminal-panel" id="tilePanel">
             <div class="panel-header">TILESET CONTROLS</div>
 
             <div class="control-row">
@@ -73,6 +71,92 @@
             </div>
           </section>
 
+          <!-- LEFT: Zone Panel (hidden by default) -->
+          <section class="terminal-panel" id="zonePanel" style="display: none">
+            <div class="panel-header">ZONE CONTROLS</div>
+
+            <div class="section-header">
+              ZONE LAYERS (Lower = Higher Priority)
+            </div>
+            <div class="button-row">
+              <button id="addZoneBtn">ADD NEW ZONE</button>
+            </div>
+            <div id="zoneLayerPanel" class="zone-layer-panel">
+              <div class="zone-layer-list" id="zoneLayerList">
+                <div class="zone-empty-message">No zones created</div>
+              </div>
+            </div>
+
+            <div id="zoneProperties" class="zone-properties">
+              <div class="section-header">SELECTED ZONE</div>
+              <div class="zone-none" id="noZoneSelected">No zone selected</div>
+
+              <div class="zone-editor" id="zoneEditor" style="display: none">
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>ZONE ID</label>
+                    <span id="zoneId" class="zone-id-display">-</span>
+                  </div>
+                </div>
+
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>POSITION X</label>
+                    <input id="zoneX" type="number" min="0" max="255" />
+                  </div>
+                  <div class="control-group">
+                    <label>POSITION Y</label>
+                    <input id="zoneY" type="number" min="0" max="255" />
+                  </div>
+                </div>
+
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>WIDTH</label>
+                    <input id="zoneW" type="number" min="1" max="256" />
+                  </div>
+                  <div class="control-group">
+                    <label>HEIGHT</label>
+                    <input id="zoneH" type="number" min="1" max="256" />
+                  </div>
+                </div>
+
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>ZONE COLOR</label>
+                    <input id="zoneColor" type="color" value="#271810" />
+                  </div>
+                </div>
+
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>CEILING FRONT</label>
+                    <input id="zoneCeilFront" type="color" value="#271810" />
+                  </div>
+                  <div class="control-group">
+                    <label>CEILING BACK</label>
+                    <input id="zoneCeilBack" type="color" value="#271810" />
+                  </div>
+                  <div class="control-group">
+                    <label>FLOOR BACK</label>
+                    <input id="zoneFloorBack" type="color" value="#000000" />
+                  </div>
+                </div>
+
+                <div class="button-row">
+                  <button id="deleteZoneBtn" class="danger-btn">
+                    DELETE ZONE
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="terminal-text">
+              > Left-click: Create/Select zones > Right-click: Delete zone >
+              Drag corners/edges to resize
+            </div>
+          </section>
+
           <!-- CENTER: Canvas Editor -->
           <section class="canvas-panel">
             <div class="panel-header">MAP EDITOR</div>
@@ -101,6 +185,12 @@
                 <button id="undoBtn">UNDO</button>
                 <button id="redoBtn">REDO</button>
               </div>
+
+              <div class="mode-controls">
+                <button id="modeBtn" class="mode-toggle">
+                  MODE: TILE EDIT
+                </button>
+              </div>
             </div>
 
             <canvas id="editor" width="320" height="320" tabindex="0"></canvas>
@@ -110,6 +200,16 @@
               <span class="controls-text"
                 >LMB: PAINT | RMB: EYEDROP | CTRL+Z/Y: UNDO/REDO</span
               >
+            </div>
+
+            <!-- Zone Mini Panel (shown in tile mode when zones exist) -->
+            <div
+              id="zoneMiniPanel"
+              class="zone-mini-panel"
+              style="display: none"
+            >
+              <div class="zone-mini-header">ZONES OVERLAY</div>
+              <div id="zoneMiniList" class="zone-mini-list"></div>
             </div>
           </section>
 
@@ -158,7 +258,7 @@
             </div>
 
             <div class="back-link">
-              <a href="../index.html">← RETURN TO TERMINAL</a>
+              <a href="../index.html">← RETURN TO PRONODE</a>
             </div>
           </section>
         </div>
@@ -166,11 +266,11 @@
         <!-- System Status Bar -->
         <div class="system-status">
           <span>MAP EDITOR READY</span>
-          <span>VERSION: 1.2</span>
-          <span>SYSTEM: Apple II</span>
+          <span>VERSION: 1.9</span>
+          <span>SYSTEM: PRONODE V33</span>
         </div>
       </div>
     </div>
-    <script type="module" src="../src/editor/MapEditor.js?v=1.2"></script>
+    <script type="module" src="../src/editor/MapEditor.js?v=1.9"></script>
   </body>
 </html>
