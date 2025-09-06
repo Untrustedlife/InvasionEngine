@@ -75,7 +75,7 @@ export function drawMinimap(sprites) {
         ? "#ffeb9c"
         : s.type === entityTypes.barrel
         ? "#CD1C18"
-        : s.type === "key"
+        : s.type === entityTypes.key
         ? "#6aa2ff"
         : s.type === entityTypes.food
         ? "#7fffd4"

@@ -26,16 +26,9 @@ import {
   HEALTH_FROM_FOOD,
   ENTITY_DAMAGE,
   MELEE_RANGE,
-  WEAPON_COOLDOWN
+  WEAPON_COOLDOWN,
 } from "./Constants.js";
-import {
-  sprites,
-  wolfIdle,
-  barrel,
-  keycard1,
-  arrowQuiver,
-  bow,
-} from "./Sprites.js";
+import { sprites, wolfIdle, barrel, arrowQuiver, bow } from "./Sprites.js";
 import { entityTypes, spawnEntity } from "./Entities.js";
 
 //Used so that you are forced to play through all levels before it randomizes
@@ -91,11 +84,11 @@ export function move(dt) {
   const leftY = dirX;
 
   //Update weapon animation each turn
-  if(player.weaponAnim > WEAPON_COOLDOWN){
-	// done with animation
-	player.weaponAnim = -1.0;
+  if (player.weaponAnim > WEAPON_COOLDOWN) {
+    // done with animation
+    player.weaponAnim = -1.0;
   }
-  if(player.weaponAnim >= 0.0){
+  if (player.weaponAnim >= 0.0) {
     //add delta time
     player.weaponAnim += dt;
   }
@@ -140,11 +133,10 @@ export function move(dt) {
 }
 
 export function fire() {
-
-  if(player.weaponAnim >= 0.0){
+  if (player.weaponAnim >= 0.0) {
     return;
   }
-  player.weaponAnim = 0.0
+  player.weaponAnim = 0.0;
   updateBars();
   SFX.shot();
 
@@ -160,13 +152,6 @@ export function fire() {
   }
 
   switch (hit.type) {
-    case "key":
-      hit.alive = false;
-      player.hasBlueKey = true;
-      SFX.door();
-      addMsg("Keycard found! Find the exit!");
-      removeAllFlesh();
-      break;
     case "arrows":
       hit.alive = false;
       player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
@@ -192,13 +177,6 @@ export function autoPickup() {
       continue;
     }
     switch (s.type) {
-      case "key":
-        s.alive = false;
-        player.hasBlueKey = true;
-        SFX.door();
-        addMsg("Keycard found! Find the exit!");
-        removeAllFlesh();
-        break;
       case "arrows":
         s.alive = false;
         player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
@@ -321,7 +299,7 @@ export function buildForcefieldRing() {
 }
 
 export function placeSprites(assets) {
-  const { keycard1, arrowQuiver } = assets;
+  const { arrowQuiver } = assets;
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
@@ -336,17 +314,7 @@ export function placeSprites(assets) {
   //Spawn keycard
 
   let t = randomEmptyTile(4.0);
-  sprites.push({
-    x: t.x + 0.5,
-    y: t.y + 0.5,
-    img: keycard1,
-    type: "key",
-    alive: true,
-    dist: 0,
-    ground: true,
-    scale: 0.25,
-    floorBiasFrac: 0.04,
-  });
+  sprites.push(spawnEntity(entityTypes.key, { x: t.x + 0.5, y: t.y + 0.5 }));
 
   //Spawn food
 
@@ -581,7 +549,7 @@ export function resetLevel(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { keycard1, arrowQuiver };
+  const assets = { arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
@@ -602,7 +570,7 @@ export function resetLevelInOrder(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { keycard1, arrowQuiver };
+  const assets = { arrowQuiver };
   placeSprites(assets);
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
