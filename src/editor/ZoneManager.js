@@ -44,7 +44,8 @@ export class ZoneManager {
       ...this.defaultZone,
     };
 
-    this.zones.push(zone);
+    const insertIndex = this.zones.length > 0 ? 1 : 0;
+    this.zones.splice(insertIndex, 0, zone);
     this.selectedZoneId = zone.id;
     this.reassignZoneIds();
     return zone;
