@@ -86,6 +86,7 @@ export class MapEditor {
       zoneColor: document.getElementById("zoneColor"),
       zoneCeilFront: document.getElementById("zoneCeilFront"),
       zoneCeilBack: document.getElementById("zoneCeilBack"),
+      zoneFloorBack: document.getElementById("zoneFloorBack"),
       deleteZoneBtn: document.getElementById("deleteZoneBtn"),
       // Zone mini panel
       zoneMiniPanel: document.getElementById("zoneMiniPanel"),
