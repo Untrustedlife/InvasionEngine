@@ -87,6 +87,7 @@ export class MapEditor {
       zoneCeilFront: document.getElementById("zoneCeilFront"),
       zoneCeilBack: document.getElementById("zoneCeilBack"),
       zoneFloorBack: document.getElementById("zoneFloorBack"),
+      zoneFogColor: document.getElementById("zoneFogColor"),
       deleteZoneBtn: document.getElementById("deleteZoneBtn"),
       // Zone mini panel
       zoneMiniPanel: document.getElementById("zoneMiniPanel"),
@@ -592,6 +593,7 @@ export class MapEditor {
       cielingColorFront: this.elements.zoneCeilFront.value,
       cielingColorBack: this.elements.zoneCeilBack.value,
       floorColorBack: this.elements.zoneFloorBack.value,
+      fogColor: this.elements.zoneFogColor.value,
     };
 
     this.zoneManager.updateZone(zone.id, newProps);
@@ -627,6 +629,7 @@ export class MapEditor {
       this.elements.zoneCeilFront.value = selectedZone.cielingColorFront;
       this.elements.zoneCeilBack.value = selectedZone.cielingColorBack;
       this.elements.zoneFloorBack.value = selectedZone.floorColorBack;
+      this.elements.zoneFogColor.value = selectedZone.fogColor;
       this._updatingZoneUI = false;
     } else {
       this.elements.noZoneSelected.style.display = "block";
