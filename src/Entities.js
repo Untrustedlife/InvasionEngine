@@ -65,7 +65,7 @@ for (const k in ENTITY_TEMPLATES) {
 
 //#endregion
 //#region BEHAVIOR
-import { isSolidTile } from "./Collision.js";
+import { isSolidTile, collide } from "./Collision.js";
 import { player, wave } from "./Player.js";
 import {
   updateBars,
@@ -95,10 +95,10 @@ export const ENTITY_BEHAVIOR = {
         const uy = dy / dist;
         const nx = entity.x + ux * sp;
         const ny = entity.y + uy * sp;
-        if (!isSolidTile(nx, entity.y)) {
+        if (!collide(nx, entity.y, 0.4)) {
           entity.x = nx;
         }
-        if (!isSolidTile(entity.x, ny)) {
+        if (!collide(entity.x, ny, 0.4)) {
           entity.y = ny;
         }
       }

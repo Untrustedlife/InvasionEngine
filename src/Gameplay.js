@@ -96,7 +96,7 @@ export function move(dt) {
   }
 
   //deceleration
-  const friction = 4.0
+  const friction = 8.0
   let fdirX = -player.velX / speed;
   let fdirY = -player.velY / speed;
   
