@@ -149,7 +149,7 @@ function castAndDraw(nowSec) {
   renderVisibleSprites(cameraBasisVectors);
 
   //Draw weapon HUD in bottom-right corner
-  drawWeaponHUD();
+  drawWeaponHUD(nowSec);
 
   //Render visual effects (explosion radius feedback)
   renderVisualEffects(ctx, cameraBasisVectors, WIDTH, HEIGHT, player);
@@ -304,15 +304,23 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
 }
 
 //Draw the bow weapon in the HUD
-function drawWeaponHUD() {
+function drawWeaponHUD(nowSec) {
   const weaponDisplayWidth = Math.round(WIDTH * 0.42);
   const weaponDisplayHeight = Math.round(
     weaponDisplayWidth * (bow.height / bow.width)
   );
+  const offsetX = player.isMoving && player.weaponAnim<0.0? 10 * Math.sin(nowSec * 5)  : 0;
   const hudMargin = Math.max(8, (WIDTH * 0.02) | 0);
-  const weaponPositionX = WIDTH * 0.8 - weaponDisplayWidth - hudMargin;
-  const weaponPositionY = HEIGHT - weaponDisplayHeight - hudMargin + 20;
+  const weaponPositionX = WIDTH * 0.5 - (weaponDisplayWidth / 2.0) - (hudMargin / 2.0) + offsetX;
 
+
+  // hacky animation nonsense. TODO replace this gargabe
+  const weaponAnimFactor = (player.weaponAnim + 1.0) ** 10.0;
+  const animation = weaponAnimFactor > 7.0? 7.0 : weaponAnimFactor;
+  const attackY = player.weaponAnim >= 0.0? 100 - (animation * 20): 0;
+  const offsetY = player.isMoving && player.weaponAnim<0.0? 10 * Math.sin(nowSec * 10)  : 0;
+  const weaponPositionY = HEIGHT - weaponDisplayHeight - hudMargin + 70 + offsetY + attackY;
+  
   ctx.drawImage(
     pitchfork,
     weaponPositionX,

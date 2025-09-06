@@ -26,6 +26,7 @@ import {
   HEALTH_FROM_FOOD,
   ENTITY_DAMAGE,
   MELEE_RANGE,
+  WEAPON_COOLDOWN
 } from "./Constants.js";
 import {
   sprites,
@@ -88,6 +89,18 @@ export function move(dt) {
   const dirY = Math.sin(player.a);
   const leftX = -dirY;
   const leftY = dirX;
+
+  //Update weapon animation each turn
+  if(player.weaponAnim > WEAPON_COOLDOWN){
+	// done with animation
+	player.weaponAnim = -1.0;
+  }
+  if(player.weaponAnim >= 0.0){
+    //add delta time
+    player.weaponAnim += dt;
+  }
+
+  player.isMoving = false;
   let mx = 0,
     my = 0;
   if (keys.has("ArrowLeft")) {
@@ -99,18 +112,22 @@ export function move(dt) {
   if (keys.has("ArrowUp") || keys.has("KeyW")) {
     mx += dirX * spd;
     my += dirY * spd;
+    player.isMoving = true;
   }
   if (keys.has("ArrowDown") || keys.has("KeyS")) {
     mx -= dirX * spd;
     my -= dirY * spd;
+    player.isMoving = true;
   }
   if (keys.has("KeyA")) {
     mx -= leftX * spd;
     my -= leftY * spd;
+    player.isMoving = true;
   }
   if (keys.has("KeyD")) {
     mx += leftX * spd;
     my += leftY * spd;
+    player.isMoving = true;
   }
   const nx = player.x + mx,
     ny = player.y + my;
@@ -123,10 +140,13 @@ export function move(dt) {
 }
 
 export function fire() {
-  let fired = false;
+
+  if(player.weaponAnim >= 0.0){
+    return;
+  }
+  player.weaponAnim = 0.0
   updateBars();
   SFX.shot();
-  fired = true;
 
   const basis = cameraBasis();
   const hit = pickSpriteAtCenter(basis);
@@ -156,7 +176,7 @@ export function fire() {
       break;
     default:
       if (hit.onHit) {
-        hit.onHit(hit, fired);
+        hit.onHit(hit, true);
       }
       break;
   }

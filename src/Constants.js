@@ -21,3 +21,4 @@ export const HEALTH_FROM_FOOD = 10;
 export const ENTITY_DAMAGE = 3.33;
 export const MELEE_RANGE = 1.5;
 export const START_HEALTH = 20;
+export const WEAPON_COOLDOWN = 0.75;

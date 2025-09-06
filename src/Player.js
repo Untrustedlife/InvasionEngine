@@ -8,6 +8,8 @@ export const player = {
   maxHealth: 20,
   ammo: 1,
   hasBlueKey: false,
+  isMoving: false,
+  weaponAnim: -1.0,
   tenacity: 20,
   maxTenacity: 20,
   height: 0.75,
