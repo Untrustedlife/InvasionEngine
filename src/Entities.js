@@ -78,7 +78,7 @@ export const ENTITY_BEHAVIOR = {
       const dy = player.y - entity.y;
       const dist = Math.hypot(dx, dy);
       if (dist > 0.3) {
-        const sp = 0.9 * dt;
+        const sp = 1.25 * dt;
         const ux = dx / dist;
         const uy = dy / dist;
         const nx = entity.x + ux * sp;

@@ -38,7 +38,7 @@ await build({
   bundle: true,
   format: "esm",
   splitting: true,
-  minify: true,
+  minify: false,
   sourcemap: false,
   outdir: out,
   outbase: root, //keep folder structure (sist/src/main.js)

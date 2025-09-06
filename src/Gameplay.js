@@ -26,7 +26,8 @@ import {
   HEALTH_FROM_FOOD,
   ENTITY_DAMAGE,
   MELEE_RANGE,
-  WEAPON_COOLDOWN
+  WEAPON_COOLDOWN,
+  MAX_SPEED,
 } from "./Constants.js";
 import {
   sprites,
@@ -83,12 +84,13 @@ export function wireInput(canvas) {
 
 export function move(dt) {
   const run = keys.has("ShiftLeft") || keys.has("ShiftRight");
-  const spd = player.speed * (run ? 2 : 1) * dt;
   const rot = player.rotSpeed * dt;
+  const accel = player.accel * dt * dt;
   const dirX = Math.cos(player.a);
   const dirY = Math.sin(player.a);
   const leftX = -dirY;
   const leftY = dirX;
+  const speed = Math.sqrt(player.velX * player.velX + player.velY * player.velY);
 
   //Update weapon animation each turn
   if(player.weaponAnim > WEAPON_COOLDOWN){
@@ -100,9 +102,27 @@ export function move(dt) {
     player.weaponAnim += dt;
   }
 
+  //deceleration
+  const friction = 4.0
+  let fdirX = -player.velX / speed;
+  let fdirY = -player.velY / speed;
+  
+  if(Math.abs(player.velX) < 0.001){ 
+	player.velX = 0.0
+  }else{
+  	player.velX += fdirX * friction * dt * dt;
+  }
+
+  if(Math.abs(player.velY) < 0.001){ 
+	  player.velY = 0.0
+  }else{
+  	player.velY += fdirY * friction * dt * dt;
+  }
+
+	
   player.isMoving = false;
-  let mx = 0,
-    my = 0;
+  let ax = 0,
+    ay = 0;
   if (keys.has("ArrowLeft")) {
     player.a -= rot;
   }
@@ -110,32 +130,47 @@ export function move(dt) {
     player.a += rot;
   }
   if (keys.has("ArrowUp") || keys.has("KeyW")) {
-    mx += dirX * spd;
-    my += dirY * spd;
+    ax += dirX * accel;
+    ay += dirY * accel;
     player.isMoving = true;
   }
   if (keys.has("ArrowDown") || keys.has("KeyS")) {
-    mx -= dirX * spd;
-    my -= dirY * spd;
+    ax -= dirX * accel;
+    ay -= dirY * accel;
     player.isMoving = true;
   }
   if (keys.has("KeyA")) {
-    mx -= leftX * spd;
-    my -= leftY * spd;
+    ax -= leftX * accel;
+    ay -= leftY * accel;
     player.isMoving = true;
   }
   if (keys.has("KeyD")) {
-    mx += leftX * spd;
-    my += leftY * spd;
+    ax += leftX * accel;
+    ay += leftY * accel;
     player.isMoving = true;
   }
-  const nx = player.x + mx,
-    ny = player.y + my;
+
+  player.velX += ax;
+  player.velY += ay;
+
+  const newSpeed = Math.sqrt(player.velX * player.velX + player.velY * player.velY);
+
+  if(newSpeed > MAX_SPEED){
+    player.velX *= MAX_SPEED / newSpeed;
+    player.velY *= MAX_SPEED / newSpeed;
+  }
+
+  const nx = player.x + player.velX,
+    ny = player.y + player.velY;
   if (!collide(nx, player.y, collisionRadius)) {
     player.x = nx;
+  } else{
+    player.velX = 0;
   }
   if (!collide(player.x, ny, collisionRadius)) {
     player.y = ny;
+  }else{
+    player.velY = 0;
   }
 }
 
@@ -226,6 +261,8 @@ export function checkExit() {
     addMsg(`Floor ${wave} cleared.`);
     setWave(wave + 1);
     exitPending = true;
+    player.velX = 0.0;
+    player.velY = 0.0;
     setTimeout(() => {
       resetLevelInOrder(true);
       exitPending = false;

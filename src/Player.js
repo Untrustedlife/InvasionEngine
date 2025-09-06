@@ -1,8 +1,10 @@
 export const player = {
   x: 3.5,
   y: 3.5,
+  velX: 0.0,
+  velY: 0.0,
   a: 0,
-  speed: 2,
+  accel: 6.0,
   rotSpeed: 2.6,
   health: 6,
   maxHealth: 20,
