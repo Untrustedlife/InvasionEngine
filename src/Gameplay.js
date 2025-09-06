@@ -78,50 +78,49 @@ export function wireInput(canvas) {
 export function move(dt) {
   const run = keys.has("ShiftLeft") || keys.has("ShiftRight");
   const rot = player.rotSpeed * dt;
-  const accel = player.accel * dt * dt;
+
+  // CHANGED: only one dt for integration
+  const accel = player.accel * dt;
+
   const dirX = Math.cos(player.a);
   const dirY = Math.sin(player.a);
   const leftX = -dirY;
   const leftY = dirX;
-  const speed = Math.sqrt(player.velX * player.velX + player.velY * player.velY);
 
   //Update weapon animation each turn
   if (player.weaponAnim > WEAPON_COOLDOWN) {
-    // done with animation
     player.weaponAnim = -1.0;
   }
   if (player.weaponAnim >= 0.0) {
-    //add delta time
     player.weaponAnim += dt;
   }
 
-  //deceleration
-  const friction = 8.0
-  let fdirX = -player.velX / speed;
-  let fdirY = -player.velY / speed;
-  
-  if(Math.abs(player.velX) < 0.002){ 
-	player.velX = 0.0
-  }else{
-  	player.velX += fdirX * friction * dt * dt;
+  //linear drag (Idea is we can change friction based on zones later so we cna in fact have ice skating if we want)
+  const friction = 4.0;
+
+  //apply drag first
+  player.velX -= player.velX * friction * dt;
+  player.velY -= player.velY * friction * dt;
+
+  // snap tiny velocities after damping
+  if (Math.abs(player.velX) < 0.002) {
+    player.velX = 0.0;
+  }
+  if (Math.abs(player.velY) < 0.002) {
+    player.velY = 0.0;
   }
 
-  if(Math.abs(player.velY) < 0.002){ 
-	  player.velY = 0.0
-  }else{
-  	player.velY += fdirY * friction * dt * dt;
-  }
-
-	
   player.isMoving = false;
   let ax = 0,
     ay = 0;
+
   if (keys.has("ArrowLeft")) {
     player.a -= rot;
   }
   if (keys.has("ArrowRight")) {
     player.a += rot;
   }
+
   if (keys.has("ArrowUp") || keys.has("KeyW")) {
     ax += dirX * accel;
     ay += dirY * accel;
@@ -146,23 +145,25 @@ export function move(dt) {
   player.velX += ax;
   player.velY += ay;
 
-  const newSpeed = Math.sqrt(player.velX * player.velX + player.velY * player.velY);
+  //hypot squares then adds then square roots (SO same math just cleaner)
+  const newSpeed = Math.hypot(player.velX, player.velY);
 
-  if(newSpeed > MAX_SPEED){
+  if (newSpeed > MAX_SPEED) {
     player.velX *= MAX_SPEED / newSpeed;
     player.velY *= MAX_SPEED / newSpeed;
   }
 
-  const nx = player.x + player.velX,
-    ny = player.y + player.velY;
+  const nx = player.x + player.velX * dt,
+    ny = player.y + player.velY * dt;
+
   if (!collide(nx, player.y, collisionRadius)) {
     player.x = nx;
-  } else{
+  } else {
     player.velX = 0;
   }
   if (!collide(player.x, ny, collisionRadius)) {
     player.y = ny;
-  }else{
+  } else {
     player.velY = 0;
   }
 }

@@ -22,4 +22,4 @@ export const ENTITY_DAMAGE = 3.33;
 export const MELEE_RANGE = 2.5;
 export const START_HEALTH = 20;
 export const WEAPON_COOLDOWN = 0.75;
-export const MAX_SPEED = 0.07;
+export const MAX_SPEED = 20;
