@@ -29,6 +29,7 @@ export const entityTypes = Object.freeze({
   entity: "entity",
   barrel: "barrel",
   food: "food",
+  key: "key",
 });
 
 export const ENTITY_TEMPLATES = {
@@ -50,6 +51,12 @@ export const ENTITY_TEMPLATES = {
     scale: 0.25,
     floorBiasFrac: 0.04,
   },
+  [entityTypes.key]: {
+    type: entityTypes.key,
+    ground: true,
+    scale: 0.25,
+    floorBiasFrac: 0.04,
+  },
 };
 Object.freeze(ENTITY_TEMPLATES);
 for (const k in ENTITY_TEMPLATES) {
@@ -60,7 +67,12 @@ for (const k in ENTITY_TEMPLATES) {
 //#region BEHAVIOR
 import { isSolidTile } from "./Collision.js";
 import { player, wave } from "./Player.js";
-import { updateBars, addMsg, checkGameOver } from "./Gameplay.js";
+import {
+  updateBars,
+  addMsg,
+  checkGameOver,
+  removeAllFlesh,
+} from "./Gameplay.js";
 import { SFX } from "./Audio.js";
 import { ENTITY_DAMAGE, HEALTH_FROM_FOOD } from "./Constants.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
@@ -123,6 +135,11 @@ export const ENTITY_BEHAVIOR = {
         addMsg("You hear something like water nearby...");
       }
     },
+    onExplode(entity) {
+      entity.alive = false;
+      SFX.killedEntity();
+      addMsg("The entity is blown to gibs.");
+    },
   },
   //Barrel
   [entityTypes.barrel]: {
@@ -140,6 +157,10 @@ export const ENTITY_BEHAVIOR = {
       if (tryCooldown(entityTypes.barrel, 10000)) {
         addMsg("Shooting this barrel may yield useful results...");
       }
+    },
+    onExplode(entity) {
+      entity.alive = false;
+      splashDamage(entity.x, entity.y, 2.5);
     },
   },
   [entityTypes.food]: {
@@ -160,6 +181,22 @@ export const ENTITY_BEHAVIOR = {
     },
   },
   // ...
+  [entityTypes.key]: {
+    onTouch(entity) {
+      entity.alive = false;
+      player.hasBlueKey = true;
+      SFX.door();
+      addMsg("Keycard found! Find the exit!");
+      removeAllFlesh();
+    },
+    onExplode(entity) {
+      entity.alive = false;
+      player.hasBlueKey = true;
+      SFX.door();
+      addMsg("The forcefield protecting the exit has suddenly lifted!");
+      removeAllFlesh();
+    },
+  },
 };
 Object.freeze(ENTITY_BEHAVIOR);
 for (const k in ENTITY_BEHAVIOR) {
@@ -169,7 +206,7 @@ for (const k in ENTITY_BEHAVIOR) {
 //#endregion
 //Id as entityType
 let nextId = 0;
-import { wolfIdle, barrel, sprites, food } from "./Sprites.js";
+import { wolfIdle, barrel, sprites, food, keycard1 } from "./Sprites.js";
 
 export function spawnEntity(
   id,
@@ -203,6 +240,9 @@ export function spawnEntity(
     case entityTypes.food:
       e.img = food;
       break;
+    case entityTypes.key:
+      e.img = keycard1;
+      break;
   }
 
   if (overrides) {
@@ -211,20 +251,20 @@ export function spawnEntity(
   return e;
 }
 
-export function splashDamage(x, y, radius) {
+export function splashDamage(x, y, r) {
   // Create visual effect for the explosion radius
-  createExplosionEffect(x, y, radius);
+  createExplosionEffect(x, y, r);
   for (const s of sprites) {
     if (!s.alive) {
       continue;
     }
     const d = Math.hypot(s.x - x, s.y - y);
-    if (d < radius) {
-      if (s.type === itemTypes.barrel) {
+    if (d < r) {
+      if (s.onExplode) {
+        s.onExplode(s);
+      } else {
         s.alive = false;
-        splashDamage(s.x, s.y, 2.5);
       }
-      s.alive = false;
     }
   }
 }
