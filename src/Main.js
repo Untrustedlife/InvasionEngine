@@ -147,7 +147,6 @@ function castAndDraw(nowSec) {
     const px = player.x | 0;
     const py = player.y | 0;
     const zIndex = zoneIdAt(px, py, gameStateObject.zones);
-    // Check cache first - O(1) access
     let floor = SIMPLE_FLOOR_GRADIENT_CACHE[zIndex];
     if (!floor) {
       // Create and cache the gradient
