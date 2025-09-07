@@ -374,6 +374,30 @@ export const mapDefinitions = [
     cielingColorBack: "#000000",
     floorColorBack: "#000000",
   },
-
-  //Commit
 ];
+const zoneRgbCache = new Map();
+export function getZoneBaseRgb(zoneId) {
+  // pick zone color or fall back to whats defined on map object
+  const mats = gameStateObject.zones;
+  const key = (mats && mats[zoneId]?.color) || FOG_COLOR;
+  let rgb = zoneRgbCache.get(key);
+  if (!rgb) {
+    rgb = hexToRgb(key);
+    zoneRgbCache.set(key, rgb);
+  }
+  return rgb;
+}
+
+export function zoneIdAt(x, y, zones) {
+  for (let i = 0; i < zones.length; i++) {
+    const z = zones[i];
+    const x0 = Math.min(z.x, z.x + z.w);
+    const x1 = Math.max(z.x, z.x + z.w) - 1; // inclusive max
+    const y0 = Math.min(z.y, z.y + z.h);
+    const y1 = Math.max(z.y, z.y + z.h) - 1; // inclusive max
+    if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
+      return i;
+    } // first match wins
+  }
+  return 0; // fallback to 0
+}

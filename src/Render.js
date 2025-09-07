@@ -15,7 +15,20 @@ import { gameStateObject } from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
+export const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
 
+// Distance from camera to each screen row (used for floor projection)
+// This keeps floors and walls aligned at any playerHeight without hacks.
+const ROW_DIST = new Float32Array(HEIGHT);
+function rebuildRowDistLUT() {
+  const posZ = HALF_HEIGHT; // horizon line
+  for (let y = 0; y < HEIGHT; y++) {
+    const p = y - HALF_HEIGHT;
+    ROW_DIST[y] =
+      p !== 0 ? (posZ / p) * (2 - player.calculatePlayerHeight()) : 1e-6; // avoid div-by-0 on the horizon
+  }
+}
+rebuildRowDistLUT();
 //Wall slice draw: sample a 1px-wide column from the source texture
 //and scale to the destination height using drawImage. Apply uniform shading
 //via Canvas2D filter brightness for speed. This avoids per-pixel ImageData work.
