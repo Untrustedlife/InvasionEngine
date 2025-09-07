@@ -61,7 +61,6 @@ export function projectSprite(sprite, cameraBasisVectors) {
   }
   sprite._hR = roundedSpriteHeight;
 
-  //Push out of way effect
   const finalSpriteHeight = roundedSpriteHeight;
 
   const spriteImage = sprite.img;
@@ -99,7 +98,6 @@ export function projectSprite(sprite, cameraBasisVectors) {
 
   const verticalPosition = { startY, endY };
   const drawStartX = Math.round(screenCenterPixelX - (finalSpriteWidth >> 1));
-  //Push things to the side effect
   const drawEndX = drawStartX + finalSpriteWidth;
 
   return {
