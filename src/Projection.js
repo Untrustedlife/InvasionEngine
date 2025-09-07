@@ -74,11 +74,10 @@ export function projectSprite(sprite, cameraBasisVectors) {
   );
 
   //Calculate floor bias for ground sprites based on size and scale
-
   //Use the same constants the walls use
   const proj = HEIGHT; //matches projectHeight = HEIGHT / cameraSpaceY
-  const EYE = player.calculatePlayerHeight(); //<-- match wall formula exactly
-  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if you implement pitch
+  const EYE = player.calculatePlayerHeight(); //match wall formula exactly
+  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if we implement pitch
 
   let startY, endY;
   if (sprite.ground) {
