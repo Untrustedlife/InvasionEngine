@@ -159,6 +159,15 @@ export class MapEditor {
     this.elements.zoneCeilBack.oninput = () =>
       this.updateSelectedZoneFromInputs();
 
+    this.elements.zoneCeilFront.oninput = () =>
+      this.updateSelectedZoneFromInputs();
+
+    this.elements.zoneFloorBack.oninput = () =>
+      this.updateSelectedZoneFromInputs();
+
+    this.elements.zoneFogColor.oninput = () =>
+      this.updateSelectedZoneFromInputs();
+
     //Input events
     this.elements.activeIdInput.oninput = () => {
       this.setActiveId(

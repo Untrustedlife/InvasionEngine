@@ -12,8 +12,8 @@
     <title>Map Editor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="styles/_variables.css?v=1.9" />
-    <link rel="stylesheet" href="styles/map-editor.css?v=1.9" />
+    <link rel="stylesheet" href="styles/_variables.css?v=1.2" />
+    <link rel="stylesheet" href="styles/map-editor.css?v=1.2" />
   </head>
   <body>
     <div class="terminal-container">
@@ -21,9 +21,7 @@
         <!-- OS Header -->
         <div class="os-header">
           <h1 class="os-title">Map Editor --Terminal</h1>
-          <p class="os-version">
-            MAP.EDITOR.rbn RC Invasion Tile Editor System
-          </p>
+          <p class="os-version">MAP.EDITOR.rbn Tile Editor System</p>
         </div>
 
         <div class="terminal-prompt">
@@ -246,9 +244,7 @@
             <textarea
               id="io"
               spellcheck="false"
-              placeholder="//PASTE 2D ARRAY [[...]] OR FULL JSON 
-//FORMAT: {width,height,tiles:[{id,name,color}],map:[...]}
-//FOR JS: paste line with 'export const MAP = [...]'"
+              placeholder="//PASTE FULL JSON OF MAP HERE TO LOAD IT\nCOPY FROM HERE TO EXPORT."
             ></textarea>
 
             <div class="button-row">
@@ -262,7 +258,7 @@
             </div>
 
             <div class="back-link">
-              <a href="../index.html">← RETURN TO PRONODE</a>
+              <a href="../index.html">← RETURN TO TERMINAL</a>
             </div>
           </section>
         </div>
@@ -270,11 +266,11 @@
         <!-- System Status Bar -->
         <div class="system-status">
           <span>MAP EDITOR READY</span>
-          <span>VERSION: 1.9</span>
-          <span>SYSTEM: PRONODE V33</span>
+          <span>VERSION: 1.3</span>
+          <span>SYSTEM: APPLE II</span>
         </div>
       </div>
     </div>
-    <script type="module" src="../src/editor/MapEditor.js?v=1.9"></script>
+    <script type="module" src="../src/editor/MapEditor.js?v=1.2"></script>
   </body>
 </html>
