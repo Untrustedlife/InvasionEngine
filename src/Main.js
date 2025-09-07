@@ -78,10 +78,17 @@ export function ChangeMapLevel(specificLevel = -1) {
   if (specificLevel !== -1) {
     const mapDef = mapDefinitions[specificLevel];
     if (mapDef) {
-      chosenMapDefinition = mapDef;
+      chosenMapDefinition = mapDef.dontPersist
+        ? JSON.parse(JSON.stringify(mapDef))
+        : mapDef;
     }
   } else {
-    chosenMapDefinition = chooseRandomElementFromArray(mapDefinitions);
+    const mapDef = getRandomElementFromArray(mapDefinitions);
+    if (mapDef) {
+      chosenMapDefinition = mapDef.dontPersist
+        ? JSON.parse(JSON.stringify(mapDef))
+        : mapDef;
+    }
   }
 
   EXIT_POS.x = chosenMapDefinition.exitPos.x;
@@ -90,7 +97,6 @@ export function ChangeMapLevel(specificLevel = -1) {
   START_POS.y = chosenMapDefinition.startPos.y;
 
   //Initialize game state with chosen map
-  player.health = player.maxHealth;
   gameStateObject.cielingColorFront =
     chosenMapDefinition.cielingColorFront || "#6495ED";
   gameStateObject.floorColorFront =
@@ -99,10 +105,11 @@ export function ChangeMapLevel(specificLevel = -1) {
     chosenMapDefinition.cielingColorBack || "#6495ED";
   gameStateObject.floorColorBack =
     chosenMapDefinition.floorColorBack || "#03210A";
-
+  ZONE_CSS.clear();
   gameStateObject.MAP = chosenMapDefinition.mapLayout;
   gameStateObject.MAP_W = gameStateObject.MAP[0].length;
   gameStateObject.MAP_H = gameStateObject.MAP.length;
+  gameStateObject.zones = chosenMapDefinition.zones;
   player.x = player.x = chosenMapDefinition.startPos.x;
   player.y = chosenMapDefinition.startPos.y;
 }
@@ -129,7 +136,27 @@ function castAndDraw(nowSec) {
 
   castCieling(ctx);
 
-  castFloors(ctx);
+  //2 means fog zone + basic floor cover and since we don't use the fog zone
+  //for anything other then correcting the horizon we can just use the one simple performant gradient
+  // for those levels
+  if (gameStateObject.zones.length <= 2) {
+    const px = player.x | 0;
+    const py = player.y | 0;
+    const zIndex = zoneIdAt(px, py, gameStateObject.zones);
+    const fogColorZone = gameStateObject.zones[zIndex].fogColor;
+    const floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
+    floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
+    floor.addColorStop(0.85, gameStateObject.floorColorBack || "#03210A");
+    floor.addColorStop(0.95, fogColorZone || FOG_COLOR);
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, HALF_HEIGHT, WIDTH, HALF_HEIGHT);
+  } else {
+    //TODO: Replace with single draw call + gradient fill for performance (Eventually. Not a priority)
+    for (let x = 0; x < WIDTH; x++) {
+      castFloor(nowSec, cameraBasisVectors, x, 0);
+    }
+    castFloorFog(ctx);
+  }
 
   castHaze(ctx);
 
@@ -140,7 +167,6 @@ function castAndDraw(nowSec) {
     gameStateObject.MAP_W,
     gameStateObject.MAP_H
   );
-
   //Sort sprites back-to-front by distance from player for proper alpha blending
   calculateSpriteDistances();
   sprites.sort((spriteA, spriteB) => spriteB.dist - spriteA.dist);
@@ -309,18 +335,21 @@ function drawWeaponHUD(nowSec) {
   const weaponDisplayHeight = Math.round(
     weaponDisplayWidth * (bow.height / bow.width)
   );
-  const offsetX = player.isMoving && player.weaponAnim<0.0? 10 * Math.sin(nowSec * 5)  : 0;
+  const offsetX =
+    player.isMoving && player.weaponAnim < 0.0 ? 10 * Math.sin(nowSec * 5) : 0;
   const hudMargin = Math.max(8, (WIDTH * 0.02) | 0);
-  const weaponPositionX = WIDTH * 0.5 - (weaponDisplayWidth / 2.0) - (hudMargin / 2.0) + offsetX;
-
+  const weaponPositionX =
+    WIDTH * 0.5 - weaponDisplayWidth / 2.0 - hudMargin / 2.0 + offsetX;
 
   // hacky animation nonsense. TODO replace this gargabe
   const weaponAnimFactor = (player.weaponAnim + 1.0) ** 10.0;
-  const animation = weaponAnimFactor > 7.0? 7.0 : weaponAnimFactor;
-  const attackY = player.weaponAnim >= 0.0? 100 - (animation * 20): 0;
-  const offsetY = player.isMoving && player.weaponAnim<0.0? 10 * Math.sin(nowSec * 10)  : 0;
-  const weaponPositionY = HEIGHT - weaponDisplayHeight - hudMargin + 70 + offsetY + attackY;
-  
+  const animation = weaponAnimFactor > 7.0 ? 7.0 : weaponAnimFactor;
+  const attackY = player.weaponAnim >= 0.0 ? 100 - animation * 20 : 0;
+  const offsetY =
+    player.isMoving && player.weaponAnim < 0.0 ? 10 * Math.sin(nowSec * 10) : 0;
+  const weaponPositionY =
+    HEIGHT - weaponDisplayHeight - hudMargin + 70 + offsetY + attackY;
+
   ctx.drawImage(
     pitchfork,
     weaponPositionX,

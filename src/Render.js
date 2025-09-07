@@ -94,30 +94,123 @@ function drawWallColumnImg(
 //Draw sprite column with alpha blending - preserves transparency
 const SPRITE_Y_ORIGIN_BOTTOM = false;
 
-//Main raycasting function - casts rays using DDA algorithm and draws textured walls
-//Fills zBuffer for sprite occlusion and draws sky/floor gradients
-const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
-
 export function castCieling(ctx) {
-  //Draw sky gradient (top half)
   const sky = ctx.createLinearGradient(0, 0, 0, HALF_HEIGHT);
-  sky.addColorStop(0, gameStateObject.cielingColorFront || "#6495ED");
+  const px = player.x | 0;
+  const py = player.y | 0;
+
+  //Quick switch for ceiling colors instead of casting ceilings for now TODO: Replace with actual cieling caster.
+  const zIndex = zoneIdAt(px, py, gameStateObject.zones);
+  const cielingFrontColorZone = gameStateObject.zones[zIndex].cielingColorFront;
+  const cielingBackColorZone = gameStateObject.zones[zIndex].cielingColorBack;
+  const fogColorZone = gameStateObject.zones[zIndex].fogColor;
+
+  sky.addColorStop(
+    0,
+    cielingFrontColorZone || gameStateObject.cielingColorFront || "#6495ED"
+  );
   if (gameStateObject.cielingColorBack) {
-    sky.addColorStop(0.5, gameStateObject.cielingColorBack || "#6495ED");
+    sky.addColorStop(
+      0.5,
+      cielingBackColorZone || gameStateObject.cielingColorBack || "#6495ED"
+    );
   }
-  sky.addColorStop(0.9, FOG_COLOR);
+  sky.addColorStop(0.9, fogColorZone || FOG_COLOR);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
 }
 
-export function castFloors(ctx) {
-  //Draw floor gradient (bottom half)
-  const floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
-  floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
-  floor.addColorStop(0.85, gameStateObject.floorColorBack || "#03210A");
-  floor.addColorStop(0.95, FOG_COLOR);
-  ctx.fillStyle = floor;
-  ctx.fillRect(0, HALF_HEIGHT, WIDTH, HALF_HEIGHT);
+// Cache zone colors for performance
+export const ZONE_CSS = new Map();
+function zoneCss(zoneId) {
+  let c = ZONE_CSS.get(zoneId);
+  if (!c) {
+    const [r, g, b] = getZoneBaseRgb(zoneId); // already zone-based shade
+    c = `rgb(${r | 0},${g | 0},${b | 0})`;
+    ZONE_CSS.set(zoneId, c);
+  }
+  return c;
+}
+
+//this might end up being less efficient then a scanline approach but also does no overdraw.
+// so i might rewrite later, for now this works.
+export function castFloor(
+  nowSec,
+  cameraBasisVectors,
+  screenColumnX,
+  fromY = 0
+) {
+  const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
+
+  // never draw above the horizon
+  const startY = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
+  if (startY >= HEIGHT) {
+    return;
+  }
+
+  const zones = gameStateObject.zones;
+
+  // Ray for this column (same as walls)
+  const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
+  const rayX = dirX + planeX * camX;
+  const rayY = dirY + planeY * camX;
+
+  // Initialize world positions using first row distance
+  //  1 / cos(theta) to remove tiny fisheye on floor
+  const invDot = 1 / (dirX * rayX + dirY * rayY);
+
+  // Initialize world positions using first row *perp* distance, corrected
+  let dist = ROW_DIST[startY];
+  let wx = player.x + rayX * dist * invDot;
+  let wy = player.y + rayY * dist * invDot;
+
+  let lastZone = 0;
+  let runStartY = startY;
+  let lastStyle = null;
+
+  // Walk rows, build a vertical scan based on the floors we can see
+  for (let y = startY; y < HEIGHT; y++) {
+    const ix = wx | 0;
+    const iy = wy | 0;
+
+    let zoneId = 0;
+    if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
+      zoneId = 0; // keep your horizon special-case
+    } else {
+      zoneId =
+        ix >= 0 &&
+        iy >= 0 &&
+        ix < gameStateObject.MAP_W &&
+        iy < gameStateObject.MAP_H
+          ? zoneIdAt(ix, iy, zones)
+          : 0;
+    }
+
+    if (zoneId !== lastZone) {
+      const color = zoneCss(lastZone);
+      if (color !== lastStyle) {
+        ctx.fillStyle = color;
+        lastStyle = color;
+      }
+      ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
+      lastZone = zoneId;
+      runStartY = y;
+    }
+
+    // step world coords using successive row distances
+    const nextDist = ROW_DIST[y + 1] ?? dist;
+    const delta = nextDist - dist;
+    wx += rayX * delta * invDot;
+    wy += rayY * delta * invDot;
+    dist = nextDist;
+  }
+
+  // Flush tail run
+  const color = zoneCss(lastZone);
+  if (color !== lastStyle) {
+    ctx.fillStyle = color;
+  }
+  ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
 }
 
 export function castHaze(ctx) {
@@ -128,6 +221,24 @@ export function castHaze(ctx) {
   backgroundFogGradient.addColorStop(1.0, "rgba(16,27,46,0.20)");
   ctx.fillStyle = backgroundFogGradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
+}
+
+export function castFloorFog(ctx) {
+  const y0 = HALF_HEIGHT - 1,
+    h = HEIGHT - y0;
+  const px = player.x | 0;
+  const py = player.y | 0;
+  const zIndex = zoneIdAt(px, py, gameStateObject.zones);
+  const floorBackColor = gameStateObject.zones[zIndex].floorColorBack;
+  const g = ctx.createLinearGradient(0, y0, 0, HEIGHT);
+  g.addColorStop(0.05, gameStateObject.zones[zIndex].fogColor || FOG_COLOR);
+  g.addColorStop(
+    0.15,
+    floorBackColor || gameStateObject.floorColorBack || "#03210A"
+  );
+  g.addColorStop(1, "rgba(0,0,0,0)"); //Clear
+  ctx.fillStyle = g;
+  ctx.fillRect(0, y0, WIDTH, h);
 }
 
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
@@ -380,9 +491,12 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         )
       );
       if (fogLerpFactor > 0) {
+        const px = player.x | 0;
+        const py = player.y | 0;
+        const zIndex = zoneIdAt(px, py, gameStateObject.zones);
         ctx.save();
         ctx.globalAlpha = fogLerpFactor * 0.85;
-        ctx.fillStyle = FOG_COLOR;
+        ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
         ctx.fillRect(screenColumnX, drawStartY, 1, drawEndY - drawStartY);
         ctx.restore();
       }
