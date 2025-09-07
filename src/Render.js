@@ -29,6 +29,22 @@ function rebuildRowDistLUT() {
   }
 }
 rebuildRowDistLUT();
+
+// Gradient caches - arrays indexed by zone ID for O(1) access
+export const CEILING_GRADIENT_CACHE = [];
+export const FLOOR_FOG_GRADIENT_CACHE = [];
+export const HAZE_GRADIENT_CACHE = [];
+export const SIMPLE_FLOOR_GRADIENT_CACHE = [];
+
+//Clear all gradient caches (called when switching maps)
+export function clearGradientCaches() {
+  CEILING_GRADIENT_CACHE.length = 0;
+  FLOOR_FOG_GRADIENT_CACHE.length = 0;
+  HAZE_GRADIENT_CACHE.length = 0;
+  SIMPLE_FLOOR_GRADIENT_CACHE.length = 0;
+  ZONE_CSS.clear();
+}
+
 //Wall slice draw: sample a 1px-wide column from the source texture
 //and scale to the destination height using drawImage. Apply uniform shading
 //via Canvas2D filter brightness for speed. This avoids per-pixel ImageData work.
@@ -95,27 +111,34 @@ function drawWallColumnImg(
 const SPRITE_Y_ORIGIN_BOTTOM = false;
 
 export function castCieling(ctx) {
-  const sky = ctx.createLinearGradient(0, 0, 0, HALF_HEIGHT);
   const px = player.x | 0;
   const py = player.y | 0;
-
-  //Quick switch for ceiling colors instead of casting ceilings for now TODO: Replace with actual cieling caster.
   const zIndex = zoneIdAt(px, py, gameStateObject.zones);
-  const cielingFrontColorZone = gameStateObject.zones[zIndex].cielingColorFront;
-  const cielingBackColorZone = gameStateObject.zones[zIndex].cielingColorBack;
-  const fogColorZone = gameStateObject.zones[zIndex].fogColor;
 
-  sky.addColorStop(
-    0,
-    cielingFrontColorZone || gameStateObject.cielingColorFront || "#6495ED"
-  );
-  if (gameStateObject.cielingColorBack) {
+  let sky = CEILING_GRADIENT_CACHE[zIndex];
+  if (!sky) {
+    //Create and cache the gradient
+    sky = ctx.createLinearGradient(0, 0, 0, HALF_HEIGHT);
+    const cielingFrontColorZone =
+      gameStateObject.zones[zIndex].cielingColorFront;
+    const cielingBackColorZone = gameStateObject.zones[zIndex].cielingColorBack;
+    const fogColorZone = gameStateObject.zones[zIndex].fogColor;
+
     sky.addColorStop(
-      0.5,
-      cielingBackColorZone || gameStateObject.cielingColorBack || "#6495ED"
+      0,
+      cielingFrontColorZone || gameStateObject.cielingColorFront || "#6495ED"
     );
+    if (gameStateObject.cielingColorBack) {
+      sky.addColorStop(
+        0.5,
+        cielingBackColorZone || gameStateObject.cielingColorBack || "#6495ED"
+      );
+    }
+    sky.addColorStop(0.9, fogColorZone || FOG_COLOR);
+
+    CEILING_GRADIENT_CACHE[zIndex] = sky;
   }
-  sky.addColorStop(0.9, fogColorZone || FOG_COLOR);
+
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
 }
@@ -214,11 +237,18 @@ export function castFloor(
 }
 
 export function castHaze(ctx) {
-  //Add atmospheric haze to prevent banding on empty rays
-  const backgroundFogGradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  backgroundFogGradient.addColorStop(0.0, "rgba(16,27,46,0.08)");
-  backgroundFogGradient.addColorStop(0.5, "rgba(16,27,46,0.16)");
-  backgroundFogGradient.addColorStop(1.0, "rgba(16,27,46,0.20)");
+  //Check cache first
+  let backgroundFogGradient = HAZE_GRADIENT_CACHE[0];
+  if (!backgroundFogGradient) {
+    //Create and cache the gradient
+    backgroundFogGradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+    backgroundFogGradient.addColorStop(0.0, "rgba(16,27,46,0.08)");
+    backgroundFogGradient.addColorStop(0.5, "rgba(16,27,46,0.16)");
+    backgroundFogGradient.addColorStop(1.0, "rgba(16,27,46,0.20)");
+
+    HAZE_GRADIENT_CACHE[0] = backgroundFogGradient;
+  }
+
   ctx.fillStyle = backgroundFogGradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 }
@@ -229,14 +259,22 @@ export function castFloorFog(ctx) {
   const px = player.x | 0;
   const py = player.y | 0;
   const zIndex = zoneIdAt(px, py, gameStateObject.zones);
-  const floorBackColor = gameStateObject.zones[zIndex].floorColorBack;
-  const g = ctx.createLinearGradient(0, y0, 0, HEIGHT);
-  g.addColorStop(0.05, gameStateObject.zones[zIndex].fogColor || FOG_COLOR);
-  g.addColorStop(
-    0.15,
-    floorBackColor || gameStateObject.floorColorBack || "#03210A"
-  );
-  g.addColorStop(1, "rgba(0,0,0,0)"); //Clear
+
+  let g = FLOOR_FOG_GRADIENT_CACHE[zIndex];
+  if (!g) {
+    //Create and cache the gradient
+    const floorBackColor = gameStateObject.zones[zIndex].floorColorBack;
+    g = ctx.createLinearGradient(0, y0, 0, HEIGHT);
+    g.addColorStop(0.05, gameStateObject.zones[zIndex].fogColor || FOG_COLOR);
+    g.addColorStop(
+      0.15,
+      floorBackColor || gameStateObject.floorColorBack || "#03210A"
+    );
+    g.addColorStop(1, "rgba(0,0,0,0)"); //Clear
+
+    FLOOR_FOG_GRADIENT_CACHE[zIndex] = g;
+  }
+
   ctx.fillStyle = g;
   ctx.fillRect(0, y0, WIDTH, h);
 }

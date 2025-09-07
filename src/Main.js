@@ -10,6 +10,8 @@ import {
   castFloors,
   castCieling,
   castHaze,
+  SIMPLE_FLOOR_GRADIENT_CACHE,
+  clearGradientCaches,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, bow, pitchfork, loadAsyncSprites } from "./Sprites.js";
@@ -105,7 +107,9 @@ export function ChangeMapLevel(specificLevel = -1) {
     chosenMapDefinition.cielingColorBack || "#6495ED";
   gameStateObject.floorColorBack =
     chosenMapDefinition.floorColorBack || "#03210A";
-  ZONE_CSS.clear();
+  //Clear zone and gradient caches when switching maps/levels
+  clearGradientCaches();
+
   gameStateObject.MAP = chosenMapDefinition.mapLayout;
   gameStateObject.MAP_W = gameStateObject.MAP[0].length;
   gameStateObject.MAP_H = gameStateObject.MAP.length;
@@ -143,11 +147,18 @@ function castAndDraw(nowSec) {
     const px = player.x | 0;
     const py = player.y | 0;
     const zIndex = zoneIdAt(px, py, gameStateObject.zones);
-    const fogColorZone = gameStateObject.zones[zIndex].fogColor;
-    const floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
-    floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
-    floor.addColorStop(0.85, gameStateObject.floorColorBack || "#03210A");
-    floor.addColorStop(0.95, fogColorZone || FOG_COLOR);
+    // Check cache first - O(1) access
+    let floor = SIMPLE_FLOOR_GRADIENT_CACHE[zIndex];
+    if (!floor) {
+      // Create and cache the gradient
+      const fogColorZone = gameStateObject.zones[zIndex].fogColor;
+      floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
+      floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
+      floor.addColorStop(0.85, gameStateObject.floorColorBack || "#03210A");
+      floor.addColorStop(0.95, fogColorZone || FOG_COLOR);
+
+      SIMPLE_FLOOR_GRADIENT_CACHE[zIndex] = floor;
+    }
     ctx.fillStyle = floor;
     ctx.fillRect(0, HALF_HEIGHT, WIDTH, HALF_HEIGHT);
   } else {

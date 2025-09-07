@@ -20,7 +20,7 @@ ctx.imageSmoothingEnabled = false;
 //visible context
 export const vctx = canvas.getContext("2d");
 
-//Optional: if you ever change CSS size, keep pixels crisp
+//Ensure crisp pixel-perfect scaling for the entire frame
 vctx.imageSmoothingEnabled = false;
 
 export const cMini = document.getElementById("mini");
