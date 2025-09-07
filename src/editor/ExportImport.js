@@ -55,7 +55,6 @@ export class ExportImport {
       ? this.editor.zoneManager.exportZones()
       : [];
 
-    // keep your existing zone keys (including misspellings if relied on elsewhere)
     const normalizedZones = zones.map((z) => ({
       color: z.color ?? "#101b2e",
       x: z.x ?? 0,

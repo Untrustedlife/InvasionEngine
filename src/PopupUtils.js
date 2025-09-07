@@ -178,7 +178,9 @@ export function createWordPressProofPopup(options = {}) {
       e.stopPropagation(); //STOP. JUST STOP.
 
       if (buttonClicked) {
-        console.warn("Button click ignored (flood protection saved your ass)");
+        console.warn(
+          "Button click ignored (flood protection saved your buttocks)"
+        );
         return; //NOPE. ONE CLICK ONLY.
       }
 
