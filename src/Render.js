@@ -15,17 +15,17 @@ import { gameStateObject } from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
-export const HALF_HEIGHT = HEIGHT >> 1; // Bitwise shift is faster than division by 2
+export const HALF_HEIGHT = HEIGHT >> 1; //Bitwise shift is faster than division by 2
 
-// Distance from camera to each screen row (used for floor projection)
-// This keeps floors and walls aligned at any playerHeight without hacks.
+//Distance from camera to each screen row (used for floor projection)
+//This keeps floors and walls aligned at any playerHeight without hacks.
 const ROW_DIST = new Float32Array(HEIGHT);
 function rebuildRowDistLUT() {
-  const posZ = HALF_HEIGHT; // horizon line
+  const posZ = HALF_HEIGHT; //horizon line
   for (let y = 0; y < HEIGHT; y++) {
     const p = y - HALF_HEIGHT;
     ROW_DIST[y] =
-      p !== 0 ? (posZ / p) * (2 - player.calculatePlayerHeight()) : 1e-6; // avoid div-by-0 on the horizon
+      p !== 0 ? (posZ / p) * (2 - player.calculatePlayerHeight()) : 1e-6; //avoid div-by-0 on the horizon
   }
 }
 rebuildRowDistLUT();
@@ -75,8 +75,8 @@ function drawWallColumnImg(
       : rawSourceHeight;
 
   //Use pre-shaded texture
-  // This can make animated textures act a bit weird. In RC Invasion I skip it
-  // for texture 7 (the animated one). Here it’s fine, I’m pushing a bit more perf.
+  //This can make animated textures act a bit weird. In RC Invasion I skip it
+  //for texture 7 (the animated one). Here it’s fine, I’m pushing a bit more perf.
   const closestShade = nearestIndexInAscendingOrder(SHADE_LEVELS, shade);
   g.drawImage(
     SHADED_TEX[texId][SHADE_LEVELS[closestShade]],
@@ -120,12 +120,12 @@ export function castCieling(ctx) {
   ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
 }
 
-// Cache zone colors for performance
+//Cache zone colors for performance
 export const ZONE_CSS = new Map();
 function zoneCss(zoneId) {
   let c = ZONE_CSS.get(zoneId);
   if (!c) {
-    const [r, g, b] = getZoneBaseRgb(zoneId); // already zone-based shade
+    const [r, g, b] = getZoneBaseRgb(zoneId); //already zone-based shade
     c = `rgb(${r | 0},${g | 0},${b | 0})`;
     ZONE_CSS.set(zoneId, c);
   }
@@ -133,7 +133,7 @@ function zoneCss(zoneId) {
 }
 
 //this might end up being less efficient then a scanline approach but also does no overdraw.
-// so i might rewrite later, for now this works.
+//so i might rewrite later, for now this works.
 export function castFloor(
   nowSec,
   cameraBasisVectors,
@@ -142,7 +142,7 @@ export function castFloor(
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
 
-  // never draw above the horizon
+  //never draw above the horizon
   const startY = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
   if (startY >= HEIGHT) {
     return;
@@ -150,16 +150,16 @@ export function castFloor(
 
   const zones = gameStateObject.zones;
 
-  // Ray for this column (same as walls)
+  //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
   const rayY = dirY + planeY * camX;
 
-  // Initialize world positions using first row distance
-  //  1 / cos(theta) to remove tiny fisheye on floor
+  //Initialize world positions using first row distance
+  //1 / cos(theta) to remove tiny fisheye on floor
   const invDot = 1 / (dirX * rayX + dirY * rayY);
 
-  // Initialize world positions using first row *perp* distance, corrected
+  //Initialize world positions using first row *perp* distance, corrected
   let dist = ROW_DIST[startY];
   let wx = player.x + rayX * dist * invDot;
   let wy = player.y + rayY * dist * invDot;
@@ -168,14 +168,14 @@ export function castFloor(
   let runStartY = startY;
   let lastStyle = null;
 
-  // Walk rows, build a vertical scan based on the floors we can see
+  //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < HEIGHT; y++) {
     const ix = wx | 0;
     const iy = wy | 0;
 
     let zoneId = 0;
     if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
-      zoneId = 0; // keep your horizon special-case
+      zoneId = 0; //Horizon pixel, don't draw
     } else {
       zoneId =
         ix >= 0 &&
@@ -197,7 +197,7 @@ export function castFloor(
       runStartY = y;
     }
 
-    // step world coords using successive row distances
+    //step world coords using successive row distances
     const nextDist = ROW_DIST[y + 1] ?? dist;
     const delta = nextDist - dist;
     wx += rayX * delta * invDot;
@@ -205,7 +205,7 @@ export function castFloor(
     dist = nextDist;
   }
 
-  // Flush tail run
+  //Flush tail run
   const color = zoneCss(lastZone);
   if (color !== lastStyle) {
     ctx.fillStyle = color;
@@ -386,10 +386,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let textureCoordinateU;
     if (wallSide === 0) {
       //x-side (vertical wall): use fractional part of Y
-      textureCoordinateU = hitPositionY - (hitPositionY | 0); // bitwise or (For positive)  is same as math.floor
+      textureCoordinateU = hitPositionY - (hitPositionY | 0); //bitwise or (For positive)  is same as math.floor
     } else {
       //y-side (horizontal wall): use fractional part of X
-      textureCoordinateU = hitPositionX - (hitPositionX | 0); // bitwise or (For positive)  is same as math.floor
+      textureCoordinateU = hitPositionX - (hitPositionX | 0); //bitwise or (For positive)  is same as math.floor
     }
     //Fast clamp to [0, 0.999999] range
     textureCoordinateU =
@@ -407,7 +407,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       : textureData.w | 0;
 
     //Convert to texel column and apply direction-based flip
-    let textureColumnX = (textureCoordinateU * textureWidth) | 0; // bitwise or (For positive)  is same as math.floor
+    let textureColumnX = (textureCoordinateU * textureWidth) | 0; //bitwise or (For positive)  is same as math.floor
     //Flip only by step/side rule to keep u monotonic across a wall face
     if (
       (wallSide === 0 && stepDirectionX > 0) ||
@@ -425,7 +425,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
     //Project wall height to screen space
     const projectionDistance =
-      perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; // Faster than Math.max
+      perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; //Faster than Math.max
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
 
     //Compute unclipped vertical segment and derive texture source window for any clipping

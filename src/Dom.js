@@ -5,23 +5,22 @@ export const LOGICAL_H = 270;
 
 export const canvas = document.getElementById("view");
 
-// Backing stores match the logical size
+//Backing stores match the logical size
 canvas.width = LOGICAL_W;
 canvas.height = LOGICAL_H;
 
-export const WIDTH = LOGICAL_W; // use these in all math
+export const WIDTH = LOGICAL_W; //use these in all math
 export const HEIGHT = LOGICAL_H;
 
 export const offscreen = new OffscreenCanvas(WIDTH, HEIGHT);
 
-// If you don’t call getImageData() a lot, drop willReadFrequently—it can hurt perf.
 export const ctx = offscreen.getContext("2d");
 //Ensure crisp pixel-perfect scaling for the entire frame
 ctx.imageSmoothingEnabled = false;
-// visible context
+//visible context
 export const vctx = canvas.getContext("2d");
 
-// Optional: if you ever change CSS size, keep pixels crisp
+//Optional: if you ever change CSS size, keep pixels crisp
 vctx.imageSmoothingEnabled = false;
 
 export const cMini = document.getElementById("mini");

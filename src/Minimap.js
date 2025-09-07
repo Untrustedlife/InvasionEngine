@@ -10,9 +10,9 @@ import { entityTypes } from "./Entities.js";
 export function drawMinimap(sprites) {
   mctx.clearRect(0, 0, cMini.width, cMini.height);
 
-  const SCALE = 6; // pixels per tile
-  const VIEW = 20; // tiles shown per side
-  const PAD = 2; // border
+  const SCALE = 6; //pixels per tile
+  const VIEW = 20; //tiles shown per side
+  const PAD = 2; //border
   const HALF = Math.floor(VIEW / 2);
   //Fast floor since these can't be negative AFAIK
   const startX = Math.max(
@@ -30,7 +30,7 @@ export function drawMinimap(sprites) {
     for (let x = 0; x < VIEW; x++) {
       const mapY = startY + y;
       const mapX = startX + x;
-      // Safe lookup (treat OOB as empty)
+      //Safe lookup (treat OOB as empty)
       const cell = gameStateObject.MAP[mapY]?.[mapX] ?? 0;
 
       let color = "#0c1220"; //empty/floor
@@ -61,7 +61,7 @@ export function drawMinimap(sprites) {
     }
   }
 
-  // Sprites
+  //Sprites
   for (const s of sprites) {
     if (!s.alive) {
       continue;
@@ -86,7 +86,7 @@ export function drawMinimap(sprites) {
     mctx.fillRect(sx - 2, sy - 2, 4, 4);
   }
 
-  // Player (same origin)
+  //Player (same origin)
   const px = PAD + (player.x - startX) * SCALE;
   const py = PAD + (player.y - startY) * SCALE;
 

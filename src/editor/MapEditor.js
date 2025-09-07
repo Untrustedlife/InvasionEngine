@@ -29,8 +29,8 @@ export class MapEditor {
     this.activeId = 1;
     this.map = createMap(this.width, this.height, 0);
 
-    // Editor mode state
-    this.currentMode = "tile"; // 'tile' or 'zone'
+    //Editor mode state
+    this.currentMode = "tile"; //'tile' or 'zone'
 
     //Components
     this.renderer = null;
@@ -71,11 +71,11 @@ export class MapEditor {
       io: document.getElementById("io"),
       gridBtn: document.getElementById("gridBtn"),
       mapNameInput: document.getElementById("mapName"),
-      // Mode switching elements
+      //Mode switching elements
       modeBtn: document.getElementById("modeBtn"),
       tilePanel: document.getElementById("tilePanel"),
       zonePanel: document.getElementById("zonePanel"),
-      // Zone UI elements
+      //Zone UI elements
       noZoneSelected: document.getElementById("noZoneSelected"),
       zoneEditor: document.getElementById("zoneEditor"),
       zoneId: document.getElementById("zoneId"),
@@ -89,10 +89,10 @@ export class MapEditor {
       zoneFloorBack: document.getElementById("zoneFloorBack"),
       zoneFogColor: document.getElementById("zoneFogColor"),
       deleteZoneBtn: document.getElementById("deleteZoneBtn"),
-      // Zone mini panel
+      //Zone mini panel
       zoneMiniPanel: document.getElementById("zoneMiniPanel"),
       zoneMiniList: document.getElementById("zoneMiniList"),
-      // Zone layer panel
+      //Zone layer panel
       zoneLayerList: document.getElementById("zoneLayerList"),
       addZoneBtn: document.getElementById("addZoneBtn"),
     };
@@ -143,10 +143,10 @@ export class MapEditor {
     document.getElementById("downloadJsonBtn").onclick = () =>
       this.exportImport.downloadJSON();
 
-    // Mode switching
+    //Mode switching
     this.elements.modeBtn.onclick = () => this.toggleMode();
 
-    // Zone events
+    //Zone events
     this.elements.addZoneBtn.onclick = () => this.addNewZone();
     this.elements.deleteZoneBtn.onclick = () => this.deleteSelectedZone();
     this.elements.zoneX.oninput = () => this.updateSelectedZoneFromInputs();
@@ -313,7 +313,7 @@ export class MapEditor {
       this.strokeChanges = null;
     }
 
-    // Handle zone operations
+    //Handle zone operations
     if (this.currentMode === "zone" && this.zoneManager) {
       this.zoneManager.finishCreation();
       this.zoneManager.endDrag();
@@ -331,13 +331,13 @@ export class MapEditor {
     const mapX = cellCoordinates.x;
     const mapY = cellCoordinates.y;
 
-    // Update cursor based on current position
+    //Update cursor based on current position
     if (this.zoneRenderer) {
       const cursor = this.zoneRenderer.getCursorForPosition(mapX, mapY);
       this.elements.canvas.style.cursor = cursor;
     }
 
-    // Handle zone operations
+    //Handle zone operations
     if (this.zoneManager.isCreating) {
       this.zoneManager.updateCreation(mapX, mapY);
       this.render();
@@ -349,7 +349,7 @@ export class MapEditor {
       this.render();
     }
 
-    // Update status with zone information
+    //Update status with zone information
     const zone = this.zoneManager.getZoneAt(mapX, mapY);
     if (zone) {
       this.status(
@@ -368,7 +368,7 @@ export class MapEditor {
     const mapY = cellCoordinates.y;
 
     if (mouseEvent.button === 2) {
-      // Right-click: Delete zone if clicked on one
+      //Right-click: Delete zone if clicked on one
       const zone = this.zoneManager.getZoneAt(mapX, mapY);
       if (zone) {
         this.zoneManager.deleteZone(zone.id);
@@ -380,22 +380,22 @@ export class MapEditor {
       return;
     }
 
-    // Left-click handling
+    //Left-click handling
     const handle = this.zoneManager.getResizeHandle(mapX, mapY);
     if (handle) {
-      // Start resizing
+      //Start resizing
       this.zoneManager.startResize(handle);
       this.status(`Resizing zone #${this.zoneManager.getSelectedZone().id}`);
     } else {
       const zone = this.zoneManager.getZoneAt(mapX, mapY);
       if (zone) {
-        // Select and start dragging zone
+        //Select and start dragging zone
         this.zoneManager.selectZone(zone.id);
         this.zoneManager.startDrag(mapX, mapY);
         this.status(`Selected zone #${zone.id} - drag to move`);
         this.updateZoneUI();
       } else {
-        // Start creating new zone
+        //Start creating new zone
         this.zoneManager.startCreation(mapX, mapY);
         this.status("Creating zone - drag to set size");
       }
@@ -504,10 +504,10 @@ export class MapEditor {
 
     this.currentMode = mode;
 
-    // Update UI to reflect mode change
+    //Update UI to reflect mode change
     this.updateModeUI();
 
-    // Clear any active operations
+    //Clear any active operations
     if (this.currentMode === "zone") {
       this.endStroke();
       this.zoneManager.cancelCreation();
@@ -529,11 +529,11 @@ export class MapEditor {
    * Update UI elements based on current mode
    */
   updateModeUI() {
-    // Update mode button text
+    //Update mode button text
     this.elements.modeBtn.textContent =
       this.currentMode === "tile" ? "MODE: TILE EDIT" : "MODE: ZONE EDIT";
 
-    // Show/hide appropriate panels
+    //Show/hide appropriate panels
     if (this.currentMode === "zone") {
       this.elements.tilePanel.style.display = "none";
       this.elements.zonePanel.style.display = "block";
@@ -541,7 +541,7 @@ export class MapEditor {
     } else {
       this.elements.tilePanel.style.display = "block";
       this.elements.zonePanel.style.display = "none";
-      // Show zone mini panel if zones exist
+      //Show zone mini panel if zones exist
       this.updateZoneMiniPanel();
     }
 
@@ -584,7 +584,7 @@ export class MapEditor {
       return;
     }
 
-    // Prevent recursive updates
+    //Prevent recursive updates
     if (this._updatingZoneUI) {
       return;
     }
@@ -618,7 +618,7 @@ export class MapEditor {
       return;
     }
 
-    // Update layer panel
+    //Update layer panel
     this.updateZoneLayerPanel();
 
     const selectedZone = this.zoneManager.getSelectedZone();
@@ -627,7 +627,7 @@ export class MapEditor {
       this.elements.noZoneSelected.style.display = "none";
       this.elements.zoneEditor.style.display = "block";
 
-      // Update UI with zone properties (prevent recursive updates)
+      //Update UI with zone properties (prevent recursive updates)
       this._updatingZoneUI = true;
       this.elements.zoneId.textContent = selectedZone.id;
       this.elements.zoneX.value = selectedZone.x;
@@ -687,7 +687,7 @@ export class MapEditor {
         </div>
       `;
 
-      // Add click handler for zone selection
+      //Add click handler for zone selection
       item.addEventListener("click", (e) => {
         if (e.target.classList.contains("zone-layer-btn")) {
           const action = e.target.dataset.action;
@@ -706,7 +706,7 @@ export class MapEditor {
         }
       });
 
-      // Add drag and drop handlers
+      //Add drag and drop handlers
       item.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", zoneInfo.id.toString());
         item.classList.add("dragging");
@@ -773,9 +773,9 @@ export class MapEditor {
    */
   updateCanvasCursor() {
     if (this.currentMode === "zone" && this.zoneRenderer) {
-      // Get current mouse position if available
+      //Get current mouse position if available
       const canvas = this.elements.canvas;
-      // Default cursor for zone mode
+      //Default cursor for zone mode
       canvas.style.cursor = "crosshair";
     } else {
       this.elements.canvas.style.cursor = "default";
@@ -789,13 +789,13 @@ export class MapEditor {
   render() {
     this.renderer.draw();
 
-    // Draw zone overlays
+    //Draw zone overlays
     if (this.zoneRenderer) {
       const overlayMode = this.currentMode === "zone" ? "zone" : "tile";
       this.zoneRenderer.drawZones(overlayMode);
     }
 
-    // Update layer panel if in zone mode
+    //Update layer panel if in zone mode
     if (this.currentMode === "zone") {
       this.updateZoneLayerPanel();
     }

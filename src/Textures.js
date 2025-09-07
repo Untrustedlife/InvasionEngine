@@ -41,15 +41,15 @@ export function addLoadedTextures(loadedTextures) {
 
 //Rebuild TEXCACHE when new textures are added
 function rebuildTextureCache() {
-  TEXCACHE.length = 0; // Clear existing cache
+  TEXCACHE.length = 0; //Clear existing cache
   TEX.forEach((tex) => {
     TEXCACHE.push(tex ? cacheColumns(tex) : null);
   });
 }
 
 //In RC Invasion this is only length 21 with 0.05 increments, but we want smoother shading since our walls are way bigger,
-// this is still WAY mor eoptimized then doing it per wall per frame every frame even if we reach int0 82 shade levels
-// Eliminates 115k+ expensive operations per second
+//this is still WAY mor eoptimized then doing it per wall per frame every frame even if we reach int0 82 shade levels
+//Eliminates 115k+ expensive operations per second
 
 export const SHADE_LEVELS = Array.from({ length: 82 }, (_, i) => i * 0.0125);
 export const SHADED_TEX = {};
@@ -96,7 +96,7 @@ async function loadWallTexture(imageName) {
   });
 }
 
-// Load the wallpaper asynchronously and update TEX/TEXCACHE
+//Load the wallpaper asynchronously and update TEX/TEXCACHE
 export async function initAsyncTextures() {
   try {
     let imagesToReplace = [
@@ -107,7 +107,7 @@ export async function initAsyncTextures() {
       { index: 5, image: "Portal.png" },
       { index: 6, image: "OfficeDoorBlue.png" },
       { index: 7, image: "Field.png" },
-      // Add more textures to replace if needed
+      //Add more textures to replace if needed
     ];
     await loadImagesToTex(imagesToReplace);
     rebuildTextureCache();

@@ -11,18 +11,18 @@ export class ZoneManager {
     this.zones = [];
     this.selectedZoneId = null;
 
-    // Zone creation state
+    //Zone creation state
     this.isCreating = false;
     this.creationStart = null;
     this.creationEnd = null;
 
-    // Zone manipulation state
+    //Zone manipulation state
     this.isDragging = false;
     this.isResizing = false;
     this.resizeHandle = null;
     this.dragOffset = { x: 0, y: 0 };
 
-    // Default zone properties
+    //Default zone properties
     this.defaultZone = {
       color: "#271810",
       cielingColorFront: "#271810",
@@ -37,7 +37,7 @@ export class ZoneManager {
    */
   createZone(x, y, w, h) {
     const zone = {
-      id: this.zones.length, // ID = array index
+      id: this.zones.length, //ID = array index
       x: Math.min(x, x + w),
       y: Math.min(y, y + h),
       w: Math.abs(w),
@@ -56,7 +56,7 @@ export class ZoneManager {
    * Create a new zone programmatically (for "Add Zone" button)
    */
   addNewZone() {
-    // Create a default-sized zone in a visible area
+    //Create a default-sized zone in a visible area
     const defaultX = Math.floor(this.editor.width / 4);
     const defaultY = Math.floor(this.editor.height / 4);
     const defaultW = Math.floor(this.editor.width / 8);
@@ -73,7 +73,7 @@ export class ZoneManager {
       zone.id = index;
     });
 
-    // Update selected zone ID if needed
+    //Update selected zone ID if needed
     if (this.selectedZoneId !== null) {
       const selectedZone = this.zones.find(
         (z, index) =>
@@ -131,7 +131,7 @@ export class ZoneManager {
     const zone = this.getZone(zoneId);
     if (zone) {
       Object.assign(zone, properties);
-      // Clamp values to valid ranges
+      //Clamp values to valid ranges
       zone.x = safeClamp(zone.x, 0, this.editor.width - 1);
       zone.y = safeClamp(zone.y, 0, this.editor.height - 1);
       zone.w = safeClamp(zone.w, 1, this.editor.width - zone.x);
@@ -163,7 +163,7 @@ export class ZoneManager {
    * Find zone at map coordinates (lower index = higher priority)
    */
   getZoneAt(mapX, mapY) {
-    // Check zones in forward order (lower index wins)
+    //Check zones in forward order (lower index wins)
     for (let i = 0; i < this.zones.length; i++) {
       const zone = this.zones[i];
       if (
@@ -187,9 +187,9 @@ export class ZoneManager {
       return null;
     }
 
-    const tolerance = 0.3; // Handle tolerance in map units
+    const tolerance = 0.3; //Handle tolerance in map units
 
-    // Corner handles
+    //Corner handles
     if (
       Math.abs(mapX - zone.x) <= tolerance &&
       Math.abs(mapY - zone.y) <= tolerance
@@ -215,7 +215,7 @@ export class ZoneManager {
       return "se";
     }
 
-    // Edge handles
+    //Edge handles
     if (mapY >= zone.y && mapY <= zone.y + zone.h) {
       if (Math.abs(mapX - zone.x) <= tolerance) {
         return "w";
@@ -265,7 +265,7 @@ export class ZoneManager {
       const w = this.creationEnd.x - this.creationStart.x;
       const h = this.creationEnd.y - this.creationStart.y;
 
-      // Only create if zone has meaningful size
+      //Only create if zone has meaningful size
       if (Math.abs(w) >= 1 && Math.abs(h) >= 1) {
         this.createZone(x, y, w, h);
       }
@@ -442,7 +442,7 @@ export class ZoneManager {
     if (Array.isArray(zonesData)) {
       zonesData.forEach((zoneData, index) => {
         const zone = {
-          id: index, // ID = array index
+          id: index, //ID = array index
           x: safeClamp(zoneData.x || 0, 0, this.editor.width - 1),
           y: safeClamp(zoneData.y || 0, 0, this.editor.height - 1),
           w: safeClamp(zoneData.w || 1, 1, this.editor.width),
@@ -470,13 +470,13 @@ export class ZoneManager {
       return false;
     }
 
-    // Remove zone from current position
+    //Remove zone from current position
     const zone = this.zones.splice(currentIndex, 1)[0];
 
-    // Insert at new position
+    //Insert at new position
     this.zones.splice(newIndex, 0, zone);
 
-    // Reassign all IDs to match new indices
+    //Reassign all IDs to match new indices
     this.reassignZoneIds();
     return true;
   }
@@ -517,7 +517,7 @@ export class ZoneManager {
     return this.zones.map((zone, index) => ({
       id: zone.id,
       index,
-      priority: index + 1, // Display as 1-based
+      priority: index + 1, //Display as if it is 1-based
       name: `Zone ${zone.id} (${zone.x},${zone.y} - ${zone.w}x${zone.h})`,
       color: zone.color,
       bounds: `${zone.x},${zone.y} - ${zone.w}x${zone.h}`,

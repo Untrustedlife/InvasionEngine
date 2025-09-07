@@ -138,7 +138,7 @@ function castAndDraw(nowSec) {
 
   //2 means fog zone + basic floor cover and since we don't use the fog zone
   //for anything other then correcting the horizon we can just use the one simple performant gradient
-  // for those levels
+  //for those levels
   if (gameStateObject.zones.length <= 2) {
     const px = player.x | 0;
     const py = player.y | 0;
@@ -341,7 +341,7 @@ function drawWeaponHUD(nowSec) {
   const weaponPositionX =
     WIDTH * 0.5 - weaponDisplayWidth / 2.0 - hudMargin / 2.0 + offsetX;
 
-  // hacky animation nonsense. TODO replace this gargabe
+  //hacky animation nonsense. TODO replace this gargabe
   const weaponAnimFactor = (player.weaponAnim + 1.0) ** 10.0;
   const animation = weaponAnimFactor > 7.0 ? 7.0 : weaponAnimFactor;
   const attackY = player.weaponAnim >= 0.0 ? 100 - animation * 20 : 0;

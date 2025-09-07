@@ -79,7 +79,7 @@ export function move(dt) {
   const run = keys.has("ShiftLeft") || keys.has("ShiftRight");
   const rot = player.rotSpeed * dt;
 
-  // CHANGED: only one dt for integration
+  //CHANGED: only one dt for integration
   const accel = player.accel * dt;
 
   const dirX = Math.cos(player.a);
@@ -102,7 +102,7 @@ export function move(dt) {
   player.velX -= player.velX * friction * dt;
   player.velY -= player.velY * friction * dt;
 
-  // snap tiny velocities after damping
+  //snap tiny velocities after damping
   if (Math.abs(player.velX) < 0.002) {
     player.velX = 0.0;
   }
