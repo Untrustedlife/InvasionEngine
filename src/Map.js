@@ -47,6 +47,13 @@ export const gameStateObject = {
   floorColorFront: "",
   cielingColorBack: "",
   floorColorBack: "",
+  // Do not persist this map to localStorage.
+  // Useful for maps with toggleables (e.g., force fields) that should reset
+  // to their original on/off state when you re-enter.
+  // true  -> changes are not saved
+  // false -> changes persist to the map when you reenter
+  // the map through it being randomly picked after playing through all of them
+  dontPersist: false,
   //Changes fog/clip distance if you want something spooky
   sightDist: 15,
   //Maybe add fog color customization later
