@@ -56,7 +56,7 @@ export const gameStateObject = {
   dontPersist: false,
   //Changes fog/clip distance if you want something spooky
   sightDist: 15,
-  //Maybe add fog color customization later
+  //Fog colors can be changed through zones now. If you want the fog on the map to change.
   zones: [
     {
       color: "#101b2e",
