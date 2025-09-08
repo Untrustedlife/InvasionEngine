@@ -1,17 +1,23 @@
 //Main game loop and rendering orchestrator
 //Handles frame loop, wall/sprite rendering with z-buffer occlusion, HUD, and game state
 import { canvas } from "./Dom.js";
-import { FAR_PLANE, FOG_START_FRAC, START_HEALTH } from "./Constants.js";
+import {
+  FOG_START_FRAC,
+  START_HEALTH,
+  FAR_PLANE,
+  FOG_COLOR,
+} from "./Constants.js";
 import { ctx, WIDTH, HEIGHT, cMini, offscreen, vctx } from "./Dom.js";
 import { cameraBasis } from "./Camera.js";
 import {
   castWalls,
   zBuffer,
-  castFloors,
+  castFloor,
   castCieling,
   castHaze,
   SIMPLE_FLOOR_GRADIENT_CACHE,
   clearGradientCaches,
+  castFloorFog,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, bow, pitchfork, loadAsyncSprites } from "./Sprites.js";
@@ -31,7 +37,13 @@ import {
   updateBars,
 } from "./Gameplay.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
-import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
+import {
+  gameStateObject,
+  mapDefinitions,
+  EXIT_POS,
+  START_POS,
+  zoneIdAt,
+} from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
 import { updateVisualEffects, renderVisualEffects } from "./Effects.js";
 let last = performance.now();
@@ -46,6 +58,7 @@ export function tryCooldown(key, intervalMS) {
   coolDowns.set(key, now + intervalMS);
   return true;
 }
+const HALF_HEIGHT = HEIGHT >> 1;
 
 //Wire inputs
 wireInput(canvas);
@@ -99,6 +112,7 @@ export function ChangeMapLevel(specificLevel = -1) {
   START_POS.y = chosenMapDefinition.startPos.y;
 
   //Initialize game state with chosen map
+  player.sightDist = chosenMapDefinition.sightDist || FAR_PLANE;
   gameStateObject.cielingColorFront =
     chosenMapDefinition.cielingColorFront || "#6495ED";
   gameStateObject.floorColorFront =
@@ -214,7 +228,7 @@ function renderVisibleSprites(cameraTransform) {
     }
 
     //Skip sprites beyond far plane
-    if (FAR_PLANE > 0 && projection.depth > FAR_PLANE) {
+    if (player.sightDist > 0 && projection.depth > player.sightDist) {
       continue;
     }
 
@@ -234,14 +248,17 @@ function calculateSpriteShading(projection) {
   let spriteShade = 1 / (1 + projection.depth * 0.3);
 
   //Apply fog dimming for sprites near far plane
-  if (FAR_PLANE > 0 && projection.depth > FAR_PLANE * FOG_START_FRAC) {
-    const fogStartDistance = FAR_PLANE * FOG_START_FRAC;
+  if (
+    player.sightDist > 0 &&
+    projection.depth > player.sightDist * FOG_START_FRAC
+  ) {
+    const fogStartDistance = player.sightDist * FOG_START_FRAC;
     const fogLerpFactor = Math.min(
       1,
       Math.max(
         0,
         (projection.depth - fogStartDistance) /
-          Math.max(1e-6, FAR_PLANE - fogStartDistance)
+          Math.max(1e-6, player.sightDist - fogStartDistance)
       )
     );
     spriteShade *= 1 - fogLerpFactor * 0.6; //reduce brightness by up to 60% in fog

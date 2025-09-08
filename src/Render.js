@@ -2,16 +2,10 @@
 //Draws textured walls with distance shading and fills z-buffer for sprite occlusion
 //Could just add a sprite loader (all walls are 64x64)
 import { ctx, WIDTH, HEIGHT } from "./Dom.js";
-import {
-  NEAR,
-  PROJ_NEAR,
-  FAR_PLANE,
-  FOG_START_FRAC,
-  FOG_COLOR,
-} from "./Constants.js";
+import { NEAR, PROJ_NEAR, FOG_START_FRAC, FOG_COLOR } from "./Constants.js";
 import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
 import { player } from "./Player.js";
-import { gameStateObject } from "./Map.js";
+import { gameStateObject, getZoneBaseRgb, zoneIdAt } from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
@@ -350,9 +344,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       }
 
       //Far plane culling
-      if (FAR_PLANE > 0) {
+      if (player.sightDist > 0) {
         const approximateDistance = Math.min(sideDistanceX, sideDistanceY);
-        if (approximateDistance > FAR_PLANE) {
+        if (approximateDistance > player.sightDist) {
           wallHit = false;
           hitTextureId = 0;
           culledApproximateDistance = approximateDistance;
@@ -517,9 +511,12 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     );
 
     //Apply distance fog
-    if (FAR_PLANE > 0 && perpendicularDistance > FAR_PLANE * FOG_START_FRAC) {
-      const fogStartDistance = FAR_PLANE * FOG_START_FRAC;
-      const fogEndDistance = FAR_PLANE;
+    if (
+      player.sightDist > 0 &&
+      perpendicularDistance > player.sightDist * FOG_START_FRAC
+    ) {
+      const fogStartDistance = player.sightDist * FOG_START_FRAC;
+      const fogEndDistance = player.sightDist;
       const fogLerpFactor = Math.min(
         1,
         Math.max(

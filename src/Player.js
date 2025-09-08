@@ -15,6 +15,7 @@ export const player = {
   tenacity: 20,
   maxTenacity: 20,
   height: 0.75,
+  sightDist: 15,
   calculatePlayerHeight: () => {
     if (player.height < 0.01) {
       return 0.01;

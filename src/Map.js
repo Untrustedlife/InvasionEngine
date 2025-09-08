@@ -1,5 +1,22 @@
+import { FOG_COLOR } from "./Constants.js";
+import { hexToRgb } from "./UntrustedUtils.js";
 export const EXIT_POS = { x: 10, y: 8 };
 export const START_POS = { x: 3.5, y: 3.5 };
+
+//What a zone object looks like
+const referenceZones = [
+  {
+    color: "#271810",
+    x: 10,
+    y: 8,
+    w: 6,
+    h: 6,
+    cielingColorFront: "#271810",
+    cielingColorBack: "#271810",
+    floorColorBack: "#271810",
+    fogColor: "#000000",
+  },
+];
 
 export const gameStateObject = {
   MAP: [
@@ -30,7 +47,18 @@ export const gameStateObject = {
   floorColorFront: "",
   cielingColorBack: "",
   floorColorBack: "",
+  //Changes fog/clip distance if you want something spooky
+  sightDist: 15,
   //Maybe add fog color customization later
+  zones: [
+    {
+      color: "#101b2e",
+      x: 0,
+      y: 0,
+      w: 1,
+      h: 1,
+    },
+  ],
 };
 
 export const mapDefinitions = [
@@ -58,8 +86,49 @@ export const mapDefinitions = [
       [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
       [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
     ],
-    exitPos: { x: 10, y: 12 },
-    startPos: { x: 9.5, y: 1.5 },
+    exitPos: {
+      x: 10,
+      y: 12,
+    },
+    startPos: {
+      x: 9.5,
+      y: 1.5,
+    },
+    zones: [
+      {
+        color: "#101b2e",
+        x: 0,
+        y: 0,
+        w: 1,
+        h: 1,
+        cielingColorFront: "#271810",
+        cielingColorBack: "#271810",
+        floorColorBack: "#101b2e",
+        fogColor: "#101b2e",
+      },
+      {
+        color: "#8b8000",
+        x: 3,
+        y: 5,
+        w: 14,
+        h: 12,
+        cielingColorFront: "#8b8000",
+        cielingColorBack: "#000000",
+        floorColorBack: "#000000",
+        fogColor: "#000000",
+      },
+      {
+        color: "#054213",
+        x: 1,
+        y: 0,
+        w: 18,
+        h: 19,
+        cielingColorFront: "#6495ed",
+        cielingColorBack: "#6495ed",
+        floorColorBack: "#03210a",
+        fogColor: "#101b2e",
+      },
+    ],
   },
   {
     name: "TowerFloor1",
@@ -91,6 +160,15 @@ export const mapDefinitions = [
     floorColorFront: "#8B8000",
     cielingColorBack: "#000000",
     floorColorBack: "#000000",
+    zones: [
+      {
+        color: "#101b2e",
+        x: 0,
+        y: 0,
+        w: 1,
+        h: 1,
+      },
+    ],
   },
   {
     name: "Gallery",
@@ -202,6 +280,16 @@ export const mapDefinitions = [
     floorColorFront: "#8B8000",
     cielingColorBack: "#ECDE60",
     floorColorBack: "#000000",
+    sightDist: 10,
+    zones: [
+      {
+        color: "#101b2e",
+        x: 0,
+        y: 0,
+        w: 1,
+        h: 1,
+      },
+    ],
   },
   {
     name: "LongHallways",
@@ -367,12 +455,22 @@ export const mapDefinitions = [
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
       ],
     ],
+    sightDist: 10,
     exitPos: { x: 1, y: 1 },
     startPos: { x: 9.5, y: 3.5 },
     cielingColorFront: "#ECDE60",
     floorColorFront: "#8B8000",
     cielingColorBack: "#000000",
     floorColorBack: "#000000",
+    zones: [
+      {
+        color: "#101b2e",
+        x: 0,
+        y: 0,
+        w: 1,
+        h: 1,
+      },
+    ],
   },
 ];
 const zoneRgbCache = new Map();

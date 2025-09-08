@@ -22,7 +22,6 @@ import { isSolidTile, collide } from "./Collision.js";
 import { ChangeMapLevel, tryCooldown } from "./Main.js";
 import {
   ARROWS_FROM_QUIVER,
-  FAR_PLANE,
   HEALTH_FROM_FOOD,
   ENTITY_DAMAGE,
   MELEE_RANGE,
@@ -265,7 +264,7 @@ export function pickSpriteAtCenter(basis) {
     if (!p) {
       continue;
     }
-    if (FAR_PLANE > 0 && p.depth > FAR_PLANE) {
+    if (player.sightDist > 0 && p.depth > player.sightDist) {
       continue;
     }
     if (
