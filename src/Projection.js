@@ -62,6 +62,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
   sprite._hR = roundedSpriteHeight;
 
   const finalSpriteHeight = roundedSpriteHeight;
+
   const spriteImage = sprite.img;
   const aspectRatio =
     spriteImage && spriteImage.width && spriteImage.height
@@ -73,16 +74,14 @@ export function projectSprite(sprite, cameraBasisVectors) {
   );
 
   //Calculate floor bias for ground sprites based on size and scale
-  const relativeSizeFactor = finalSpriteHeight / HEIGHT;
-  // Use the same constants the walls use
-  const proj = HEIGHT; // matches projectHeight = HEIGHT / cameraSpaceY
-  const EYE = player.calculatePlayerHeight(); // <-- match wall formula exactly
-  const horizon = HEIGHT * 0.5; // add + proj*Math.tan(pitch) if you implement pitch
+  //Use the same constants the walls use
+  const proj = HEIGHT; //matches projectHeight = HEIGHT / cameraSpaceY
+  const EYE = player.calculatePlayerHeight(); //match wall formula exactly
+  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if we implement pitch
 
   let startY, endY;
-
   if (sprite.ground) {
-    // Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
+    //Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
     const bias = sprite.floorBiasFrac ?? 0.04;
     const bottomY =
       horizon + (EYE * proj) / cameraSpaceY - bias * finalSpriteHeight;
@@ -97,7 +96,6 @@ export function projectSprite(sprite, cameraBasisVectors) {
   }
 
   const verticalPosition = { startY, endY };
-
   const drawStartX = Math.round(screenCenterPixelX - (finalSpriteWidth >> 1));
   const drawEndX = drawStartX + finalSpriteWidth;
 
@@ -111,7 +109,6 @@ export function projectSprite(sprite, cameraBasisVectors) {
     width: drawEndX - drawStartX,
   };
 }
-
 //Debug helpers
 export function debugDrawFloorAndHorizonLines(g) {
   g.save();

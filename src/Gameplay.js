@@ -22,7 +22,6 @@ import { isSolidTile, collide } from "./Collision.js";
 import { ChangeMapLevel, tryCooldown } from "./Main.js";
 import {
   ARROWS_FROM_QUIVER,
-  FAR_PLANE,
   HEALTH_FROM_FOOD,
   ENTITY_DAMAGE,
   MELEE_RANGE,
@@ -79,7 +78,7 @@ export function move(dt) {
   const run = keys.has("ShiftLeft") || keys.has("ShiftRight");
   const rot = player.rotSpeed * dt;
 
-  // CHANGED: only one dt for integration
+  //CHANGED: only one dt for integration
   const accel = player.accel * dt;
 
   const dirX = Math.cos(player.a);
@@ -102,7 +101,7 @@ export function move(dt) {
   player.velX -= player.velX * friction * dt;
   player.velY -= player.velY * friction * dt;
 
-  // snap tiny velocities after damping
+  //snap tiny velocities after damping
   if (Math.abs(player.velX) < 0.002) {
     player.velX = 0.0;
   }
@@ -153,7 +152,7 @@ export function move(dt) {
     player.velY *= MAX_SPEED / newSpeed;
   }
 
-  //Apply velocity * dt after everything else to compute tentative position (for collisions)
+  //Apply velocity * dt after everything else to compute position (for collisions)
   const nx = player.x + player.velX * dt,
     ny = player.y + player.velY * dt;
 
@@ -265,7 +264,7 @@ export function pickSpriteAtCenter(basis) {
     if (!p) {
       continue;
     }
-    if (FAR_PLANE > 0 && p.depth > FAR_PLANE) {
+    if (player.sightDist > 0 && p.depth > player.sightDist) {
       continue;
     }
     if (

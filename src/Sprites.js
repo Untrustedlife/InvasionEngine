@@ -76,9 +76,9 @@ async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
     img.onload = () => {
       const canvas = new OffscreenCanvas(img.width * scale, img.height * scale);
       const ctx = canvas.getContext("2d");
-      ctx.imageSmoothingEnabled = false; // Pixel-perfect scaling
+      ctx.imageSmoothingEnabled = false; //Pixel-perfect scaling
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      // Set properties like existing sprites
+      //Set properties like existing sprites
       canvas.baseline = baselineFraction;
       canvas.scale = scale;
       resolve(canvas);

@@ -79,7 +79,7 @@ export function nearestIndexInAscendingOrder(arr, value) {
       hi = mid - 1;
     }
   }
-  // lo is the insertion point, hi = lo - 1
+  //lo is the insertion point, hi = lo - 1
   return value - arr[hi] <= arr[lo] - value ? hi : lo;
 }
 
@@ -101,7 +101,7 @@ export function hexToRgb(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 export function rgbToCss(r, g, b) {
-  // clamp + fast ints
+  //clamp + fast ints
   r = r < 0 ? 0 : r > 255 ? 255 : r | 0;
   g = g < 0 ? 0 : g > 255 ? 255 : g | 0;
   b = b < 0 ? 0 : b > 255 ? 255 : b | 0;

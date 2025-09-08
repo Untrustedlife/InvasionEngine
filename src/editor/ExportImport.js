@@ -15,11 +15,6 @@ export class ExportImport {
    * Export JavaScript code in the new map format with name, mapLayout, exitPos, and startPos
    */
   exportJS() {
-    const mapConstantName = (
-      this.editor.elements.io.parentElement.querySelector("#jsMapName")
-        ?.value || "MAP"
-    ).replace(/\W+/g, "_");
-
     const mapDisplayName =
       this.editor.elements.mapNameInput?.value || "Untitled";
 
@@ -27,36 +22,24 @@ export class ExportImport {
     let playerStartPosition = null;
     let exitPosition = null;
 
-    //Search for special tiles and record their positions
-    for (let mapRowIndex = 0; mapRowIndex < this.editor.height; mapRowIndex++) {
-      for (
-        let mapColumnIndex = 0;
-        mapColumnIndex < this.editor.width;
-        mapColumnIndex++
-      ) {
-        const currentTileId = this.editor.map[mapRowIndex][mapColumnIndex];
-        if (currentTileId === SPECIAL_TILES.PLAYER_START) {
-          playerStartPosition = {
-            x: mapColumnIndex + 0.5,
-            y: mapRowIndex + 0.5,
-          };
-        } else if (currentTileId === SPECIAL_TILES.PLAYER_EXIT) {
-          exitPosition = { x: mapColumnIndex, y: mapRowIndex };
+    for (let r = 0; r < this.editor.height; r++) {
+      for (let c = 0; c < this.editor.width; c++) {
+        const id = this.editor.map[r][c];
+        if (id === SPECIAL_TILES.PLAYER_START) {
+          playerStartPosition = { x: c + 0.5, y: r + 0.5 };
+        } else if (id === SPECIAL_TILES.PLAYER_EXIT) {
+          exitPosition = { x: c, y: r };
         }
       }
     }
 
-    //Create cleaned map layout (remove special tiles, replace with empty)
+    //(remove special tiles)
     const cleanedMap = this.editor.map.map((row) =>
-      row.map((tileId) => {
-        if (
-          tileId === SPECIAL_TILES.PLAYER_START ||
-          tileId === SPECIAL_TILES.PLAYER_EXIT
-        ) {
-          return 0; //Replace with empty tile
-        }
-        return tileId;
-      })
+      row.map((id) =>
+        id === SPECIAL_TILES.PLAYER_START || id === SPECIAL_TILES.PLAYER_EXIT
+          ? 0
+          : id
+      )
     );
 
     //Default positions if not found
@@ -67,17 +50,34 @@ export class ExportImport {
       exitPosition = { x: 10, y: 8 };
     }
 
-    //Generate the new map format
-    const mapObject = `export const ${mapConstantName} = {
-  name: "${mapDisplayName}",
-  mapLayout: [
-${cleanedMap.map((row) => `    [${row.join(", ")}]`).join(",\n")}
-  ],
-  exitPos: { x: ${exitPosition.x}, y: ${exitPosition.y} },
-  startPos: { x: ${playerStartPosition.x}, y: ${playerStartPosition.y} },
-};`;
+    //zones
+    const zones = this.editor.zoneManager
+      ? this.editor.zoneManager.exportZones()
+      : [];
 
-    this.editor.elements.io.value = `${mapObject}\n`;
+    const normalizedZones = zones.map((z) => ({
+      color: z.color ?? "#101b2e",
+      x: z.x ?? 0,
+      y: z.y ?? 0,
+      w: z.w ?? 0,
+      h: z.h ?? 0,
+      cielingColorFront: z.cielingColorFront ?? "",
+      cielingColorBack: z.cielingColorBack ?? "",
+      floorColorBack: z.floorColorBack ?? "",
+      fogColor: z.fogColor ?? "",
+    }));
+
+    const payload = {
+      name: mapDisplayName,
+      mapLayout: cleanedMap,
+      exitPos: exitPosition,
+      startPos: playerStartPosition,
+      ...(normalizedZones.length ? { zones: normalizedZones } : {}),
+    };
+
+    const js = `${JSON.stringify(payload, null, 2)};\n`;
+
+    this.editor.elements.io.value = js;
   }
 
   /**
@@ -218,8 +218,8 @@ ${cleanedMap.map((row) => `    [${row.join(", ")}]`).join(",\n")}
       typeof mapDataObject.startPos.x === "number" &&
       typeof mapDataObject.startPos.y === "number"
     ) {
-      const playerStartX = Math.floor(mapDataObject.startPos.x);
-      const playerStartY = Math.floor(mapDataObject.startPos.y);
+      const playerStartX = mapDataObject.startPos.x | 0;
+      const playerStartY = mapDataObject.startPos.y | 0;
       if (
         playerStartX >= 0 &&
         playerStartX < this.editor.width &&
@@ -262,6 +262,15 @@ ${cleanedMap.map((row) => `    [${row.join(", ")}]`).join(",\n")}
     //Import tile definitions if provided
     if (mapDataObject.tiles && Array.isArray(mapDataObject.tiles)) {
       this.editor.tileManager.updateTiles(mapDataObject.tiles);
+    }
+
+    //Import zones if provided and zone manager exists
+    if (
+      mapDataObject.zones &&
+      Array.isArray(mapDataObject.zones) &&
+      this.editor.zoneManager
+    ) {
+      this.editor.zoneManager.importZones(mapDataObject.zones);
     }
 
     //Re-render the editor with imported data

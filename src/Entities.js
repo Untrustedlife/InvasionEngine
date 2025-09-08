@@ -180,7 +180,7 @@ export const ENTITY_BEHAVIOR = {
       SFX.pickup();
     },
   },
-  // ...
+  //...
   [entityTypes.key]: {
     onTouch(entity) {
       entity.alive = false;
@@ -214,12 +214,12 @@ export function spawnEntity(
   overrides = undefined
 ) {
   const tpl = ENTITY_TEMPLATES[id];
-  const proto = ENTITY_BEHAVIOR[id]; // shared methods
+  const proto = ENTITY_BEHAVIOR[id]; //shared methods
 
-  // Allocate an instance whose prototype is the behavior object
+  //Allocate an instance whose prototype is the behavior object
   const e = Object.assign(Object.create(proto), tpl);
 
-  // Minimal mutable state (copy only what changes)
+  //Minimal mutable state (copy only what changes)
   e.id = nextId++;
   e.x = position.x;
   e.y = position.y;
@@ -252,7 +252,7 @@ export function spawnEntity(
 }
 
 export function splashDamage(x, y, r) {
-  // Create visual effect for the explosion radius
+  //Create visual effect for the explosion radius
   createExplosionEffect(x, y, r);
   for (const s of sprites) {
     if (!s.alive) {

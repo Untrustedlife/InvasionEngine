@@ -178,7 +178,9 @@ export function createWordPressProofPopup(options = {}) {
       e.stopPropagation(); //STOP. JUST STOP.
 
       if (buttonClicked) {
-        console.warn("Button click ignored (flood protection saved your ass)");
+        console.warn(
+          "Button click ignored (flood protection saved your buttocks)"
+        );
         return; //NOPE. ONE CLICK ONLY.
       }
 
@@ -249,10 +251,10 @@ export function showTerminalError(message, returnUrl = "../index.html") {
 //
 //Custom popup:
 //const cleanup = createWordPressProofPopup({
-//  title: "WHATEVER",
-//  message: "Something broke again",
-//  buttonText: "FIX IT",
-//  onConfirm: () => { console.log("At least something works"); }
+//title: "WHATEVER",
+//message: "Something broke again",
+//buttonText: "FIX IT",
+//onConfirm: () => { console.log("At least something works"); }
 //});
 //
 //Always call cleanup when done :D
