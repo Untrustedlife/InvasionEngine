@@ -187,19 +187,8 @@ export function fire() {
     return;
   }
 
-  switch (hit.type) {
-    case "arrows":
-      hit.alive = false;
-      player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
-      updateBars();
-      addMsg(`Arrows +${ARROWS_FROM_QUIVER}`);
-      SFX.pickup();
-      break;
-    default:
-      if (hit.onHit) {
-        hit.onHit(hit, true);
-      }
-      break;
+  if (hit.onHit) {
+    hit.onHit(hit, true);
   }
 }
 
@@ -212,19 +201,8 @@ export function autoPickup() {
     if (d >= 0.6) {
       continue;
     }
-    switch (s.type) {
-      case "arrows":
-        s.alive = false;
-        player.ammo = Math.min(60, player.ammo + ARROWS_FROM_QUIVER);
-        updateBars();
-        SFX.pickup();
-        addMsg(`Arrows +${ARROWS_FROM_QUIVER}`);
-        break;
-      default:
-        if (s.onTouch) {
-          s.onTouch(s);
-        }
-        break;
+    if (s.onTouch) {
+      s.onTouch(s);
     }
   }
 }
@@ -338,7 +316,6 @@ export function buildForcefieldRing() {
 
 export function placeSprites() {
   sprites.length = 0;
-
   if (rollDice(100) < 50) {
     for (let i = 0; i < rollDice(2) * ((gameStateObject.MAP_H / 20) | 0); i++) {
       const t = randomEmptyTile(1.0);
@@ -357,32 +334,6 @@ export function placeSprites() {
 
   t = randomEmptyTile(4.0);
   sprites.push(spawnEntity(entityTypes.food, { x: t.x + 0.5, y: t.y + 0.5 }));
-
-  //SPawn arrow quivers
-  for (
-    let i = 0;
-    i < 1 + ((wave / 3) | 0) * ((gameStateObject.MAP_H / 20) | 0);
-    i++
-  ) {
-    if (
-      (i <= 1 && rollDice(100) < 50) ||
-      (i < 1 && player.ammo <= 0 && rollDice(100) < 80) ||
-      rollDice(100) < 25
-    ) {
-      const at = randomEmptyTile(3.0);
-      sprites.push({
-        x: at.x + 0.5,
-        y: at.y + 0.5,
-        img: arrowQuiver,
-        type: "arrows",
-        alive: true,
-        dist: 0,
-        ground: true,
-        scale: 0.25,
-        floorBiasFrac: 0.04,
-      });
-    }
-  }
 
   //Spawn enemies
   const wolfCount = Math.min(
