@@ -98,7 +98,7 @@ export function ChangeMapLevel(specificLevel = -1) {
         : mapDef;
     }
   } else {
-    const mapDef = getRandomElementFromArray(mapDefinitions);
+    const mapDef = chooseRandomElementFromArray(mapDefinitions);
     if (mapDef) {
       chosenMapDefinition = mapDef.dontPersist
         ? JSON.parse(JSON.stringify(mapDef))
