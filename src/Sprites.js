@@ -89,7 +89,7 @@ async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
   });
 }
 
-export let bow, wolfIdle, arrowQuiver, keycard1, food, barrel, pitchfork;
+export let bow, wolfIdle, keycard1, food, barrel, pitchfork;
 
 //We could maybe make some kind of asset lookup table for this later insetad of it all being defined as variables
 export async function loadAsyncSprites() {
@@ -136,73 +136,12 @@ export async function loadAsyncSprites() {
     4
   );
 
-  barrel = makeSprite(
-    `
-  ............
-  ....bbbb....
-  ..bbGGGGbb..
-  .bssssssssb.
-  .bGGgGGgGGb.
-  .bssssssssb.
-  .bGgGGGGgGb.
-  .bssssssssb.
-  .bGGgGGgGGb.
-  .bssssssssb.
-  .bGgGGGGgGb.
-  .bssssssssb.
-  .bGGgGGgGGb.
-  .bssssssssb.
-  .bGGgGGgGGb.
-  .bssssssssb.
-  ..bbGGGGbb..
-  ....bbbb....
-  ............
-  ............
-  `,
-    {
-      k: "#0a0f10",
-      g: "#FA5053",
-      G: "#CD1C18",
-      s: "#950606",
-      b: "#0e1620",
-    },
-    3
-  );
-  arrowQuiver = makeSprite(
-    `
-  ............r...
-  ............rr..
-  ...........w..r.
-  .......sb.w...rr
-  .......bdw...w..
-  .......sfd..w...
-  ......sfffdw....
-  .....sfffffdb...
-  ....sfbffffss...
-  ...sfbfbffs.....
-  ..sfbfbfbs......
-  .sfbfbfbs.......
-  .sffbfbs........
-  ..sffbs.........
-  ...sss..........
-  ................
-  `,
-    {
-      b: "#100904", //Darker leather/border brown
-      d: "#8f715b",
-      f: "#5a3b1a", //Leather
-      r: "#DC143C", //Red fletching
-      s: "#000000", //Silver arrowhead
-      w: "#4d260a", //Brown wood
-    },
-    3
-  );
-
   //Image sprites
   food = await makeSpriteLoad("noodles.png", 3);
   bow = await makeSpriteLoad("bow.png", 3);
   pitchfork = await makeSpriteLoad("pitchfork.png", 3);
   keycard1 = await makeSpriteLoad("keycard1.png", 3);
+  barrel = await makeSpriteLoad("emp.png", 3);
 }
 //Runtime list of active sprites (enemies, pickups, effects)
 export const sprites = [];

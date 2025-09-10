@@ -28,7 +28,7 @@ import {
   WEAPON_COOLDOWN,
   MAX_SPEED,
 } from "./Constants.js";
-import { sprites, wolfIdle, barrel, arrowQuiver, bow } from "./Sprites.js";
+import { sprites, wolfIdle, barrel, bow } from "./Sprites.js";
 import { entityTypes, spawnEntity } from "./Entities.js";
 
 //Used so that you are forced to play through all levels before it randomizes
@@ -336,8 +336,7 @@ export function buildForcefieldRing() {
   }
 }
 
-export function placeSprites(assets) {
-  const { arrowQuiver } = assets;
+export function placeSprites() {
   sprites.length = 0;
 
   if (rollDice(100) < 50) {
@@ -587,8 +586,7 @@ export function resetLevel(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { arrowQuiver };
-  placeSprites(assets);
+  placeSprites();
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
 }
@@ -608,8 +606,7 @@ export function resetLevelInOrder(changeMap = false) {
   player.hasBlueKey = false;
   gameStateObject.MAP[EXIT_POS.y][EXIT_POS.x] = 5;
   buildForcefieldRing();
-  const assets = { arrowQuiver };
-  placeSprites(assets);
+  placeSprites();
   updateBars();
   addMsg(`Floor ${wave}: Find the keycard.`);
 }
