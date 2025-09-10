@@ -23,6 +23,7 @@ We might be bale to move the object definitiosn for each type to their own type 
 Then we could also move functions out of "gameplay" and into these files so we don't need to export them.
 
 */
+import { aiDrone1, aiDrone2, aiDrone3, barrel, sprites, food, keycard1 } from "./Sprites.js";
 
 //#region TYPES
 export const entityTypes = Object.freeze({
@@ -38,6 +39,8 @@ export const ENTITY_TEMPLATES = {
     ground: true,
     scale: 0.66,
     floorBiasFrac: 0.2,
+    animationTime: 0.0,
+    animationFrame: 0,
   },
   [entityTypes.barrel]: {
     type: entityTypes.barrel,
@@ -86,11 +89,33 @@ export const ENTITY_BEHAVIOR = {
       if (!entity.alive) {
         return;
       }
+      //walk animation
+      entity.animationTime += dt;
+      if(entity.animationTime > 0.2){
+	entity.animationTime -= 0.2;
+	entity.animationFrame +=1;
+	entity.animationFrame %= 4;
+      }
+      switch(entity.animationFrame){
+	case 0:
+          entity.img = aiDrone1;
+	  break;
+	case 1:
+          entity.img = aiDrone2;
+	  break;
+	case 2:
+          entity.img = aiDrone3;
+	  break;
+	case 3:
+          entity.img = aiDrone2;
+	  break;
+      }
+
       const dx = player.x - entity.x;
       const dy = player.y - entity.y;
       const dist = Math.hypot(dx, dy);
       if (dist > 0.3) {
-        const sp = 1.25 * dt;
+        const sp = 1.5 * dt;
         const ux = dx / dist;
         const uy = dy / dist;
         const nx = entity.x + ux * sp;
@@ -206,7 +231,6 @@ for (const k in ENTITY_BEHAVIOR) {
 //#endregion
 //Id as entityType
 let nextId = 0;
-import { wolfIdle, barrel, sprites, food, keycard1 } from "./Sprites.js";
 
 export function spawnEntity(
   id,
@@ -227,12 +251,9 @@ export function spawnEntity(
   e.alive = true;
   e.hurtCD = 0;
 
-  //This is messy but i can't come up with anything better rn due to how asynchronous loading works
-  //Could maybe do a promise system but that seems like overkill
-  //Maybe later if we have more entities
   switch (id) {
     case entityTypes.entity:
-      e.img = wolfIdle;
+      e.img = aiDrone1;
       break;
     case entityTypes.barrel:
       e.img = barrel;
