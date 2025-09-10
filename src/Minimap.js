@@ -79,8 +79,6 @@ export function drawMinimap(sprites) {
         ? "#6aa2ff"
         : s.type === entityTypes.food
         ? "#7fffd4"
-        : s.type === "arrows"
-        ? "#ffffff"
         : "#ffffff";
 
     mctx.fillRect(sx - 2, sy - 2, 4, 4);
