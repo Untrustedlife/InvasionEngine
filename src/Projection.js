@@ -91,8 +91,8 @@ export function projectSprite(sprite, cameraBasisVectors) {
     endY = Math.round(bottomY);
   } else {
     const topY = Math.round(horizon - finalSpriteHeight * 0.5);
-    startY = Math.max(0, topY);
-    endY = Math.min(HEIGHT, topY + finalSpriteHeight);
+    startY = topY
+    endY = topY + finalSpriteHeight;
   }
 
   const verticalPosition = { startY, endY };

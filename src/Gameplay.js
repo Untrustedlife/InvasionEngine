@@ -346,6 +346,11 @@ export function placeSprites() {
       spawnEntity(entityTypes.entity, { x: t.x + 0.5, y: t.y + 0.5 })
     );
   }
+
+  t = randomEmptyTile(4.0);
+  sprites.push(spawnEntity(entityTypes.ball, {x: t.x + 0.5, y: t.y + 0.5}));
+  t = randomEmptyTile(4.0);
+  sprites.push(spawnEntity(entityTypes.sparkle, {x: t.x + 0.5, y: t.y + 0.5}));
 }
 
 export function updateBars() {

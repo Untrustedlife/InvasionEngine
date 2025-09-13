@@ -23,11 +23,23 @@ We might be bale to move the object definitiosn for each type to their own type 
 Then we could also move functions out of "gameplay" and into these files so we don't need to export them.
 
 */
-import { aiDrone1, aiDrone2, aiDrone3, barrel, sprites, food, keycard1 } from "./Sprites.js";
+import {
+  aiDrone1,
+  aiDrone2,
+  aiDrone3,
+  barrel,
+  sprites,
+  food,
+  keycard1,
+  ball,
+  sparkle,
+} from "./Sprites.js";
 
 //#region TYPES
 export const entityTypes = Object.freeze({
   entity: "entity",
+  ball: "ball",
+  sparkle: "sparkle",
   barrel: "barrel",
   food: "food",
   key: "key",
@@ -41,6 +53,21 @@ export const ENTITY_TEMPLATES = {
     floorBiasFrac: 0.2,
     animationTime: 0.0,
     animationFrame: 0,
+  },
+  [entityTypes.ball]: {
+    type: entityTypes.ball,
+    ground: false,
+    scale: 0.75,
+    floorBiasFrac: 0.2,
+    spark1: null,
+    spark2: null,
+    spark3: null,
+  },
+  [entityTypes.sparkle]: {
+    type: entityTypes.sparkle,
+    ground: false,
+    scale: 0.75,
+    floorBiasFrac: 0.2,
   },
   [entityTypes.barrel]: {
     type: entityTypes.barrel,
@@ -83,6 +110,10 @@ import { tryCooldown } from "./Main.js";
 import { createExplosionEffect, createFlashScreenEffect } from "./Effects.js";
 import { clamp } from "./Utils.js";
 export const ENTITY_BEHAVIOR = {
+  [entityTypes.ball]: {
+  },
+  [entityTypes.sparkle]: {
+  },
   //Entity
   [entityTypes.entity]: {
     ai(entity, dt) {
@@ -254,6 +285,12 @@ export function spawnEntity(
   switch (id) {
     case entityTypes.entity:
       e.img = aiDrone1;
+      break;
+    case entityTypes.ball:
+      e.img = ball;
+      break;
+    case entityTypes.sparkle:
+      e.img = sparkle;
       break;
     case entityTypes.barrel:
       e.img = barrel;
