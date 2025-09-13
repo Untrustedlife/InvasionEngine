@@ -49,7 +49,14 @@ import { updateVisualEffects, renderVisualEffects } from "./Effects.js";
 let last = performance.now();
 
 const coolDowns = new Map();
-export function tryCooldown(key, intervalMS) {
+export function tryCooldown(key, intervalMS = 0) {
+  if (intervalMS === 0) {
+    if (last < coolDowns.get(key)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
   const now = last,
     next = coolDowns.get(key) ?? 0;
   if (now < next) {
@@ -58,6 +65,11 @@ export function tryCooldown(key, intervalMS) {
   coolDowns.set(key, now + intervalMS);
   return true;
 }
+
+export function resetCooldown(key) {
+  coolDowns.set(key, performance.now());
+}
+
 const HALF_HEIGHT = HEIGHT >> 1;
 
 //Wire inputs
