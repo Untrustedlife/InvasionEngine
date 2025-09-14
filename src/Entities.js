@@ -35,15 +35,8 @@ import {
   sparkle,
 } from "./Sprites.js";
 
+import { entityTypes } from "./both/SharedConstants.js";
 //#region TYPES
-export const entityTypes = Object.freeze({
-  entity: "entity",
-  ball: "ball",
-  sparkle: "sparkle",
-  barrel: "barrel",
-  food: "food",
-  key: "key",
-});
 
 export const ENTITY_TEMPLATES = {
   [entityTypes.entity]: {
@@ -110,10 +103,8 @@ import { tryCooldown } from "./Main.js";
 import { createExplosionEffect, createFlashScreenEffect } from "./Effects.js";
 import { clamp } from "./Utils.js";
 export const ENTITY_BEHAVIOR = {
-  [entityTypes.ball]: {
-  },
-  [entityTypes.sparkle]: {
-  },
+  [entityTypes.ball]: {},
+  [entityTypes.sparkle]: {},
   //Entity
   [entityTypes.entity]: {
     ai(entity, dt) {
@@ -122,24 +113,24 @@ export const ENTITY_BEHAVIOR = {
       }
       //walk animation
       entity.animationTime += dt;
-      if(entity.animationTime > 0.2){
-	entity.animationTime -= 0.2;
-	entity.animationFrame +=1;
-	entity.animationFrame %= 4;
+      if (entity.animationTime > 0.2) {
+        entity.animationTime -= 0.2;
+        entity.animationFrame += 1;
+        entity.animationFrame %= 4;
       }
-      switch(entity.animationFrame){
-	case 0:
+      switch (entity.animationFrame) {
+        case 0:
           entity.img = aiDrone1;
-	  break;
-	case 1:
+          break;
+        case 1:
           entity.img = aiDrone2;
-	  break;
-	case 2:
+          break;
+        case 2:
           entity.img = aiDrone3;
-	  break;
-	case 3:
+          break;
+        case 3:
           entity.img = aiDrone2;
-	  break;
+          break;
       }
 
       const dx = player.x - entity.x;

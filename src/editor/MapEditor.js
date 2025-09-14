@@ -18,6 +18,7 @@ import { ExportImport } from "./ExportImport.js";
 import { ZoneManager } from "./ZoneManager.js";
 import { ZoneRenderer } from "./ZoneRenderer.js";
 
+import { entityTypes } from "../both/SharedConstants.js";
 export class MapEditor {
   constructor() {
     console.log("In editor code");
@@ -538,6 +539,8 @@ export class MapEditor {
       this.elements.tilePanel.style.display = "none";
       this.elements.zonePanel.style.display = "block";
       this.elements.zoneMiniPanel.style.display = "none";
+      //Initialize spawn rules UI when switching to zone mode
+      this.initSpawnRulesUI();
     } else {
       this.elements.tilePanel.style.display = "block";
       this.elements.zonePanel.style.display = "none";
@@ -620,10 +623,10 @@ export class MapEditor {
 
     //Update layer panel
     this.updateZoneLayerPanel();
-
     const selectedZone = this.zoneManager.getSelectedZone();
 
     if (selectedZone) {
+      this.updateSpawnRulesDisplay();
       this.elements.noZoneSelected.style.display = "none";
       this.elements.zoneEditor.style.display = "block";
 
@@ -653,7 +656,6 @@ export class MapEditor {
     if (!this.zoneManager || this.currentMode !== "zone") {
       return;
     }
-
     const zoneDisplayInfo = this.zoneManager.getZoneDisplayInfo();
     this.elements.zoneLayerList.innerHTML = "";
 
@@ -800,7 +802,111 @@ export class MapEditor {
       this.updateZoneLayerPanel();
     }
   }
+
+  //#region Entity Stuff
+  initSpawnRulesUI() {
+    this.updateSpawnRuleEntityDropdown();
+
+    //Remove existing event listeners to prevent duplicates
+    const addBtn = document.getElementById("addSpawnRuleBtn");
+    const spawnRulesList = document.getElementById("spawnRulesList");
+
+    if (addBtn && !addBtn.hasAttribute("data-listener-added")) {
+      addBtn.addEventListener("click", (e) => this.addSpawnRule(e));
+      addBtn.setAttribute("data-listener-added", "true");
+    }
+
+    //Add event delegation for delete buttons
+    if (spawnRulesList && !spawnRulesList.hasAttribute("data-listener-added")) {
+      spawnRulesList.addEventListener("click", (e) => {
+        if (e.target.classList.contains("spawn-rule-delete")) {
+          const index = parseInt(e.target.getAttribute("data-index"));
+          this.removeSpawnRule(index);
+        }
+      });
+      spawnRulesList.setAttribute("data-listener-added", "true");
+    }
+  }
+
+  updateSpawnRuleEntityDropdown() {
+    const entitySelect = document.getElementById("spawnRuleEntity");
+    entitySelect.innerHTML = "";
+    Object.values(entityTypes).forEach((type) => {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type.toUpperCase();
+      entitySelect.appendChild(option);
+    });
+  }
+
+  addSpawnRule(e) {
+    e.preventDefault();
+    if (!this.zoneManager || this.currentMode !== "zone") {
+      return;
+    }
+    const selectedZone = this.zoneManager.getSelectedZone();
+    if (!selectedZone) {
+      return;
+    }
+    const entityType = document.getElementById("spawnRuleEntity").value;
+    const amount = parseInt(document.getElementById("spawnRuleAmount").value);
+    if (!selectedZone.spawnRules) {
+      selectedZone.spawnRules = [];
+    }
+
+    selectedZone.spawnRules.push({
+      entityType,
+      amount,
+    });
+
+    this.updateSpawnRulesDisplay();
+  }
+
+  updateSpawnRulesDisplay() {
+    if (!this.zoneManager || this.currentMode !== "zone") {
+      return;
+    }
+    const selectedZone = this.zoneManager.getSelectedZone();
+    const container = document.getElementById("spawnRulesList");
+
+    container.innerHTML = "";
+
+    if (
+      !selectedZone ||
+      !selectedZone.spawnRules ||
+      selectedZone.spawnRules.length === 0
+    ) {
+      container.innerHTML =
+        '<div class="terminal-text">No spawn rules defined</div>';
+      return;
+    }
+
+    selectedZone.spawnRules.forEach((rule, index) => {
+      const ruleDiv = document.createElement("div");
+      ruleDiv.className = "spawn-rule-item";
+      ruleDiv.innerHTML = `
+      <span class="spawn-rule-info">
+        ENTITY: ${rule.entityType.toUpperCase()} x${rule.amount}
+      </span>
+      <button class="spawn-rule-delete" data-index="${index}">×</button>
+    `;
+      container.appendChild(ruleDiv);
+    });
+  }
+
+  removeSpawnRule(index) {
+    if (!this.zoneManager || this.currentMode !== "zone") {
+      return;
+    }
+    const selectedZone = this.zoneManager.getSelectedZone();
+    if (selectedZone && selectedZone.spawnRules) {
+      selectedZone.spawnRules.splice(index, 1);
+      this.updateSpawnRulesDisplay();
+    }
+  }
+  //#endregion
 }
+
 //#region Start Editor
 new MapEditor();
 //#endregion

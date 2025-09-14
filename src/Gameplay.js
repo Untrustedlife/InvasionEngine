@@ -29,8 +29,8 @@ import {
   MAX_SPEED,
 } from "./Constants.js";
 import { sprites, wolfIdle, barrel, bow } from "./Sprites.js";
-import { entityTypes, spawnEntity } from "./Entities.js";
-
+import { spawnEntity } from "./Entities.js";
+import { entityTypes } from "./both/SharedConstants.js";
 //Used so that you are forced to play through all levels before it randomizes
 let order = 0;
 export const keys = new Set();
@@ -348,9 +348,11 @@ export function placeSprites() {
   }
 
   t = randomEmptyTile(4.0);
-  sprites.push(spawnEntity(entityTypes.ball, {x: t.x + 0.5, y: t.y + 0.5}));
+  sprites.push(spawnEntity(entityTypes.ball, { x: t.x + 0.5, y: t.y + 0.5 }));
   t = randomEmptyTile(4.0);
-  sprites.push(spawnEntity(entityTypes.sparkle, {x: t.x + 0.5, y: t.y + 0.5}));
+  sprites.push(
+    spawnEntity(entityTypes.sparkle, { x: t.x + 0.5, y: t.y + 0.5 })
+  );
 }
 
 export function updateBars() {

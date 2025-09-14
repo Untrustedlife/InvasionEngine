@@ -5,7 +5,7 @@ import { cMini, mctx } from "./Dom.js";
 import { player } from "./Player.js";
 import { TAU } from "./Utils.js";
 import { gameStateObject } from "./Map.js";
-import { entityTypes } from "./Entities.js";
+import { entityTypes } from "./both/SharedConstants.js";
 //Draw minimap: tiles -> sprites -> player (draw order matters)
 export function drawMinimap(sprites) {
   mctx.clearRect(0, 0, cMini.width, cMini.height);

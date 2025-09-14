@@ -43,6 +43,7 @@ export class ZoneManager {
       w: Math.abs(w),
       h: Math.abs(h),
       ...this.defaultZone,
+      spawnRules: [],
     };
 
     const insertIndex = this.zones.length > 0 ? 1 : 0;
@@ -419,6 +420,7 @@ export class ZoneManager {
       cielingColorBack: zone.cielingColorBack,
       floorColorBack: zone.floorColorBack,
       fogColor: zone.fogColor,
+      spawnRules: zone.spawnRules,
     }));
     if (zones.length === 0 || zones[0].color !== "#101b2e") {
       zones.unshift({
@@ -455,6 +457,9 @@ export class ZoneManager {
           floorColorBack:
             zoneData.floorColorBack || this.defaultZone.floorColorBack,
           fogColor: zoneData.fogColor || this.defaultZone.fogColor,
+          spawnRules: Array.isArray(zoneData.spawnRules)
+            ? zoneData.spawnRules
+            : [],
         };
         this.zones.push(zone);
       });
@@ -517,7 +522,7 @@ export class ZoneManager {
     return this.zones.map((zone, index) => ({
       id: zone.id,
       index,
-      priority: index + 1, //Display as if it is 1-based
+      priority: index + 1, //Display as 1-based
       name: `Zone ${zone.id} (${zone.x},${zone.y} - ${zone.w}x${zone.h})`,
       color: zone.color,
       bounds: `${zone.x},${zone.y} - ${zone.w}x${zone.h}`,

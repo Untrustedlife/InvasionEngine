@@ -144,15 +144,40 @@
                     <input id="zoneFogColor" type="color" value="#000000" />
                   </div>
                 </div>
+                <div class="section-header">SPAWN RULES</div>
+                <div id="spawnRulesContainer">
+                  <div id="spawnRulesList" class="spawn-rules-list">
+                    <!-- Spawn rules will be populated here -->
+                  </div>
 
+                  <div class="add-spawn-rule-section">
+                    <div class="control-row">
+                      <div class="control-group">
+                        <label>ENTITY</label>
+                        <select id="spawnRuleEntity">
+                          <!-- Populated by JavaScript -->
+                        </select>
+                      </div>
+                      <div class="control-group">
+                        <label>AMOUNT</label>
+                        <input
+                          id="spawnRuleAmount"
+                          type="number"
+                          min="1"
+                          max="99"
+                          value="1"
+                        />
+                      </div>
+                      <button id="addSpawnRuleBtn">ADD RULE</button>
+                    </div>
+                  </div>
+                </div>
                 <div class="button-row">
                   <button id="deleteZoneBtn" class="danger-btn">
                     DELETE ZONE
                   </button>
                 </div>
-              </div>
             </div>
-
             <div class="terminal-text">
               > Left-click: Create/Select zones > Right-click: Delete zone >
               Drag corners/edges to resize

@@ -18,7 +18,7 @@ export class ExportImport {
     const mapDisplayName =
       this.editor.elements.mapNameInput?.value || "Untitled";
 
-    //Find player start and exit positions
+    //--- scan for special tiles ---
     let playerStartPosition = null;
     let exitPosition = null;
 
@@ -42,7 +42,7 @@ export class ExportImport {
       )
     );
 
-    //Default positions if not found
+    //--- sensible defaults if not found ---
     if (!playerStartPosition) {
       playerStartPosition = { x: 3.5, y: 3.5 };
     }
@@ -50,7 +50,7 @@ export class ExportImport {
       exitPosition = { x: 10, y: 8 };
     }
 
-    //zones
+    //--- zones ---
     const zones = this.editor.zoneManager
       ? this.editor.zoneManager.exportZones()
       : [];
@@ -65,6 +65,7 @@ export class ExportImport {
       cielingColorBack: z.cielingColorBack ?? "",
       floorColorBack: z.floorColorBack ?? "",
       fogColor: z.fogColor ?? "",
+      spawnRules: Array.isArray(z.spawnRules) ? z.spawnRules : [],
     }));
 
     const payload = {
