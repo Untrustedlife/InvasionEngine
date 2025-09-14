@@ -178,8 +178,6 @@ export function castFloor(
     return;
   }
 
-  const zones = gameStateObject.zones;
-
   //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
