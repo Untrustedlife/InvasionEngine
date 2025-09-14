@@ -304,6 +304,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       rayDirectionY > -1e-8
     ) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
+      wallBottomY[screenColumnX] = 0;
       continue;
     }
 
@@ -392,6 +393,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     //Skip if no wall hit within range
     if (hitTextureId === 0) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
+      wallBottomY[screenColumnX] = 0;
       continue;
     }
 
@@ -486,6 +488,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       drawEndY = HEIGHT;
     }
     const visibleHeight = drawEndY - drawStartY;
+    wallBottomY[screenColumnX] = drawEndY;
     if (visibleHeight <= 0) {
       zBuffer[screenColumnX] = perpendicularDistance;
       continue;
@@ -508,8 +511,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (hitTextureId === 7) {
       shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
     }
-
-    wallBottomY[screenColumnX] = drawEndY;
 
     //Draw wall column using fast canvas method
     drawWallColumnImg(
