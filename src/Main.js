@@ -18,6 +18,7 @@ import {
   SIMPLE_FLOOR_GRADIENT_CACHE,
   clearGradientCaches,
   castFloorFog,
+  cacheZoneIdAtGrid,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, bow, pitchfork, loadAsyncSprites } from "./Sprites.js";
@@ -35,6 +36,7 @@ import {
   resetLevel,
   placeSprites,
   updateBars,
+  buildEmptyTilesOnce,
 } from "./Gameplay.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import {
@@ -133,13 +135,15 @@ export function ChangeMapLevel(specificLevel = -1) {
     chosenMapDefinition.cielingColorBack || "#6495ED";
   gameStateObject.floorColorBack =
     chosenMapDefinition.floorColorBack || "#03210A";
-  //Clear zone and gradient caches when switching maps/levels
-  clearGradientCaches();
 
   gameStateObject.MAP = chosenMapDefinition.mapLayout;
   gameStateObject.MAP_W = gameStateObject.MAP[0].length;
   gameStateObject.MAP_H = gameStateObject.MAP.length;
   gameStateObject.zones = chosenMapDefinition.zones;
+
+  buildEmptyTilesOnce();
+  clearGradientCaches();
+  cacheZoneIdAtGrid();
   player.x = player.x = chosenMapDefinition.startPos.x;
   player.y = chosenMapDefinition.startPos.y;
 }

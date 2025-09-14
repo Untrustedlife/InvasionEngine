@@ -16,7 +16,13 @@ import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
 import { zBuffer } from "./Render.js";
 import { projectSprite } from "./Projection.js";
-import { gameStateObject, EXIT_POS, START_POS, mapDefinitions } from "./Map.js";
+import {
+  gameStateObject,
+  EXIT_POS,
+  START_POS,
+  mapDefinitions,
+  zoneIdAt,
+} from "./Map.js";
 import { player, collisionRadius, wave, setWave } from "./Player.js";
 import { isSolidTile, collide } from "./Collision.js";
 import { ChangeMapLevel, tryCooldown } from "./Main.js";
@@ -277,6 +283,49 @@ export function randomEmptyTile(minDist = 2.0) {
   return { x: 9, y: 9 };
 }
 
+//zoneId -> [{x,y}, ...] of NON-solid tiles inside that zone's rect
+const emptyTilesByZone = new Map();
+
+//Build once when the level loads (or call whenever we update the level)
+export function buildEmptyTilesOnce() {
+  emptyTilesByZone.clear();
+  const { MAP_W: W, MAP_H: H, MAP, zones } = gameStateObject;
+  for (let zoneId = 0; zoneId < zones.length; zoneId++) {
+    const z = zones[zoneId];
+    const x0r = Math.min(z.x, z.x + z.w);
+    const x1r = Math.max(z.x, z.x + z.w) - 1; //inclusive
+    const y0r = Math.min(z.y, z.y + z.h);
+    const y1r = Math.max(z.y, z.y + z.h) - 1; //inclusive
+    const x0 = clamp(x0r, 0, W - 1);
+    const x1 = clamp(x1r, 0, W - 1);
+    const y0 = clamp(y0r, 0, H - 1);
+    const y1 = clamp(y1r, 0, H - 1);
+    const list = [];
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        if (!isSolidTile(x, y)) {
+          list.push({ x, y });
+        }
+      }
+    }
+    emptyTilesByZone.set(zoneId, list);
+  }
+
+  //console.log("Built empty tiles for zones:", emptyTilesByZone);
+}
+
+export function randomEmptyTileInZone(zoneId) {
+  const arr = emptyTilesByZone.get(zoneId);
+  if (!arr || arr.length === 0) {
+    return null;
+  }
+  return getRandomElementFromArray(arr);
+}
+
+export function onTileChanged() {
+  buildEmptyTilesOnce();
+}
+
 export function openForcefieldRing() {
   const ex = EXIT_POS.x,
     ey = EXIT_POS.y;
@@ -353,6 +402,24 @@ export function placeSprites() {
   sprites.push(
     spawnEntity(entityTypes.sparkle, { x: t.x + 0.5, y: t.y + 0.5 })
   );
+
+  gameStateObject.zones.forEach((zone, idx) => {
+    const zoneId = idx;
+    const rules = zone.spawnRules;
+
+    rules?.forEach((rule) => {
+      const amount = Math.max(0, rule.amount | 0);
+      for (let n = 0; n < amount; n++) {
+        const t = randomEmptyTileInZone(zoneId);
+        if (!t) {
+          break;
+        }
+        sprites.push(
+          spawnEntity(rule.entityType, { x: t.x + 0.5, y: t.y + 0.5 })
+        );
+      }
+    });
+  });
 }
 
 export function updateBars() {

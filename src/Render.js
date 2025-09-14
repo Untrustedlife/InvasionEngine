@@ -10,7 +10,7 @@ import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
 export const HALF_HEIGHT = HEIGHT >> 1; //Bitwise shift is faster than division by 2
-
+const wallBottomY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
 //Distance from camera to each screen row (used for floor projection)
 //This keeps floors and walls aligned at any playerHeight without hacks.
 const ROW_DIST = new Float32Array(HEIGHT);
@@ -29,6 +29,7 @@ export const CEILING_GRADIENT_CACHE = [];
 export const FLOOR_FOG_GRADIENT_CACHE = [];
 export const HAZE_GRADIENT_CACHE = [];
 export const SIMPLE_FLOOR_GRADIENT_CACHE = [];
+export const ZONE_GRID_CACHE = [];
 
 //Clear all gradient caches (called when switching maps)
 export function clearGradientCaches() {
@@ -149,6 +150,18 @@ function zoneCss(zoneId) {
   return c;
 }
 
+export function cacheZoneIdAtGrid() {
+  ZONE_GRID_CACHE.length = 0;
+  const zones = gameStateObject.zones;
+  const MAP_W = gameStateObject.MAP_W;
+  const MAP_H = gameStateObject.MAP_H;
+  for (let iy = 0; iy < MAP_H; iy++) {
+    for (let ix = 0; ix < MAP_W; ix++) {
+      ZONE_GRID_CACHE[iy * MAP_W + ix] = zoneIdAt(ix, iy, zones);
+    }
+  }
+}
+
 //this might end up being less efficient then a scanline approach but also does no overdraw.
 //so i might rewrite later, for now this works.
 export function castFloor(
@@ -158,7 +171,7 @@ export function castFloor(
   fromY = 0
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
-
+  fromY = wallBottomY[screenColumnX] ?? 0;
   //never draw above the horizon
   const startY = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
   if (startY >= HEIGHT) {
@@ -199,7 +212,7 @@ export function castFloor(
         iy >= 0 &&
         ix < gameStateObject.MAP_W &&
         iy < gameStateObject.MAP_H
-          ? zoneIdAt(ix, iy, zones)
+          ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
           : 0;
     }
 
@@ -495,6 +508,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (hitTextureId === 7) {
       shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
     }
+
+    wallBottomY[screenColumnX] = drawEndY;
 
     //Draw wall column using fast canvas method
     drawWallColumnImg(
