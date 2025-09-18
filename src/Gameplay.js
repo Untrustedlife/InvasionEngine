@@ -40,7 +40,6 @@ import { entityTypes } from "./both/SharedConstants.js";
 //Used so that you are forced to play through all levels before it randomizes
 let order = 0;
 export const keys = new Set();
-let dragging = false;
 let lastMouseX = 0;
 let exitPending = false; //debounce exit transitions
 
@@ -57,25 +56,108 @@ export function wireInput(canvas) {
       e.preventDefault();
       cMini.classList.toggle("visible");
     }
+
+    if (e.code === "Enter") {
+      const mouseLookEnabled =
+        !!document.pointerLockElement ||
+        !!document.mozPointerLockElement ||
+        !!document.webkitPointerLockElement;
+
+      if (!mouseLookEnabled) {
+        if (canvas.requestPointerLock) {
+          canvas.requestPointerLock();
+        } else if (canvas.mozRequestPointerLock) {
+          canvas.mozRequestPointerLock();
+        } else if (canvas.webkitRequestPointerLock) {
+          canvas.webkitRequestPointerLock();
+        }
+      } else {
+        if (document.exitPointerLock) {
+          document.exitPointerLock();
+        } else if (document.mozExitPointerLock) {
+          document.mozExitPointerLock();
+        } else if (document.webkitExitPointerLock) {
+          document.webkitExitPointerLock();
+        }
+      }
+    }
+
+    if (e.code === "Escape") {
+      if (document.exitPointerLock) {
+        document.exitPointerLock();
+      } else if (document.mozExitPointerLock) {
+        document.mozExitPointerLock();
+      } else if (document.webkitExitPointerLock) {
+        document.webkitExitPointerLock();
+      }
+    }
+
+    if (e.code === "BracketLeft") {
+      // [ key - decrease
+      switch (player.mouseSensitivity) {
+        case 0.33:
+          addMsg(`Mouse sensitivity set to high.`);
+          player.mouseSensitivity = 0.22;
+          break;
+        case 0.22:
+          addMsg(`Mouse sensitivity set to medium.`);
+          player.mouseSensitivity = 0.11;
+          break;
+        case 0.11:
+          addMsg(`Mouse sensitivity set to low.`);
+          player.mouseSensitivity = 0.05;
+          break;
+        case 0.05:
+          addMsg(`Mouse sensitivity already lowest.`);
+          player.mouseSensitivity = 0.05;
+          break;
+      }
+    }
+
+    if (e.code === "BracketRight") {
+      // ] key - increase
+      switch (player.mouseSensitivity) {
+        case 0.33:
+          addMsg(`Mouse sensitivity already set to highest.`);
+          player.mouseSensitivity = 0.33;
+          break;
+        case 0.22:
+          addMsg(`Mouse sensitivity set to highest.`);
+          player.mouseSensitivity = 0.33;
+          break;
+        case 0.11:
+          addMsg(`Mouse sensitivity set to high.`);
+          player.mouseSensitivity = 0.22;
+          break;
+        case 0.05:
+          addMsg(`Mouse sensitivity set to medium.`);
+          player.mouseSensitivity = 0.11;
+          break;
+      }
+    }
   });
   window.addEventListener("keyup", (e) => keys.delete(e.code));
   canvas.addEventListener("mousedown", (e) => {
     if (e.button === 0) {
       fire();
     }
-    dragging = true;
     lastMouseX = e.clientX;
     resumeAudio();
     ensureShooterMusic();
   });
-  window.addEventListener("mouseup", () => (dragging = false));
-  window.addEventListener("mousemove", (e) => {
-    if (dragging) {
-      const dx = e.clientX - lastMouseX;
-      lastMouseX = e.clientX;
-      player.a += dx * 0.0035;
+
+  canvas.addEventListener("mousemove", (e) => {
+    const mouseLookEnabled =
+      !!document.pointerLockElement ||
+      !!document.mozPointerLockElement ||
+      !!document.webkitPointerLockElement;
+    if (mouseLookEnabled) {
+      // e.movementX and e.movementY are the delta since last event
+      const deltaX = e.movementX * Math.PI * (0.015 * player.mouseSensitivity);
+      player.a += deltaX;
     }
   });
+
   btnReset.onclick = () => hardReset();
   btnToggleMap.onclick = () => cMini.classList.toggle("visible");
 }

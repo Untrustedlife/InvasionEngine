@@ -162,8 +162,6 @@ export function cacheZoneIdAtGrid() {
   }
 }
 
-//this might end up being less efficient then a scanline approach but also does no overdraw.
-//so i might rewrite later, for now this works.
 export function castFloor(
   nowSec,
   cameraBasisVectors,
