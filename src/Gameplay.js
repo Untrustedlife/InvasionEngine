@@ -480,10 +480,6 @@ export function placeSprites() {
 
   t = randomEmptyTile(4.0);
   sprites.push(spawnEntity(entityTypes.ball, { x: t.x + 0.5, y: t.y + 0.5 }));
-  t = randomEmptyTile(4.0);
-  sprites.push(
-    spawnEntity(entityTypes.sparkle, { x: t.x + 0.5, y: t.y + 0.5 })
-  );
 
   gameStateObject.zones.forEach((zone, idx) => {
     const zoneId = idx;
