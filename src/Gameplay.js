@@ -401,7 +401,7 @@ export function randomEmptyTileInZone(zoneId) {
   if (!arr || arr.length === 0) {
     return null;
   }
-  return getRandomElementFromArray(arr);
+  return chooseRandomElementFromArray(arr);
 }
 
 export function onTileChanged() {

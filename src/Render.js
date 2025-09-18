@@ -209,7 +209,7 @@ export function castFloor(
         ix < gameStateObject.MAP_W &&
         iy < gameStateObject.MAP_H
           ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
-          : 0;
+          : 0 ?? 0;
     }
 
     if (zoneId !== lastZone) {
