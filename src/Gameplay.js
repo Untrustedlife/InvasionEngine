@@ -524,8 +524,20 @@ export function addMsg(text) {
   if (!items) {
     return;
   }
+  const first = items.firstElementChild;
+  if (first) {
+    const html = first.innerHTML;
+    const m = html.match(/^(.*?)(?:\s+x(\d+))?$/);
+    const base = m ? m[1] : html;
+    const count = m && m[2] ? parseInt(m[2]) : 1;
+    if (base === text) {
+      const newCount = m && m[2] ? count + 1 : 2;
+      first.innerHTML = `${text} x${newCount}`;
+      return;
+    }
+  }
   const line = document.createElement("div");
-  line.textContent = text;
+  line.innerHTML = text;
   items.prepend(line);
 
   //Auto-scroll only when expanded
