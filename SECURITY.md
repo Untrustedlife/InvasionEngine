@@ -7,4 +7,4 @@ ALL
 
 ## Reporting a Vulnerability
 
-Report vulnerabilitie svia creating an **issue**
+Report vulnerabilities via creating an **issue**
