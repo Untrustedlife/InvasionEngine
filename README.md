@@ -1,7 +1,7 @@
 Play the currently deployed sample game "Aniachronism" here:
 https://untrustedlife.github.io/BackroomsTower
 
-Invasion Engine is a professionally professionally developed, open-source raycaster game engine that runs and embeds directly in your browser. Without utilizing WebGL.
+Invasion Engine is a professionally developed, open-source raycaster game engine that runs and embeds directly in your browser. Without utilizing WebGL.
 
 Built at first in collaboration with WildRose then fully taken over by Untrustedlife and powered by an engine developed by Untrustedlife as the foundation.
 
