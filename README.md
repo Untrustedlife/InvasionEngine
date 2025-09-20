@@ -1,7 +1,7 @@
 Play the currently deployed version here.
 https://untrustedlife.github.io/BackroomsTower
 
-A professionally developed, open-source roguelike raycaster you can play right in your browser, featuring liminal space exploration.
+A professionally developed, open-source raycaster engine you can play a sample gam eof right in your browser.
 
 Built at first in collaboration with WildRose then fully taken over by Untrustedlife and powered by an engine developed by Untrustedlife as the foundation.
 
