@@ -5,27 +5,8 @@ import { cMini, mctx } from "./Dom.js";
 import { player } from "./Player.js";
 import { TAU } from "./Utils.js";
 import { gameStateObject } from "./Map.js";
-import { entityTypes } from "./both/SharedConstants.js";
+import { spriteColorMap, colorMap } from "./SampleGame/MiniMapConstants.js";
 //Draw minimap: tiles -> sprites -> player (draw order matters)
-
-const colorMap = {
-  0: "#0c1220", //empty/floor
-  1: "#ECDE60", //wallpaper
-  2: "#707a88", //Gray stone (blue-gray)
-  3: "#00e676", //Hedges
-  4: "#996633", //Impassible door
-  5: "#FFE300", //exit portal
-  6: " #3561ff", //blue door (passable)
-  7: "#00FFFF", //flesh
-};
-const spriteColorMap = {
-  [entityTypes.entity]: "#ffeb9c",
-  [entityTypes.barrel]: "#CD1C18",
-  [entityTypes.key]: "#6aa2ff",
-  [entityTypes.food]: "#7fffd4",
-  default: `#ffffff`,
-};
-
 const SCALE = 6; //pixels per tile
 const VIEW = 20; //tiles shown per side
 const PAD = 2; //border
