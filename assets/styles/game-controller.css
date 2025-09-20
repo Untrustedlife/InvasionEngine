@@ -289,6 +289,12 @@ header {
   box-shadow: 0 0 10px rgba(0, 255, 0, 0.3) !important;
 }
 
+.helpCollapse {
+  border: 1px solid var(--nodeos-color);
+  background: #000;
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+}
 /* ===========================================
    GAME OVER TERMINAL POPUP - Soul Disconnected
    =========================================== */
