@@ -7,13 +7,34 @@ import { TAU } from "./Utils.js";
 import { gameStateObject } from "./Map.js";
 import { entityTypes } from "./both/SharedConstants.js";
 //Draw minimap: tiles -> sprites -> player (draw order matters)
+
+const colorMap = {
+  0: "#0c1220", //empty/floor
+  1: "#ECDE60", //wallpaper
+  2: "#707a88", //Gray stone (blue-gray)
+  3: "#00e676", //Hedges
+  4: "#996633", //Impassible door
+  5: "#FFE300", //exit portal
+  6: " #3561ff", //blue door (passable)
+  7: "#00FFFF", //flesh
+};
+const spriteColorMap = {
+  [entityTypes.entity]: "#ffeb9c",
+  [entityTypes.barrel]: "#CD1C18",
+  [entityTypes.key]: "#6aa2ff",
+  [entityTypes.food]: "#7fffd4",
+  default: `#ffffff`,
+};
+
+const SCALE = 6; // pixels per tile
+const VIEW = 20; // tiles shown per side
+const PAD = 2; // border
+const HALF = Math.floor(VIEW / 2);
+cMini.width = PAD + VIEW * SCALE + PAD;
+cMini.height = PAD + VIEW * SCALE + PAD;
+
 export function drawMinimap(sprites) {
   mctx.clearRect(0, 0, cMini.width, cMini.height);
-
-  const SCALE = 6; //pixels per tile
-  const VIEW = 20; //tiles shown per side
-  const PAD = 2; //border
-  const HALF = Math.floor(VIEW / 2);
   //Fast floor since these can't be negative AFAIK
   const startX = Math.max(
     0,
@@ -23,68 +44,31 @@ export function drawMinimap(sprites) {
     0,
     Math.min((player.y | 0) - HALF, gameStateObject.MAP_H - VIEW)
   );
-  cMini.width = PAD + VIEW * SCALE + PAD;
-  cMini.height = PAD + VIEW * SCALE + PAD;
   //Draw map tiles with material-based colors
   for (let y = 0; y < VIEW; y++) {
     for (let x = 0; x < VIEW; x++) {
       const mapY = startY + y;
       const mapX = startX + x;
-      //Safe lookup (treat OOB as empty)
+      // Safe lookup (treat OOB as empty)
       const cell = gameStateObject.MAP[mapY]?.[mapX] ?? 0;
-
-      let color = "#0c1220"; //empty/floor
-      if (cell === 1) {
-        color = "#ECDE60"; //wallpaper
-      } //brick (red)
-      else if (cell === 2) {
-        color = "#707a88";
-      } //Gray stone (blue-gray)
-      else if (cell === 3) {
-        color = "#00e676";
-      } //Hedges
-      else if (cell === 4) {
-        color = "#996633";
-      } //Impassible door
-      else if (cell === 5) {
-        color = "#FFE300";
-      } //exit portal
-      else if (cell === 6) {
-        color = " #3561ff";
-      } //blue door (passable)
-      else if (cell === 7) {
-        color = "#00FFFF";
-      } //forcefield
-
+      const color = colorMap[cell] || "#000000"; //default to black if unknown
       mctx.fillStyle = color;
-      mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px padding between tiles
+      mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px gutters
     }
   }
 
-  //Sprites
+  // Sprites (relative to same window)
   for (const s of sprites) {
     if (!s.alive) {
       continue;
     }
     const sx = PAD + (s.x - startX) * SCALE;
     const sy = PAD + (s.y - startY) * SCALE;
-
-    //If we create "main" sprite objects we should add tehse to them so we dont need a weird if statement
-    mctx.fillStyle =
-      s.type === entityTypes.entity
-        ? "#ffeb9c"
-        : s.type === entityTypes.barrel
-        ? "#CD1C18"
-        : s.type === entityTypes.key
-        ? "#6aa2ff"
-        : s.type === entityTypes.food
-        ? "#7fffd4"
-        : "#ffffff";
-
+    mctx.fillStyle = spriteColorMap[s.type] || spriteColorMap.default;
     mctx.fillRect(sx - 2, sy - 2, 4, 4);
   }
 
-  //Player (same origin)
+  // Player (same origin)
   const px = PAD + (player.x - startX) * SCALE;
   const py = PAD + (player.y - startY) * SCALE;
 

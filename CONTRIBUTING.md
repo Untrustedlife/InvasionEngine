@@ -24,7 +24,7 @@ Address any feedback, if needed.
 
 Follow the project’s existing coding conventions.
 
-Write clear commit messages. 
+Write clear commit messages.
 
 Document your code well using jsdoc.
 
@@ -34,9 +34,12 @@ Feel free to open issues for bugs or suggestions.
 
 Be clear and concise in your issue description.
 
+Do not remove old engine features as this is meant to be a reusable engine
+and all code that is useful in other games should stay around. To be reused in future games.
+
 **License**
 
 By contributing, you agree that your contributions will be licensed under GPL V3
 
 Note:
-Direct commits to master by anyone other than **Untrustedlife** or **Wildrose** *will* be reverted. And i dont car eif you whine about it.
+Direct commits to master by anyone other than **Untrustedlife** or **Wildrose** _will_ be reverted. And i dont car eif you whine about it.

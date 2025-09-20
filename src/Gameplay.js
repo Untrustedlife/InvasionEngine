@@ -420,6 +420,8 @@ export function openForcefieldRing() {
   }
 }
 
+//Keep this aorund as this is an engine feature,
+// and i dont want good code to be lost as people are meant to make more games out of our engine.
 export function removeAllFlesh() {
   const w = gameStateObject.MAP_W,
     h = gameStateObject.MAP_H;

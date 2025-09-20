@@ -310,6 +310,9 @@ export const ENTITY_BEHAVIOR = {
       updateBars();
       SFX.pickup();
     },
+    onExplode(entity) {
+      //The noods are immune to explosions
+    },
   },
   //...
   [entityTypes.key]: {

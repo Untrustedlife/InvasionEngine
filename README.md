@@ -3,7 +3,7 @@ https://untrustedlife.github.io/BackroomsTower
 
 A professionally developed, open-source roguelike raycaster you can play right in your browser, featuring liminal space exploration.
 
-Built in collaboration with WildRose and powered by an engine developed by Untrustedlife as the foundation.
+Built at first in collaboration with WildRose then fully taken over by Untrustedlife and powered by an engine developed by Untrustedlife as the foundation.
 
 This version has already diverged a lot from the original:
 
@@ -68,10 +68,10 @@ _Best practice, not strictly necessary, but easy to add when switching major ver
 
 For cache-busting, we add version numbers to all JS, CSS, or other file references in the HTML, like this:
 
-- `main.css?v=1.2`
-- `script.js?v=1.2`
+- `main.css?v=1.3`
+- `script.js?v=1.3`
 
-The browser treats `main.css?v=1.1` and `main.css?v=1.2` as different files.  
+The browser treats `main.css?v=1.1` and `main.css?v=1.3` as different files.  
 So when we update the version number, users are forced to download the updated file the next time they load the game.
 
 _This isn’t strictly required, and was mainly used as a safeguard for players who visited before proper `<head>` tags were added._
