@@ -1,10 +1,11 @@
 /*
-Why not use a polymorphic class hierarchy here?
+Core Entity System - Engine Level
 
-In a typical engine I might model mobs/items with classes and inheritance.
-But in plain JavaScript (no TS types), class trees are harder to maintain,
-serialize, and extend. This file sticks to a faster, more data-driven approach:
+This file contains the core entity system architecture that is game-agnostic.
+The specific entity types and behaviors are now defined in the SampleGame folder
+and imported to keep engine and game code separated.
 
+Architecture:
 - ENTITY_TEMPLATES: immutable per-type data (sprite, scale, flags, etc.)
 - ENTITY_BEHAVIOR: shared methods per type (ai/onHit/onTouch) on a prototype
 - spawnEntity(): creates a tiny instance via Object.create(proto) and copies
@@ -16,328 +17,22 @@ Benefits:
 - Safe (templates are frozen; no accidental shared state)
 - Easy save/load (store {id, type, x, y, hp…} + relink behavior on load)
 - Easy to debug (plain objects; no complex inheritance chains)
-If we ever move to TypeScript, we can layer interfaces/types/classes on top of this.
-
-Edit:
-We might be bale to move the object definitiosn for each type to their own type associated file and just ...type for each one. 
-Then we could also move functions out of "gameplay" and into these files so we don't need to export them.
-
 */
+
+import { createExplosionEffect } from "./Effects.js";
+import { sprites } from "./Sprites.js";
+
+// Import game-specific definitions
 import {
-  aiDrone1,
-  aiDrone2,
-  aiDrone3,
-  barrel,
-  sprites,
-  food,
-  keycard1,
-  ball,
-  sparkle,
-} from "./Sprites.js";
+  GAME_ENTITY_TEMPLATES,
+  GAME_ENTITY_BEHAVIOR,
+  retrieveEntitySprite,
+  setEntityCallbacks,
+} from "./SampleGame/EntityDefinitions.js";
 
-import { entityTypes } from "./both/SharedConstants.js";
-//#region TYPES
-
-export const ENTITY_TEMPLATES = {
-  [entityTypes.entity]: {
-    type: entityTypes.entity,
-    ground: true,
-    scale: 0.66,
-    floorBiasFrac: 0.2,
-    animationTime: 0.0,
-    animationFrame: 0,
-  },
-  [entityTypes.ball]: {
-    type: entityTypes.ball,
-    ground: false,
-    scale: 0.75,
-    floorBiasFrac: 0.2,
-    cooldownTime: 0.5,
-    health: 3,
-  },
-  [entityTypes.sparkle]: {
-    type: entityTypes.sparkle,
-    ground: false,
-    scale: 0.75,
-    floorBiasFrac: 0.2,
-    cooldownTime: 3,
-  },
-  [entityTypes.barrel]: {
-    type: entityTypes.barrel,
-    ground: true,
-    scale: 0.66,
-    floorBiasFrac: 0.04,
-  },
-  [entityTypes.food]: {
-    type: entityTypes.food,
-    ground: true,
-    scale: 0.25,
-    floorBiasFrac: 0.04,
-  },
-  [entityTypes.key]: {
-    type: entityTypes.key,
-    ground: true,
-    scale: 0.25,
-    floorBiasFrac: 0.04,
-  },
-};
-Object.freeze(ENTITY_TEMPLATES);
-for (const k in ENTITY_TEMPLATES) {
-  Object.freeze(ENTITY_TEMPLATES[k]);
-}
-
-//#endregion
-//#region BEHAVIOR
-import { isSolidTile, collide } from "./Collision.js";
-import { player, wave } from "./Player.js";
-import {
-  updateBars,
-  addMsg,
-  checkGameOver,
-  removeAllFlesh,
-} from "./Gameplay.js";
-import { SFX } from "./Audio.js";
-import { ENTITY_DAMAGE, HEALTH_FROM_FOOD } from "./Constants.js";
-import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
-import { tryCooldown } from "./Main.js";
-import { createExplosionEffect, createFlashScreenEffect } from "./Effects.js";
-import { clamp } from "./Utils.js";
-export const ENTITY_BEHAVIOR = {
-  [entityTypes.ball]: {
-    ai(entity, dt) {
-      if (!entity.alive) {
-        return;
-      }
-      entity.cooldownTime -= dt;
-      if (entity.cooldownTime <= 0) {
-        entity.cooldownTime = 0.5;
-        sprites.push(
-          spawnEntity(entityTypes.sparkle, {
-            x: entity.x,
-            y: entity.y,
-          })
-        );
-      }
-
-      const dx = player.x - entity.x;
-      const dy = player.y - entity.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 0.3) {
-        const sp = 1 * dt;
-        const ux = dx / dist;
-        const uy = dy / dist;
-        const nx = entity.x + ux * sp;
-        const ny = entity.y + uy * sp;
-
-        if (!collide(nx, entity.y, 0.4)) {
-          entity.x = nx;
-        }
-        if (!collide(entity.x, ny, 0.4)) {
-          entity.y = ny;
-        }
-      }
-      if (dist < 0.6 && entity.hurtCD <= 0) {
-        player.health = Math.max(0, player.health - ENTITY_DAMAGE) | 0;
-
-        updateBars();
-        addMsg("Ball attacks!");
-        SFX.hurt();
-        entity.hurtCD = 0.8;
-        createFlashScreenEffect({ color: "	#740707", duration: 0.5 });
-        checkGameOver();
-      }
-      if (entity.hurtCD > 0) {
-        entity.hurtCD -= dt;
-      }
-    },
-    onHit(entity, fired) {
-      if (fired) {
-        if (entity.health > 1) {
-          let murderMessages = ["Ball Hit!"];
-          addMsg(chooseRandomElementFromArray(murderMessages));
-          entity.health -= 1;
-          SFX.killedEntity();
-        } else {
-          entity.alive = false;
-          let murderMessages = ["Ball Busted!"];
-          addMsg(chooseRandomElementFromArray(murderMessages));
-          SFX.killedEntity();
-        }
-      } else {
-        addMsg("No arrows.");
-      }
-    },
-    onTouch(entity) {
-      if (tryCooldown(entityTypes.entity, 10000)) {
-        addMsg("You hear something like echoes nearby...");
-      }
-    },
-    onExplode(entity) {
-      entity.alive = false;
-      SFX.killedEntity();
-      addMsg("The ball is blown to bits.");
-    },
-  },
-  [entityTypes.sparkle]: {
-    ai(entity, dt) {
-      if (!entity.alive) {
-        return;
-      }
-
-      entity.cooldownTime -= dt;
-      if (entity.cooldownTime <= 0) {
-        entity.alive = false;
-      }
-    },
-  },
-  //Entity
-  [entityTypes.entity]: {
-    ai(entity, dt) {
-      if (!entity.alive) {
-        return;
-      }
-      //walk animation
-      entity.animationTime += dt;
-      if (entity.animationTime > 0.2) {
-        entity.animationTime -= 0.2;
-        entity.animationFrame += 1;
-        entity.animationFrame %= 4;
-      }
-      switch (entity.animationFrame) {
-        case 0:
-          entity.img = aiDrone1;
-          break;
-        case 1:
-          entity.img = aiDrone2;
-          break;
-        case 2:
-          entity.img = aiDrone3;
-          break;
-        case 3:
-          entity.img = aiDrone2;
-          break;
-      }
-      const dx = player.x - entity.x;
-      const dy = player.y - entity.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 0.3) {
-        const sp = 1.5 * dt;
-        const ux = dx / dist;
-        const uy = dy / dist;
-        const nx = entity.x + ux * sp;
-        const ny = entity.y + uy * sp;
-        if (!collide(nx, entity.y, 0.4)) {
-          entity.x = nx;
-        }
-        if (!collide(entity.x, ny, 0.4)) {
-          entity.y = ny;
-        }
-      }
-      if (dist < 0.6 && entity.hurtCD <= 0) {
-        player.health = Math.max(0, player.health - ENTITY_DAMAGE) | 0;
-
-        updateBars();
-        addMsg("Entity attacks!");
-        SFX.hurt();
-        entity.hurtCD = 0.8;
-        createFlashScreenEffect({ color: "	#740707", duration: 0.5 });
-        checkGameOver();
-      }
-      if (entity.hurtCD > 0) {
-        entity.hurtCD -= dt;
-      }
-    },
-    onHit(entity, fired) {
-      if (fired) {
-        entity.alive = false;
-        let murderMessages = [
-          "Entity murdered!",
-          "Entity destroyed!",
-          "Entity purged!",
-        ];
-        addMsg(chooseRandomElementFromArray(murderMessages));
-        SFX.killedEntity();
-      } else {
-        addMsg("No arrows.");
-      }
-    },
-    onTouch(entity) {
-      if (tryCooldown(entityTypes.entity, 10000)) {
-        addMsg("You hear something like water nearby...");
-      }
-    },
-    onExplode(entity) {
-      entity.alive = false;
-      SFX.killedEntity();
-      addMsg("The entity is blown to gibs.");
-    },
-  },
-  //Barrel
-  [entityTypes.barrel]: {
-    onHit(entity, fired) {
-      if (fired) {
-        entity.alive = false;
-        splashDamage(entity.x, entity.y, 2.5);
-        addMsg("Kaboom!");
-        SFX.explode();
-      } else {
-        addMsg("No arrows.");
-      }
-    },
-    onTouch(entity) {
-      if (tryCooldown(entityTypes.barrel, 10000)) {
-        addMsg("Shooting this barrel may yield useful results...");
-      }
-    },
-    onExplode(entity) {
-      entity.alive = false;
-      splashDamage(entity.x, entity.y, 2.5);
-    },
-  },
-  [entityTypes.food]: {
-    onTouch(entity) {
-      entity.alive = false;
-      const wasMax = player.health >= player.maxHealth;
-      if (wasMax) {
-        player.maxHealth += 1;
-      }
-      player.health = clamp(
-        player.health + HEALTH_FROM_FOOD,
-        0,
-        player.maxHealth
-      );
-      addMsg(wasMax ? "Yummy!" : "Health restored.");
-      updateBars();
-      SFX.pickup();
-    },
-    onExplode(entity) {
-      //The noods are immune to explosions
-    },
-  },
-  //...
-  [entityTypes.key]: {
-    onTouch(entity) {
-      entity.alive = false;
-      player.hasBlueKey = true;
-      SFX.door();
-      addMsg("Keycard found! Find the exit!");
-      removeAllFlesh();
-    },
-    onExplode(entity) {
-      entity.alive = false;
-      player.hasBlueKey = true;
-      SFX.door();
-      addMsg("The forcefield protecting the exit has suddenly lifted!");
-      removeAllFlesh();
-    },
-  },
-};
-Object.freeze(ENTITY_BEHAVIOR);
-for (const k in ENTITY_BEHAVIOR) {
-  Object.freeze(ENTITY_BEHAVIOR[k]);
-}
-
-//#endregion
+// Use the game definitions as the active templates and behaviors
+export const ENTITY_TEMPLATES = GAME_ENTITY_TEMPLATES;
+export const ENTITY_BEHAVIOR = GAME_ENTITY_BEHAVIOR;
 //Id as entityType
 let nextId = 0;
 
@@ -348,10 +43,8 @@ export function spawnEntity(
 ) {
   const tpl = ENTITY_TEMPLATES[id];
   const proto = ENTITY_BEHAVIOR[id]; //shared methods
-
   //Allocate an instance whose prototype is the behavior object
   const e = Object.assign(Object.create(proto), tpl);
-
   //Minimal mutable state (copy only what changes)
   e.id = nextId++;
   e.x = position.x;
@@ -359,28 +52,8 @@ export function spawnEntity(
   e.dist = 0;
   e.alive = true;
   e.hurtCD = 0;
-
-  switch (id) {
-    case entityTypes.entity:
-      e.img = aiDrone1;
-      break;
-    case entityTypes.ball:
-      e.img = ball;
-      break;
-    case entityTypes.sparkle:
-      e.img = sparkle;
-      break;
-    case entityTypes.barrel:
-      e.img = barrel;
-      break;
-    case entityTypes.food:
-      e.img = food;
-      break;
-    case entityTypes.key:
-      e.img = keycard1;
-      break;
-  }
-
+  // Set the sprite based on game definitions
+  e.img = retrieveEntitySprite(e, id);
   if (overrides) {
     Object.assign(e, overrides);
   } //tweaks per spawn (E.G for a friendly entity or boss)
@@ -404,3 +77,6 @@ export function splashDamage(x, y, r) {
     }
   }
 }
+
+// Set up callbacks so game entities can access engine functions
+setEntityCallbacks(spawnEntity, splashDamage);
