@@ -34,7 +34,7 @@ import {
   WEAPON_COOLDOWN,
   MAX_SPEED,
 } from "./Constants.js";
-import { sprites, wolfIdle, barrel, bow } from "./Sprites.js";
+import { sprites } from "./Sprites.js";
 import { spawnEntity } from "./Entities.js";
 import { entityTypes } from "./both/SharedConstants.js";
 //Used so that you are forced to play through all levels before it randomizes

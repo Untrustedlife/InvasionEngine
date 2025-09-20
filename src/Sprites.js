@@ -89,11 +89,18 @@ async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
   });
 }
 
-export let bow, aiDrone1, aiDrone2, aiDrone3, keycard1, food, barrel, pitchfork, ball, sparkle;
-
+export let bow,
+  aiDrone1,
+  aiDrone2,
+  aiDrone3,
+  keycard1,
+  food,
+  barrel,
+  pitchfork,
+  ball,
+  sparkle;
 //We could maybe make some kind of asset lookup table for this later insetad of it all being defined as variables
 export async function loadAsyncSprites() {
-
   //Image sprites
   food = await makeSpriteLoad("noodles.png", 3);
   bow = await makeSpriteLoad("bow.png", 3);
@@ -105,7 +112,6 @@ export async function loadAsyncSprites() {
   aiDrone3 = await makeSpriteLoad("aiDrone3.png", 3);
   ball = await makeSpriteLoad("Palantrash1.png", 3);
   sparkle = await makeSpriteLoad("sparkle.png", 3);
-
 }
 //Runtime list of active sprites (enemies, pickups, effects)
 export const sprites = [];
