@@ -15,11 +15,12 @@ export const MAX_SLICE_FACTOR = 1.4;
 export const FOG_START_FRAC = 0.6; //fog starts at 60% of FAR_PLANE
 export const FOG_COLOR = "#101b2e";
 
-//Game balance constants
-export const ARROWS_FROM_QUIVER = 5;
-export const HEALTH_FROM_FOOD = 10;
-export const ENTITY_DAMAGE = 3.33;
-export const MELEE_RANGE = 2.5;
-export const START_HEALTH = 20;
-export const WEAPON_COOLDOWN = 0.75;
-export const MAX_SPEED = 20;
+// Game-specific constants are now imported from SampleGame
+import { SampleGame } from "../SampleGame/index.js";
+export const ARROWS_FROM_QUIVER = SampleGame.constants.ARROWS_FROM_QUIVER;
+export const HEALTH_FROM_FOOD = SampleGame.constants.HEALTH_FROM_FOOD;
+export const ENTITY_DAMAGE = SampleGame.constants.ENTITY_DAMAGE;
+export const MELEE_RANGE = SampleGame.constants.MELEE_RANGE;
+export const START_HEALTH = SampleGame.constants.START_HEALTH;
+export const WEAPON_COOLDOWN = SampleGame.constants.WEAPON_COOLDOWN;
+export const MAX_SPEED = SampleGame.constants.MAX_SPEED;

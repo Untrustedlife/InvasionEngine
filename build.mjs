@@ -86,7 +86,7 @@ if (!indexWritten) {
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Backrooms Towerlcimb</title>
+<title>Aniachronism</title>
 <style>html,body{height:100%;margin:0;background:#0b1322}#root,canvas{height:100%;width:100%;display:block}</style>
 <body>
 <canvas id="view"></canvas>

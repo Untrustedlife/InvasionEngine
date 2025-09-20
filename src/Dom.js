@@ -2,7 +2,6 @@
 //width=960 height=540 if you want to use the same scale as the original
 export const LOGICAL_W = 480;
 export const LOGICAL_H = 270;
-
 export const canvas = document.getElementById("view");
 
 //Backing stores match the logical size

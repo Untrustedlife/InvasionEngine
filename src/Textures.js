@@ -113,7 +113,7 @@ export async function initAsyncTextures() {
     rebuildTextureCache();
     precomputeShading();
   } catch (err) {
-    console.warn("Failed to init backrooms wallpaper:", err);
+    console.warn("Failed to init wall textures:", err);
   }
 }
 
