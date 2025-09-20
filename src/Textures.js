@@ -1,6 +1,7 @@
 //Procedural wall textures with pre-sliced column caching for fast rendering
 //TEX array holds texture canvases, TEXCACHE pre-slices them into vertical columns
 import { clamp } from "./Utils.js";
+import { SampleGameWallTextures } from "./SampleGame/WallTextures.js";
 
 //Create a canvas element with specified dimensions for texture generation
 function makeTex(textureWidth = 64, textureHeight = 64) {
@@ -99,16 +100,7 @@ async function loadWallTexture(imageName) {
 //Load the wallpaper asynchronously and update TEX/TEXCACHE
 export async function initAsyncTextures() {
   try {
-    let imagesToReplace = [
-      { index: 1, image: "OfficeWall.png" },
-      { index: 2, image: "Panel.png" },
-      { index: 3, image: "Hedge.png" },
-      { index: 4, image: "OfficeDoor.png" },
-      { index: 5, image: "Portal.png" },
-      { index: 6, image: "OfficeDoorBlue.png" },
-      { index: 7, image: "Field.png" },
-      //Add more textures to replace if needed
-    ];
+    let imagesToReplace = SampleGameWallTextures;
     await loadImagesToTex(imagesToReplace);
     rebuildTextureCache();
     precomputeShading();
@@ -121,7 +113,7 @@ export async function initAsyncTextures() {
  * Loads and replaces wall textures from an array of descriptors.
  *
  * @async
- * @function loadImagesToReplaceTextures
+ * @function loadImagesToTex
  * @param {{ index: number, image: string }[]} descriptors
  *   Array of texture names to load.
  * @returns {Promise<void>} Resolves when all textures have been attempted.
