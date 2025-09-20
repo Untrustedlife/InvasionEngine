@@ -1,7 +1,7 @@
-Play the currently deployed version here.
+Play the currently deployed sample game "Aniachronism" here:
 https://untrustedlife.github.io/BackroomsTower
 
-A professionally developed, open-source raycaster engine you can play a sample gam eof right in your browser.
+A professionally developed, open-source raycaster game engine that runs right in your browser. Without utilizing WebGL.
 
 Built at first in collaboration with WildRose then fully taken over by Untrustedlife and powered by an engine developed by Untrustedlife as the foundation.
 
