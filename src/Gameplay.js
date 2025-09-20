@@ -93,7 +93,7 @@ export function wireInput(canvas) {
     }
 
     if (e.code === "BracketLeft") {
-      // [ key - decrease
+      //[ key - decrease
       switch (player.mouseSensitivity) {
         case 0.33:
           addMsg(`Mouse sensitivity set to high.`);
@@ -115,7 +115,7 @@ export function wireInput(canvas) {
     }
 
     if (e.code === "BracketRight") {
-      // ] key - increase
+      //] key - increase
       switch (player.mouseSensitivity) {
         case 0.33:
           addMsg(`Mouse sensitivity already set to highest.`);
@@ -152,7 +152,7 @@ export function wireInput(canvas) {
       !!document.mozPointerLockElement ||
       !!document.webkitPointerLockElement;
     if (mouseLookEnabled) {
-      // e.movementX and e.movementY are the delta since last event
+      //e.movementX and e.movementY are the delta since last event
       const deltaX = e.movementX * Math.PI * (0.015 * player.mouseSensitivity);
       player.a += deltaX;
     }
@@ -421,7 +421,7 @@ export function openForcefieldRing() {
 }
 
 //Keep this aorund as this is an engine feature,
-// and i dont want good code to be lost as people are meant to make more games out of our engine.
+//and i dont want good code to be lost as people are meant to make more games out of our engine.
 export function removeAllFlesh() {
   const w = gameStateObject.MAP_W,
     h = gameStateObject.MAP_H;

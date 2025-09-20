@@ -179,7 +179,7 @@ function castAndDraw(nowSec) {
     const zIndex = zoneIdAt(px, py, gameStateObject.zones);
     let floor = SIMPLE_FLOOR_GRADIENT_CACHE[zIndex];
     if (!floor) {
-      // Create and cache the gradient
+      //Create and cache the gradient
       const fogColorZone = gameStateObject.zones[zIndex].fogColor;
       floor = ctx.createLinearGradient(0, HEIGHT, 0, HALF_HEIGHT);
       floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");

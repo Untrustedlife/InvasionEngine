@@ -26,9 +26,9 @@ const spriteColorMap = {
   default: `#ffffff`,
 };
 
-const SCALE = 6; // pixels per tile
-const VIEW = 20; // tiles shown per side
-const PAD = 2; // border
+const SCALE = 6; //pixels per tile
+const VIEW = 20; //tiles shown per side
+const PAD = 2; //border
 const HALF = Math.floor(VIEW / 2);
 cMini.width = PAD + VIEW * SCALE + PAD;
 cMini.height = PAD + VIEW * SCALE + PAD;
@@ -49,7 +49,7 @@ export function drawMinimap(sprites) {
     for (let x = 0; x < VIEW; x++) {
       const mapY = startY + y;
       const mapX = startX + x;
-      // Safe lookup (treat OOB as empty)
+      //Safe lookup (treat OOB as empty)
       const cell = gameStateObject.MAP[mapY]?.[mapX] ?? 0;
       const color = colorMap[cell] || "#000000"; //default to black if unknown
       mctx.fillStyle = color;
@@ -57,7 +57,7 @@ export function drawMinimap(sprites) {
     }
   }
 
-  // Sprites (relative to same window)
+  //Sprites (relative to same window)
   for (const s of sprites) {
     if (!s.alive) {
       continue;
@@ -68,7 +68,7 @@ export function drawMinimap(sprites) {
     mctx.fillRect(sx - 2, sy - 2, 4, 4);
   }
 
-  // Player (same origin)
+  //Player (same origin)
   const px = PAD + (player.x - startX) * SCALE;
   const py = PAD + (player.y - startY) * SCALE;
 

@@ -24,7 +24,7 @@ function rebuildRowDistLUT() {
 }
 rebuildRowDistLUT();
 
-// Gradient caches - arrays indexed by zone ID for O(1) access
+//Gradient caches - arrays indexed by zone ID for O(1) access
 export const CEILING_GRADIENT_CACHE = [];
 export const FLOOR_FOG_GRADIENT_CACHE = [];
 export const HAZE_GRADIENT_CACHE = [];

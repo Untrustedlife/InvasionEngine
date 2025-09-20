@@ -15,7 +15,7 @@ export const MAX_SLICE_FACTOR = 1.4;
 export const FOG_START_FRAC = 0.6; //fog starts at 60% of FAR_PLANE
 export const FOG_COLOR = "#101b2e";
 
-// Game-specific constants are now imported from SampleGame
+//Game-specific constants are now imported from SampleGame
 import {
   ARROWS_FROM_QUIVER,
   HEALTH_FROM_FOOD,

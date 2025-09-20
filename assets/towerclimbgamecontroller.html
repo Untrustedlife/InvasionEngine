@@ -98,11 +98,11 @@
           const expanded = btn.getAttribute("aria-expanded") === "true";
           btn.setAttribute("aria-expanded", String(!expanded));
           btn.textContent = expanded ? "EXPAND CONTROLS" : "COLLAPSE CONTROLS";
-          content.hidden = expanded; // hide when collapsing
-          btn.blur(); // prevents Enter from re-activating it
+          content.hidden = expanded; //hide when collapsing
+          btn.blur(); //prevents Enter from re-activating it
         });
 
-        // Keyboard shortcut to toggle help
+        //Keyboard shortcut to toggle help
         document.addEventListener("keydown", (e) => {
           if (e.key === "h" || e.key === "H") {
             btn.click();

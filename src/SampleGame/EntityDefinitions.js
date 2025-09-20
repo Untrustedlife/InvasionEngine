@@ -31,7 +31,7 @@ import { tryCooldown } from "../Main.js";
 import { createExplosionEffect, createFlashScreenEffect } from "../Effects.js";
 import { clamp } from "../Utils.js";
 
-// Game-specific entity templates
+//Game-specific entity templates
 export const GAME_ENTITY_TEMPLATES = {
   [entityTypes.entity]: {
     type: entityTypes.entity,
@@ -76,17 +76,17 @@ export const GAME_ENTITY_TEMPLATES = {
   },
 };
 
-// Global reference to spawnEntity function - will be set by the engine
+//Global reference to spawnEntity function - will be set by the engine
 let spawnEntityCallback = null;
 let splashDamageCallback = null;
 
-// Function to set the callbacks from the engine
+//Function to set the callbacks from the engine
 export function setEntityCallbacks(spawnEntity, splashDamage) {
   spawnEntityCallback = spawnEntity;
   splashDamageCallback = splashDamage;
 }
 
-// Game-specific entity behaviors
+//Game-specific entity behaviors
 export const GAME_ENTITY_BEHAVIOR = {
   [entityTypes.ball]: {
     ai(entity, dt) {
@@ -343,7 +343,7 @@ export function retrieveEntitySprite(e, id) {
   }
 }
 
-// Freeze the objects to prevent accidental modification
+//Freeze the objects to prevent accidental modification
 Object.freeze(GAME_ENTITY_TEMPLATES);
 for (const k in GAME_ENTITY_TEMPLATES) {
   Object.freeze(GAME_ENTITY_TEMPLATES[k]);

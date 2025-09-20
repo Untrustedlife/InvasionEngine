@@ -22,7 +22,7 @@ Benefits:
 import { createExplosionEffect } from "./Effects.js";
 import { sprites } from "./Sprites.js";
 
-// Import game-specific definitions
+//Import game-specific definitions
 import {
   GAME_ENTITY_TEMPLATES,
   GAME_ENTITY_BEHAVIOR,
@@ -30,7 +30,7 @@ import {
   setEntityCallbacks,
 } from "./SampleGame/EntityDefinitions.js";
 
-// Use the game definitions as the active templates and behaviors
+//Use the game definitions as the active templates and behaviors
 export const ENTITY_TEMPLATES = GAME_ENTITY_TEMPLATES;
 export const ENTITY_BEHAVIOR = GAME_ENTITY_BEHAVIOR;
 //Id as entityType
@@ -52,7 +52,7 @@ export function spawnEntity(
   e.dist = 0;
   e.alive = true;
   e.hurtCD = 0;
-  // Set the sprite based on game definitions
+  //Set the sprite based on game definitions
   e.img = retrieveEntitySprite(e, id);
   if (overrides) {
     Object.assign(e, overrides);
@@ -78,5 +78,5 @@ export function splashDamage(x, y, r) {
   }
 }
 
-// Set up callbacks so game entities can access engine functions
+//Set up callbacks so game entities can access engine functions
 setEntityCallbacks(spawnEntity, splashDamage);
