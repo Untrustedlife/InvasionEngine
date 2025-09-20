@@ -42,4 +42,4 @@ and all code that is useful in other games should stay around. To be reused in f
 By contributing, you agree that your contributions will be licensed under GPL V3
 
 Note:
-Direct commits to master by anyone other than **Untrustedlife** or **Wildrose** _will_ be reverted. And i dont car eif you whine about it.
+Direct commits to master by anyone other than **Untrustedlife** or **Wildrose** _will_ be reverted. And i dont care if you whine about it. -Untrustedlife
