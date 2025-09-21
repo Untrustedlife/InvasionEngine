@@ -7,6 +7,7 @@ import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
 import { player } from "./Player.js";
 import { gameStateObject, getZoneBaseRgb, zoneIdAt } from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
+import { WALL_HEIGHT_MAP } from "./SampleGame/Walltextures.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
 export const HALF_HEIGHT = HEIGHT >> 1; //Bitwise shift is faster than division by 2
@@ -521,6 +522,73 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       sourceHeight,
       hitTextureId
     );
+
+    const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
+    if (tall > 1) {
+      const segH = wallLineHeight; // one unit wall height on screen
+      const texH = (textureCanvas?.height || textureData.h || 64) | 0;
+      const texPerPix = texH / Math.max(1, segH);
+
+      // how many EXTRA full repeats above the base slice
+      const fullRepeats = Math.floor(tall) - 1;
+
+      // draw each full extra slice (each maps full 0..texH to segH pixels)
+      for (let i = 0; i < fullRepeats; i++) {
+        const topUnc = unclippedStartY - segH * (i + 1);
+        const botUnc = unclippedEndY - segH * (i + 1);
+
+        const y0 = Math.max(0, Math.ceil(topUnc));
+        const y1 = Math.min(HEIGHT, Math.floor(botUnc));
+        const visH = y1 - y0;
+        if (visH <= 0) {
+          continue;
+        }
+
+        const srcY = (y0 - topUnc) * texPerPix; // 0..texH (trimmed if clipped)
+        const srcH = visH * texPerPix;
+
+        drawWallColumnImg(
+          ctx,
+          screenColumnX,
+          y0,
+          y1,
+          textureCanvas,
+          textureColumnX,
+          shadeAmount,
+          srcY,
+          srcH,
+          1
+        );
+      }
+
+      // partial top slice for fractional heights (e.g. tall=2.4 → draws 0.4 of a unit)
+      const remFrac = tall - (1 + fullRepeats);
+      if (remFrac > 1e-6) {
+        const partH = segH * remFrac;
+        const topUnc = unclippedStartY - segH * (fullRepeats + 1);
+        const botUnc = topUnc + partH;
+
+        const y0 = Math.max(0, Math.ceil(topUnc));
+        const y1 = Math.min(HEIGHT, Math.floor(botUnc));
+        const visH = y1 - y0;
+        if (visH > 0) {
+          const srcY = (y0 - topUnc) * texPerPix; // maps 0..texH*remFrac over the partial
+          const srcH = visH * texPerPix;
+          drawWallColumnImg(
+            ctx,
+            screenColumnX,
+            y0,
+            y1,
+            textureCanvas,
+            textureColumnX,
+            shadeAmount,
+            srcY,
+            srcH,
+            hitTextureId
+          );
+        }
+      }
+    }
 
     //Apply distance fog
     if (

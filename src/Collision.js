@@ -21,10 +21,14 @@ export function isSolidTile(x, y) {
   if (cell === 5) {
     return false;
   }
+
   if (cell === 7) {
     return !player.hasBlueKey;
   }
   if (cell === 6) {
+    return false;
+  }
+  if (cell === 9) {
     return false;
   }
   return true;
