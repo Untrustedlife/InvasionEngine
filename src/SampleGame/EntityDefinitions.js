@@ -3,17 +3,7 @@ Game-specific entity definitions for BackroomsTower sample game.
 This includes all the specific entity types, their behaviors, and sprite assignments.
 */
 
-import {
-  aiDrone1,
-  aiDrone2,
-  aiDrone3,
-  barrel,
-  sprites,
-  food,
-  keycard1,
-  ball,
-  sparkle,
-} from "../Sprites.js";
+import { spriteEnum, sprites } from "../Sprites.js";
 
 import { entityTypes } from "../both/SharedConstants.js";
 import { isSolidTile, collide } from "../Collision.js";
@@ -40,6 +30,7 @@ export const GAME_ENTITY_TEMPLATES = {
     floorBiasFrac: 0,
     animationTime: 0.0,
     animationFrame: 0,
+    img: "aiDrone1",
   },
   [entityTypes.ball]: {
     type: entityTypes.ball,
@@ -48,6 +39,7 @@ export const GAME_ENTITY_TEMPLATES = {
     floorBiasFrac: 0,
     cooldownTime: 0.5,
     health: 3,
+    img: "ball",
   },
   [entityTypes.sparkle]: {
     type: entityTypes.sparkle,
@@ -55,24 +47,28 @@ export const GAME_ENTITY_TEMPLATES = {
     scale: 0.75,
     floorBiasFrac: 0,
     cooldownTime: 3,
+    img: "sparkle",
   },
   [entityTypes.barrel]: {
     type: entityTypes.barrel,
     ground: true,
     scale: 0.66,
     floorBiasFrac: 0,
+    img: "barrel",
   },
   [entityTypes.food]: {
     type: entityTypes.food,
     ground: true,
     scale: 0.25,
     floorBiasFrac: 0,
+    img: "food",
   },
   [entityTypes.key]: {
     type: entityTypes.key,
     ground: true,
     scale: 0.25,
     floorBiasFrac: 0,
+    img: "keycard1",
   },
 };
 
@@ -192,16 +188,16 @@ export const GAME_ENTITY_BEHAVIOR = {
       }
       switch (entity.animationFrame) {
         case 0:
-          entity.img = aiDrone1;
+          entity.img = "aiDrone1";
           break;
         case 1:
-          entity.img = aiDrone2;
+          entity.img = "aiDrone2";
           break;
         case 2:
-          entity.img = aiDrone3;
+          entity.img = "aiDrone3";
           break;
         case 3:
-          entity.img = aiDrone2;
+          entity.img = "aiDrone2";
           break;
       }
       const dx = player.x - entity.x;
@@ -323,25 +319,6 @@ export const GAME_ENTITY_BEHAVIOR = {
     },
   },
 };
-
-export function retrieveEntitySprite(e, id) {
-  switch (id) {
-    case entityTypes.entity:
-      return aiDrone1;
-    case entityTypes.ball:
-      return ball;
-    case entityTypes.sparkle:
-      return sparkle;
-    case entityTypes.barrel:
-      return barrel;
-    case entityTypes.food:
-      return food;
-    case entityTypes.key:
-      return keycard1;
-    default:
-      return null;
-  }
-}
 
 //Freeze the objects to prevent accidental modification
 Object.freeze(GAME_ENTITY_TEMPLATES);

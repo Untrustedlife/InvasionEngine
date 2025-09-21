@@ -3,6 +3,19 @@
 //I made a tool for making these, but that code is a mess.
 import { clamp } from "./Utils.js";
 
+export const spriteEnum = {
+  aiDrone1: null,
+  ball: null,
+  sparkle: null,
+  barrel: null,
+  food: null,
+  keycard1: null,
+  aiDrone2: null,
+  aiDrone3: null,
+  pitchfork: null,
+  bow: null,
+};
+
 //Can add simple function for loading an actual image if i want heh
 export function makeSprite(pattern, palette, scale = 1) {
   let rows = pattern
@@ -89,29 +102,19 @@ async function loadSprite(imageName, scale = 1, baselineFraction = 1.0) {
   });
 }
 
-export let bow,
-  aiDrone1,
-  aiDrone2,
-  aiDrone3,
-  keycard1,
-  food,
-  barrel,
-  pitchfork,
-  ball,
-  sparkle;
 //We could maybe make some kind of asset lookup table for this later insetad of it all being defined as variables
 export async function loadAsyncSprites() {
   //Image sprites
-  food = await makeSpriteLoad("noodles.png", 3);
-  bow = await makeSpriteLoad("bow.png", 3);
-  pitchfork = await makeSpriteLoad("pitchfork.png", 3);
-  keycard1 = await makeSpriteLoad("keycard1.png", 3);
-  barrel = await makeSpriteLoad("emp.png", 3);
-  aiDrone1 = await makeSpriteLoad("aiDrone1.png", 3);
-  aiDrone2 = await makeSpriteLoad("aiDrone2.png", 3);
-  aiDrone3 = await makeSpriteLoad("aiDrone3.png", 3);
-  ball = await makeSpriteLoad("Palantrash1.png", 3);
-  sparkle = await makeSpriteLoad("sparkle.png", 3);
+  spriteEnum.food = await makeSpriteLoad("noodles.png", 3);
+  spriteEnum.bow = await makeSpriteLoad("bow.png", 3);
+  spriteEnum.pitchfork = await makeSpriteLoad("pitchfork.png", 3);
+  spriteEnum.keycard1 = await makeSpriteLoad("keycard1.png", 3);
+  spriteEnum.barrel = await makeSpriteLoad("emp.png", 3);
+  spriteEnum.aiDrone1 = await makeSpriteLoad("aiDrone1.png", 3);
+  spriteEnum.aiDrone2 = await makeSpriteLoad("aiDrone2.png", 3);
+  spriteEnum.aiDrone3 = await makeSpriteLoad("aiDrone3.png", 3);
+  spriteEnum.ball = await makeSpriteLoad("Palantrash1.png", 3);
+  spriteEnum.sparkle = await makeSpriteLoad("sparkle.png", 3);
 }
 //Runtime list of active sprites (enemies, pickups, effects)
 export const sprites = [];

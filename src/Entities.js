@@ -52,8 +52,6 @@ export function spawnEntity(
   e.dist = 0;
   e.alive = true;
   e.hurtCD = 0;
-  //Set the sprite based on game definitions
-  e.img = retrieveEntitySprite(e, id);
   if (overrides) {
     Object.assign(e, overrides);
   } //tweaks per spawn (E.G for a friendly entity or boss)

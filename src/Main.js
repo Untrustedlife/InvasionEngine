@@ -21,7 +21,7 @@ import {
   cacheZoneIdAtGrid,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
-import { sprites, bow, pitchfork, loadAsyncSprites } from "./Sprites.js";
+import { sprites, spriteEnum, loadAsyncSprites } from "./Sprites.js";
 import { player } from "./Player.js";
 import { drawMinimap } from "./Minimap.js";
 import {
@@ -310,7 +310,7 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
 
   //Function to map screen column to texture X coordinate
   const mapScreenColumnToTextureX = (screenColumn) =>
-    (((screenColumn - projection.drawStartX) * sprite.img.width) /
+    (((screenColumn - projection.drawStartX) * spriteEnum[sprite.img].width) /
       totalSpriteWidth) |
     0;
 
@@ -350,17 +350,17 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
       }
 
       const sourceWidth = Math.min(
-        sprite.img.width - currentRunTextureStart,
+        spriteEnum[sprite.img].width - currentRunTextureStart,
         textureEndX - currentRunTextureStart
       );
 
       if (destinationWidth > 0 && sourceWidth > 0 && spriteHeight > 0) {
         ctx.drawImage(
-          sprite.img,
+          spriteEnum[sprite.img],
           currentRunTextureStart,
           0,
           sourceWidth,
-          sprite.img.height,
+          spriteEnum[sprite.img].height,
           currentRunStart,
           spriteTopY,
           destinationWidth,
@@ -374,9 +374,13 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
 
 //Draw the bow weapon in the HUD
 function drawWeaponHUD(nowSec) {
+  if (!spriteEnum.pitchfork) {
+    return;
+  }
   const weaponDisplayWidth = Math.round(WIDTH * 0.42);
   const weaponDisplayHeight = Math.round(
-    weaponDisplayWidth * (bow.height / bow.width)
+    weaponDisplayWidth *
+      (spriteEnum.pitchfork.height / spriteEnum.pitchfork.width)
   );
   const offsetX =
     player.isMoving && player.weaponAnim < 0.0 ? 10 * Math.sin(nowSec * 5) : 0;
@@ -394,7 +398,7 @@ function drawWeaponHUD(nowSec) {
     HEIGHT - weaponDisplayHeight - hudMargin + 70 + offsetY + attackY;
 
   ctx.drawImage(
-    pitchfork,
+    spriteEnum.pitchfork,
     weaponPositionX,
     weaponPositionY,
     weaponDisplayWidth,

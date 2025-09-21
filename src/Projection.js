@@ -3,7 +3,7 @@
 import { WIDTH, HEIGHT } from "./Dom.js";
 import { clamp } from "./Utils.js";
 import { player } from "./Player.js";
-
+import { spriteEnum } from "./Sprites.js";
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
   return HEIGHT / distanceFromCamera;
@@ -42,8 +42,10 @@ export function projectSprite(sprite, cameraBasisVectors) {
   const worldScale =
     sprite && typeof sprite.scale === "number"
       ? sprite.scale
-      : sprite && sprite.img && typeof sprite.img.scale === "number"
-      ? sprite.img.scale
+      : sprite &&
+        spriteEnum[sprite.img] &&
+        typeof spriteEnum[sprite.img].scale === "number"
+      ? spriteEnum[sprite.img].scale
       : 1;
 
   //Apply height hysteresis to reduce size bobbing during movement
@@ -63,7 +65,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
 
   const finalSpriteHeight = roundedSpriteHeight;
 
-  const spriteImage = sprite.img;
+  const spriteImage = spriteEnum[sprite.img];
   const aspectRatio =
     spriteImage && spriteImage.width && spriteImage.height
       ? spriteImage.width / spriteImage.height
