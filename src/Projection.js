@@ -84,14 +84,16 @@ export function projectSprite(sprite, cameraBasisVectors) {
     //Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
     const bias = sprite.floorBiasFrac ?? 0.04;
     const bottomY =
-      horizon + (EYE * proj) / cameraSpaceY - bias * finalSpriteHeight;
+      horizon +
+      (HEIGHT * (2 - EYE)) / (2 * cameraSpaceY) -
+      bias * finalSpriteHeight;
     const topY = bottomY - finalSpriteHeight;
 
     startY = Math.round(topY);
     endY = Math.round(bottomY);
   } else {
     const topY = Math.round(horizon - finalSpriteHeight * 0.5);
-    startY = topY
+    startY = topY;
     endY = topY + finalSpriteHeight;
   }
 
