@@ -561,7 +561,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         );
       }
 
-      //partial top slice for fractional heights
+      //partial bottom slice for fractional heights
       const remFrac = tall - (1 + fullRepeats);
       if (remFrac > 1e-6) {
         const partH = segH * remFrac;
