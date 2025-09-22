@@ -525,14 +525,14 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
     const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
     if (tall > 1) {
-      const segH = wallLineHeight; // one unit wall height on screen
+      const segH = wallLineHeight; //one unit wall height on screen
       const texH = (textureCanvas?.height || textureData.h || 64) | 0;
       const texPerPix = texH / Math.max(1, segH);
 
-      // how many EXTRA full repeats above the base slice
+      //how many EXTRA full repeats above the base slice
       const fullRepeats = Math.floor(tall) - 1;
 
-      // draw each full extra slice (each maps full 0..texH to segH pixels)
+      //draw each full extra slice (each maps full 0..texH to segH pixels)
       for (let i = 0; i < fullRepeats; i++) {
         const topUnc = unclippedStartY - segH * (i + 1);
         const botUnc = unclippedEndY - segH * (i + 1);
@@ -544,7 +544,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
           continue;
         }
 
-        const srcY = (y0 - topUnc) * texPerPix; // 0..texH (trimmed if clipped)
+        const srcY = (y0 - topUnc) * texPerPix; //0..texH (trimmed if clipped)
         const srcH = visH * texPerPix;
 
         drawWallColumnImg(
@@ -561,19 +561,25 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         );
       }
 
-      // partial top slice for fractional heights (e.g. tall=2.4 → draws 0.4 of a unit)
+      //partial top slice for fractional heights
       const remFrac = tall - (1 + fullRepeats);
       if (remFrac > 1e-6) {
         const partH = segH * remFrac;
-        const topUnc = unclippedStartY - segH * (fullRepeats + 1);
-        const botUnc = topUnc + partH;
-
+        //bottom of the partial slice = top of the last full slice
+        const botUnc = unclippedStartY - segH * fullRepeats;
+        const topUnc = botUnc - partH; //grow up from bottom
+        //clip
         const y0 = Math.max(0, Math.ceil(topUnc));
         const y1 = Math.min(HEIGHT, Math.floor(botUnc));
         const visH = y1 - y0;
         if (visH > 0) {
-          const srcY = (y0 - topUnc) * texPerPix; // maps 0..texH*remFrac over the partial
+          const unitTopUnc = botUnc - segH;
+          let srcY = ((y0 - unitTopUnc) * texPerPix) % texH;
+          if (srcY < 0) {
+            srcY += texH;
+          }
           const srcH = visH * texPerPix;
+
           drawWallColumnImg(
             ctx,
             screenColumnX,
@@ -584,12 +590,11 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
             shadeAmount,
             srcY,
             srcH,
-            hitTextureId
+            1
           );
         }
       }
     }
-
     //Apply distance fog
     if (
       player.sightDist > 0 &&
