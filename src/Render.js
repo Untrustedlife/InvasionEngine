@@ -510,21 +510,22 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     }
 
     //Draw wall column using fast canvas method
-    drawWallColumnImg(
-      ctx,
-      screenColumnX,
-      drawStartY,
-      drawEndY,
-      textureCanvas,
-      textureColumnX,
-      shadeAmount,
-      sourceY,
-      sourceHeight,
-      hitTextureId
-    );
-
     const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
-    if (tall > 1) {
+
+    if (tall == 1.0) {
+      drawWallColumnImg(
+        ctx,
+        screenColumnX,
+        drawStartY,
+        drawEndY,
+        textureCanvas,
+        textureColumnX,
+        shadeAmount,
+        sourceY,
+        sourceHeight,
+        hitTextureId
+      );
+    } else if (tall > 1) {
       const segH = wallLineHeight; //one unit wall height on screen
       const texH = (textureCanvas?.height || textureData.h || 64) | 0;
       const texPerPix = texH / Math.max(1, segH);
@@ -591,6 +592,43 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
             srcY,
             srcH,
             1
+          );
+        }
+      }
+    } else if (tall < 1.0) {
+      const segH = wallLineHeight; //one unit wall height on screen
+      const texH = (textureCanvas?.height || textureData.h || 64) | 0;
+      const texPerPix = texH / Math.max(1, segH);
+
+      const remFrac = tall;
+      if (remFrac > 1e-6) {
+        const partH = segH * remFrac;
+        //bottom of the partial slice = top of the last full slice
+        const botUnc = unclippedEndY;
+        const topUnc = botUnc - partH; //grow up from bottom
+        //clip
+        const y0 = Math.max(0, Math.ceil(topUnc));
+        const y1 = Math.min(HEIGHT, Math.floor(botUnc));
+        const visH = y1 - y0;
+        if (visH > 0) {
+          const unitTopUnc = botUnc - segH;
+          let srcY = ((y0 - unitTopUnc) * texPerPix) % texH;
+          if (srcY < 0) {
+            srcY += texH;
+          }
+          const srcH = visH * texPerPix;
+
+          drawWallColumnImg(
+            ctx,
+            screenColumnX,
+            y0,
+            y1,
+            textureCanvas,
+            textureColumnX,
+            shadeAmount,
+            srcY,
+            srcH,
+            hitTextureId
           );
         }
       }
