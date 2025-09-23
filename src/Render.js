@@ -31,8 +31,8 @@ export function rebuildRowDistLUT() {
   for (let y = 0; y < HEIGHT; y++) {
     const dy = y - horizon; //>0 below horizon
     ROW_DIST[y] = dy !== 0 ? eyeScale / dy : 1e-6; //avoid div-by-zero
-    const floorScale = (2 - EYE) * 0.5;
-    CIELING_ROW_DIST[y] = -ROW_DIST[y] * floorScale;
+    const ceilingScale = HEIGHT * EYE * 0.5;
+    CIELING_ROW_DIST[y] = dy !== 0 ? -ceilingScale / dy : -1e-6;
   }
 }
 rebuildRowDistLUT();
@@ -51,6 +51,7 @@ export function clearGradientCaches() {
   HAZE_GRADIENT_CACHE.length = 0;
   SIMPLE_FLOOR_GRADIENT_CACHE.length = 0;
   ZONE_CSS.clear();
+  ZONE_CIELING_CSS.clear();
 }
 
 //Wall slice draw: sample a 1px-wide column from the source texture

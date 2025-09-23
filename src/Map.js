@@ -73,7 +73,6 @@ export const gameStateObject = {
 
 export const mapDefinitions = sampleMaps;
 const zoneRgbCache = new Map();
-const zoneCielingRgbCache = new Map();
 export function getZoneBaseRgb(zoneId) {
   //pick zone color or fall back to whats defined on map object
   const mats = gameStateObject.zones;
@@ -85,6 +84,8 @@ export function getZoneBaseRgb(zoneId) {
   }
   return rgb;
 }
+
+const zoneCielingRgbCache = new Map();
 export function getZoneCielingRgb(zoneId) {
   //pick zone color or fall back to whats defined on map object
   const mats = gameStateObject.zones;
