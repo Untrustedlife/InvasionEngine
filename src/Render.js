@@ -195,34 +195,40 @@ export function castFloor(
   fromY = 0
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
+
   fromY = wallBottomY[screenColumnX] ?? 0;
   //never draw above the horizon
   const startY = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
   if (startY >= HEIGHT) {
     return;
   }
+
   //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
   const rayY = dirY + planeY * camX;
+
   //Initialize world positions using first row distance
   //1 / cos(theta) to remove tiny fisheye on floor
   const invDot = 1 / (dirX * rayX + dirY * rayY);
+
   //Initialize world positions using first row *perp* distance, corrected
   let dist = ROW_DIST[startY];
   let wx = player.x + rayX * dist * invDot;
   let wy = player.y + rayY * dist * invDot;
 
-  let lastZone = 0;
+  let lastZoneId = 0;
   let runStartY = startY;
   let lastStyle = null;
+
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < HEIGHT; y++) {
     const ix = wx | 0;
     const iy = wy | 0;
+
     let zoneId = 0;
     if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
-      zoneId = 0; //Horizon pixel, don't draw
+      zoneId = 0; //keep horizon special-case
     } else {
       zoneId =
         ix >= 0 &&
@@ -233,14 +239,15 @@ export function castFloor(
           : 0;
     }
 
-    if (zoneId !== lastZone) {
-      const color = zoneCss(lastZone);
+    if (zoneId !== lastZoneId) {
+      const color = zoneCss(lastZoneId);
+      //No reason to swap rectangles if the color is the same
       if (color !== lastStyle) {
         ctx.fillStyle = color;
         lastStyle = color;
       }
       ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
-      lastZone = zoneId;
+      lastZoneId = zoneId;
       runStartY = y;
     }
 
@@ -253,13 +260,12 @@ export function castFloor(
   }
 
   //Flush tail run
-  const color = zoneCss(lastZone);
+  const color = zoneCss(lastZoneId);
   if (color !== lastStyle) {
     ctx.fillStyle = color;
   }
   ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
 }
-
 export function castCieling(
   nowSec,
   cameraBasisVectors,
