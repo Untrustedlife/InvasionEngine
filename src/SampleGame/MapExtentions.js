@@ -39,6 +39,7 @@ export const sampleMaps = [
         w: 1,
         h: 1,
         floorColorBack: "#101b2e",
+        cielingColorFront: "#6495ed",
         fogColor: "#101b2e",
         spawnRules: [],
       },

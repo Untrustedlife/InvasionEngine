@@ -5,22 +5,35 @@ import { ctx, WIDTH, HEIGHT } from "./Dom.js";
 import { NEAR, PROJ_NEAR, FOG_START_FRAC, FOG_COLOR } from "./Constants.js";
 import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
 import { player } from "./Player.js";
-import { gameStateObject, getZoneBaseRgb, zoneIdAt } from "./Map.js";
+import {
+  gameStateObject,
+  getZoneBaseRgb,
+  getZoneCielingRgb,
+  zoneIdAt,
+} from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 import { WALL_HEIGHT_MAP } from "./SampleGame/Walltextures.js";
 //Z-buffer stores wall distances for sprite depth testing
 export const zBuffer = new Float32Array(WIDTH);
 export const HALF_HEIGHT = HEIGHT >> 1; //Bitwise shift is faster than division by 2
 const wallBottomY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
+
+const wallTopY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
+
 //Distance from camera to each screen row (used for floor projection)
 //This keeps floors and walls aligned at any playerHeight without hacks.
 const ROW_DIST = new Float32Array(HEIGHT);
-function rebuildRowDistLUT() {
-  const posZ = HALF_HEIGHT; //horizon line
+const CIELING_ROW_DIST = new Float32Array(HEIGHT);
+export function rebuildRowDistLUT() {
+  const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
+  const EYE = player.calculatePlayerHeight(); //same EYE as in sprite code
+  const eyeScale = HEIGHT * (2 - EYE) * 0.5; //matches sprite projection
+
   for (let y = 0; y < HEIGHT; y++) {
-    const p = y - HALF_HEIGHT;
-    ROW_DIST[y] =
-      p !== 0 ? (posZ / p) * (2 - player.calculatePlayerHeight()) : 1e-6; //avoid div-by-0 on the horizon
+    const dy = y - horizon; //>0 below horizon
+    ROW_DIST[y] = dy !== 0 ? eyeScale / dy : 1e-6; //avoid div-by-zero
+    // For ceiling: just use negative of floor distance
+    CIELING_ROW_DIST[y] = -ROW_DIST[y];
   }
 }
 rebuildRowDistLUT();
@@ -106,7 +119,7 @@ function drawWallColumnImg(
 //Draw sprite column with alpha blending - preserves transparency
 const SPRITE_Y_ORIGIN_BOTTOM = false;
 
-export function castCieling(ctx) {
+/*export function castCieling(ctx) {
   const px = player.x | 0;
   const py = player.y | 0;
   const zIndex = zoneIdAt(px, py, gameStateObject.zones);
@@ -138,6 +151,7 @@ export function castCieling(ctx) {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
 }
+*/
 
 //Cache zone colors for performance
 export const ZONE_CSS = new Map();
@@ -147,6 +161,17 @@ function zoneCss(zoneId) {
     const [r, g, b] = getZoneBaseRgb(zoneId); //already zone-based shade
     c = `rgb(${r | 0},${g | 0},${b | 0})`;
     ZONE_CSS.set(zoneId, c);
+  }
+  return c;
+}
+
+export const ZONE_CIELING_CSS = new Map();
+function zoneCielingCss(zoneId) {
+  let c = ZONE_CIELING_CSS.get(zoneId);
+  if (!c) {
+    const [r, g, b] = getZoneCielingRgb(zoneId); //already zone-based shade
+    c = `rgb(${r | 0},${g | 0},${b | 0})`;
+    ZONE_CIELING_CSS.set(zoneId, c);
   }
   return c;
 }
@@ -176,16 +201,13 @@ export function castFloor(
   if (startY >= HEIGHT) {
     return;
   }
-
   //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
   const rayY = dirY + planeY * camX;
-
   //Initialize world positions using first row distance
   //1 / cos(theta) to remove tiny fisheye on floor
   const invDot = 1 / (dirX * rayX + dirY * rayY);
-
   //Initialize world positions using first row *perp* distance, corrected
   let dist = ROW_DIST[startY];
   let wx = player.x + rayX * dist * invDot;
@@ -194,12 +216,10 @@ export function castFloor(
   let lastZone = 0;
   let runStartY = startY;
   let lastStyle = null;
-
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < HEIGHT; y++) {
     const ix = wx | 0;
     const iy = wy | 0;
-
     let zoneId = 0;
     if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
       zoneId = 0; //Horizon pixel, don't draw
@@ -238,6 +258,81 @@ export function castFloor(
     ctx.fillStyle = color;
   }
   ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
+}
+
+export function castCieling(
+  nowSec,
+  cameraBasisVectors,
+  screenColumnX,
+  fromY = 0
+) {
+  const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
+  fromY = wallTopY[screenColumnX] ?? 0;
+  //never draw above the horizon
+  const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT; // where wall starts
+  const startY = 0; // top of screen
+  //if (endY <= 0) return; // nothing to draw
+  //Ray for this column (same as walls)
+  const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
+  const rayX = dirX + planeX * camX;
+  const rayY = dirY + planeY * camX;
+  //Initialize world positions using first row distance
+  //1 / cos(theta) to remove tiny fisheye on floor
+  const invDot = 1 / (dirX * rayX + dirY * rayY);
+  //Initialize world positions using first row *perp* distance, corrected
+  let dist = CIELING_ROW_DIST[startY];
+  let wx = player.x + rayX * dist * invDot;
+  let wy = player.y + rayY * dist * invDot;
+
+  let lastZone = 0;
+  let runStartY = startY;
+  let lastStyle = null;
+  //Walk rows, build a vertical scan based on the floors we can see
+  for (let y = startY; y < endY; y++) {
+    const ix = wx | 0;
+    const iy = wy | 0;
+    let zoneId = 0;
+    if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
+      //zoneId = 0; //Horizon pixel, don't draw
+    } else {
+      // Get player's current zone at start of castCeiling function
+
+      zoneId =
+        ix >= 0 &&
+        iy >= 0 &&
+        ix < gameStateObject.MAP_W &&
+        iy < gameStateObject.MAP_H
+          ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
+          : ZONE_GRID_CACHE[
+              (player.y | 0) * gameStateObject.MAP_W + (player.x | 0)
+            ];
+    }
+
+    if (zoneId !== lastZone) {
+      const color = zoneCielingCss(lastZone);
+      if (color !== lastStyle) {
+        ctx.fillStyle = color;
+        lastStyle = color;
+      }
+      ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
+      lastZone = zoneId;
+      runStartY = y;
+    }
+
+    //step world coords using successive row distances
+    const nextDist = CIELING_ROW_DIST[y + 1] ?? dist;
+    const delta = nextDist - dist;
+    wx += rayX * delta * invDot;
+    wy += rayY * delta * invDot;
+    dist = nextDist;
+  }
+
+  //Flush tail run
+  const color = zoneCielingCss(lastZone);
+  if (color !== lastStyle) {
+    ctx.fillStyle = color;
+  }
+  ctx.fillRect(screenColumnX, runStartY, 1, endY - runStartY);
 }
 
 export function castHaze(ctx) {
@@ -302,6 +397,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     ) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = 0;
+      wallTopY[screenColumnX] = HALF_HEIGHT;
       continue;
     }
 
@@ -391,6 +487,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (hitTextureId === 0) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = 0;
+      wallTopY[screenColumnX] = HALF_HEIGHT;
       continue;
     }
 
@@ -486,6 +583,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     }
     const visibleHeight = drawEndY - drawStartY;
     wallBottomY[screenColumnX] = drawEndY;
+    wallTopY[screenColumnX] = drawStartY;
     if (visibleHeight <= 0) {
       zBuffer[screenColumnX] = perpendicularDistance;
       continue;

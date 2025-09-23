@@ -168,7 +168,9 @@ async function init() {
 function castAndDraw(nowSec) {
   const cameraBasisVectors = cameraBasis();
 
-  castCieling(ctx);
+  for (let x = 0; x < WIDTH; x++) {
+    castCieling(nowSec, cameraBasisVectors, x, 0);
+  }
 
   //2 means fog zone + basic floor cover and since we don't use the fog zone
   //for anything other then correcting the horizon we can just use the one simple performant gradient
@@ -185,7 +187,6 @@ function castAndDraw(nowSec) {
       floor.addColorStop(0.0, gameStateObject.floorColorFront || "#054213");
       floor.addColorStop(0.85, gameStateObject.floorColorBack || "#03210A");
       floor.addColorStop(0.95, fogColorZone || FOG_COLOR);
-
       SIMPLE_FLOOR_GRADIENT_CACHE[zIndex] = floor;
     }
     ctx.fillStyle = floor;
