@@ -31,10 +31,7 @@ export function rebuildRowDistLUT() {
   for (let y = 0; y < HEIGHT; y++) {
     const dy = y - horizon; //>0 below horizon
     ROW_DIST[y] = dy !== 0 ? eyeScale / dy : 1e-6; //avoid div-by-zero
-    //CIELING_ROW_DIST[y] = -ROW_DIST[y] * 0.65; //Will warp if player height changes need actual formula
-    //CIELING_ROW_DIST[y] = -ROW_DIST[y] * ((2 - EYE) / EYE);
-    //CIELING_ROW_DIST[y] = -ROW_DIST[y] * player.calculatePlayerHeight();
-    const floorScale = (2 - EYE) * 0.5; // 1.25 * 0.5 = 0.625
+    const floorScale = (2 - EYE) * 0.5;
     CIELING_ROW_DIST[y] = -ROW_DIST[y] * floorScale;
   }
 }
