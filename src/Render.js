@@ -275,7 +275,9 @@ export function castCieling(
   //never draw above the horizon
   const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT; // where wall starts
   const startY = 0; // top of screen
-  if (endY <= 0) return; // nothing to draw
+  if (endY <= 0) {
+    return;
+  } // nothing to draw
   //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
@@ -295,7 +297,7 @@ export function castCieling(
   for (let y = startY; y < endY; y++) {
     const ix = wx | 0;
     const iy = wy | 0;
-    let zoneId =
+    const zoneId =
       ix >= 0 &&
       iy >= 0 &&
       ix < gameStateObject.MAP_W &&
