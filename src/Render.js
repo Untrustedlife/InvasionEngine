@@ -526,6 +526,19 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         hitTextureId
       );
     } else if (tall > 1) {
+      drawWallColumnImg(
+        ctx,
+        screenColumnX,
+        drawStartY,
+        drawEndY,
+        textureCanvas,
+        textureColumnX,
+        shadeAmount,
+        sourceY,
+        sourceHeight,
+        hitTextureId
+      );
+
       const segH = wallLineHeight; //one unit wall height on screen
       const texH = (textureCanvas?.height || textureData.h || 64) | 0;
       const texPerPix = texH / Math.max(1, segH);
