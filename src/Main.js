@@ -14,6 +14,7 @@ import {
   zBuffer,
   castFloor,
   castCieling,
+  classicCastCieling,
   castHaze,
   SIMPLE_FLOOR_GRADIENT_CACHE,
   clearGradientCaches,
@@ -168,8 +169,14 @@ async function init() {
 function castAndDraw(nowSec) {
   const cameraBasisVectors = cameraBasis();
 
-  for (let x = 0; x < WIDTH; x++) {
-    castCieling(nowSec, cameraBasisVectors, x, 0);
+  if (gameStateObject.zones.length <= 2) {
+    classicCastCieling(ctx);
+  } else {
+    //TODO: Replace with single draw call + gradient fill for performance (Eventually. Not a priority)
+    for (let x = 0; x < WIDTH; x++) {
+      castCieling(nowSec, cameraBasisVectors, x, 0);
+    }
+    //castFloorFog(ctx);
   }
 
   //2 means fog zone + basic floor cover and since we don't use the fog zone

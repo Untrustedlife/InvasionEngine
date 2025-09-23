@@ -28,12 +28,14 @@ export function rebuildRowDistLUT() {
   const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
   const EYE = player.calculatePlayerHeight(); //same EYE as in sprite code
   const eyeScale = HEIGHT * (2 - EYE) * 0.5; //matches sprite projection
-
   for (let y = 0; y < HEIGHT; y++) {
     const dy = y - horizon; //>0 below horizon
     ROW_DIST[y] = dy !== 0 ? eyeScale / dy : 1e-6; //avoid div-by-zero
-    // For ceiling: just use negative of floor distance
-    CIELING_ROW_DIST[y] = -ROW_DIST[y];
+    //CIELING_ROW_DIST[y] = -ROW_DIST[y] * 0.65; //Will warp if player height changes need actual formula
+    //CIELING_ROW_DIST[y] = -ROW_DIST[y] * ((2 - EYE) / EYE);
+    //CIELING_ROW_DIST[y] = -ROW_DIST[y] * player.calculatePlayerHeight();
+    const floorScale = (2 - EYE) * 0.5; // 1.25 * 0.5 = 0.625
+    CIELING_ROW_DIST[y] = -ROW_DIST[y] * floorScale;
   }
 }
 rebuildRowDistLUT();
@@ -119,7 +121,7 @@ function drawWallColumnImg(
 //Draw sprite column with alpha blending - preserves transparency
 const SPRITE_Y_ORIGIN_BOTTOM = false;
 
-/*export function castCieling(ctx) {
+export function classicCastCieling(ctx) {
   const px = player.x | 0;
   const py = player.y | 0;
   const zIndex = zoneIdAt(px, py, gameStateObject.zones);
@@ -151,7 +153,6 @@ const SPRITE_Y_ORIGIN_BOTTOM = false;
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, WIDTH, HALF_HEIGHT);
 }
-*/
 
 //Cache zone colors for performance
 export const ZONE_CSS = new Map();
@@ -273,11 +274,10 @@ export function castCieling(
   fromY = 0
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
-  fromY = wallTopY[screenColumnX] ?? 0;
   //never draw above the horizon
   const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT; // where wall starts
   const startY = 0; // top of screen
-  //if (endY <= 0) return; // nothing to draw
+  if (endY <= 0) return; // nothing to draw
   //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
@@ -297,22 +297,13 @@ export function castCieling(
   for (let y = startY; y < endY; y++) {
     const ix = wx | 0;
     const iy = wy | 0;
-    let zoneId = 0;
-    if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
-      //zoneId = 0; //Horizon pixel, don't draw
-    } else {
-      // Get player's current zone at start of castCeiling function
-
-      zoneId =
-        ix >= 0 &&
-        iy >= 0 &&
-        ix < gameStateObject.MAP_W &&
-        iy < gameStateObject.MAP_H
-          ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
-          : ZONE_GRID_CACHE[
-              (player.y | 0) * gameStateObject.MAP_W + (player.x | 0)
-            ];
-    }
+    let zoneId =
+      ix >= 0 &&
+      iy >= 0 &&
+      ix < gameStateObject.MAP_W &&
+      iy < gameStateObject.MAP_H
+        ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
+        : lastZone;
 
     if (zoneId !== lastZone) {
       const color = zoneCielingCss(lastZone);
