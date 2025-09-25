@@ -24,17 +24,62 @@ const wallTopY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
 //This keeps floors and walls aligned at any playerHeight without hacks.
 const ROW_DIST = new Float32Array(HEIGHT);
 const CIELING_ROW_DIST = new Float32Array(HEIGHT);
+//idd will be key for zone ID, value will be precomputed row distance array
+const ROW_DIST_BY_ZONE = {};
+const CILEING_DIST_BY_ZONE = {};
+
 export function rebuildRowDistLUT() {
+  // Clear previous per-zone tables
+  for (const key in CILEING_DIST_BY_ZONE) {
+    delete CILEING_DIST_BY_ZONE[key];
+  }
+  for (const key in ROW_DIST_BY_ZONE) {
+    delete ROW_DIST_BY_ZONE[key];
+  }
+
   const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
   const EYE = player.calculatePlayerHeight(); //same EYE as in sprite code
-  const eyeScale = HEIGHT * (2 - EYE) * 0.5; //matches sprite projection
+
+  const floorDepth = 0; //Ground level
+  const floorAdjuster = 2 - floorDepth;
+  const eyeScale = HEIGHT * (floorAdjuster - EYE) * 0.5; //matches sprite projection
+
   for (let y = 0; y < HEIGHT; y++) {
     const dy = y - horizon; //>0 below horizon
     ROW_DIST[y] = dy !== 0 ? eyeScale / dy : 1e-6; //avoid div-by-zero
-    const ceilingScale = HEIGHT * EYE * 0.5;
+
+    const cileingHeight = 2; //2 WUNITS
+    const cileingAdjuster = cileingHeight - 2; //2 is a wall consiting of two WUNITS
+    const ceilingScale = HEIGHT * (cileingAdjuster + EYE) * 0.5;
     CIELING_ROW_DIST[y] = dy !== 0 ? -ceilingScale / dy : -1e-6;
   }
+
+  for (let i = 0; i < gameStateObject.zones.length; i++) {
+    const zone = gameStateObject.zones[i];
+    if (zone.ceilingHeight !== undefined) {
+      CILEING_DIST_BY_ZONE[i] = new Float32Array(HEIGHT); // Allocate the array first
+      for (let y = 0; y < HEIGHT; y++) {
+        const dy = y - horizon; //>0 below horizon
+        const cileingHeight = zone.ceilingHeight;
+        const cileingAdjuster = cileingHeight - 2; //2 is a wall consiting of two WUNITS
+        const ceilingScale = HEIGHT * (cileingAdjuster + EYE) * 0.5;
+        CILEING_DIST_BY_ZONE[i][y] = dy !== 0 ? -ceilingScale / dy : -1e-6;
+      }
+    }
+
+    if (zone.floorDepth !== undefined) {
+      const newFloorDepth = zone.floorDepth; //Ground level
+      const newFloorAdjuster = 2 - newFloorDepth;
+      const newEyeScale = HEIGHT * (newFloorAdjuster - EYE) * 0.5; //matches sprite projection
+      ROW_DIST_BY_ZONE[i] = new Float32Array(HEIGHT); // Allocate the array first
+      for (let y = 0; y < HEIGHT; y++) {
+        const dy = y - horizon; //>0 below horizon
+        ROW_DIST_BY_ZONE[i][y] = dy !== 0 ? newEyeScale / dy : 1e-6; //avoid div-by-zero
+      }
+    }
+  }
 }
+
 rebuildRowDistLUT();
 
 //Gradient caches - arrays indexed by zone ID for O(1) access
@@ -286,11 +331,11 @@ export function castCieling(
   //1 / cos(theta) to remove tiny fisheye on floor
   const invDot = 1 / (dirX * rayX + dirY * rayY);
   //Initialize world positions using first row *perp* distance, corrected
-  let dist = CIELING_ROW_DIST[startY];
+  let lastZone = 0;
+  let dist =
+    CILEING_DIST_BY_ZONE?.[lastZone]?.[startY] ?? CIELING_ROW_DIST[startY];
   let wx = player.x + rayX * dist * invDot;
   let wy = player.y + rayY * dist * invDot;
-
-  let lastZone = 0;
   let runStartY = startY;
   let lastStyle = null;
   //Walk rows, build a vertical scan based on the floors we can see
@@ -317,7 +362,10 @@ export function castCieling(
     }
 
     //step world coords using successive row distances
-    const nextDist = CIELING_ROW_DIST[y + 1] ?? dist;
+    const nextDist =
+      CILEING_DIST_BY_ZONE?.[lastZone]?.[y + 1] ??
+      CIELING_ROW_DIST[y + 1] ??
+      dist;
     const delta = nextDist - dist;
     wx += rayX * delta * invDot;
     wy += rayY * delta * invDot;
@@ -580,7 +628,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     }
     const visibleHeight = drawEndY - drawStartY;
     wallBottomY[screenColumnX] = drawEndY;
-    wallTopY[screenColumnX] = drawStartY;
+    //Draw wall column using fast canvas method
+    const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
+    wallTopY[screenColumnX] = drawStartY * tall;
     if (visibleHeight <= 0) {
       zBuffer[screenColumnX] = perpendicularDistance;
       continue;
@@ -603,9 +653,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (hitTextureId === 7) {
       shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
     }
-
-    //Draw wall column using fast canvas method
-    const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
 
     if (tall == 1.0) {
       drawWallColumnImg(

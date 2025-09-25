@@ -20,6 +20,7 @@ import {
   clearGradientCaches,
   castFloorFog,
   cacheZoneIdAtGrid,
+  rebuildRowDistLUT,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, spriteEnum, loadAsyncSprites } from "./Sprites.js";
@@ -145,6 +146,7 @@ export function ChangeMapLevel(specificLevel = -1) {
   buildEmptyTilesOnce();
   clearGradientCaches();
   cacheZoneIdAtGrid();
+  rebuildRowDistLUT();
   player.x = player.x = chosenMapDefinition.startPos.x;
   player.y = chosenMapDefinition.startPos.y;
 }

@@ -53,6 +53,7 @@ export const sampleMaps = [
         cielingColorBack: "#000000",
         floorColorBack: "#000000",
         fogColor: "#000000",
+        ceilingHeight: 6,
         spawnRules: [
           {
             entityType: "entity",
