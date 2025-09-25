@@ -89,12 +89,15 @@ export const HAZE_GRADIENT_CACHE = [];
 export const SIMPLE_FLOOR_GRADIENT_CACHE = [];
 export const ZONE_GRID_CACHE = [];
 
+export const CIELING_FOG_GRADIENT_CACHE = [];
+
 //Clear all gradient caches (called when switching maps)
 export function clearGradientCaches() {
   CEILING_GRADIENT_CACHE.length = 0;
   FLOOR_FOG_GRADIENT_CACHE.length = 0;
   HAZE_GRADIENT_CACHE.length = 0;
   SIMPLE_FLOOR_GRADIENT_CACHE.length = 0;
+  CIELING_FOG_GRADIENT_CACHE.length = 0;
   ZONE_CSS.clear();
   ZONE_CIELING_CSS.clear();
 }
@@ -267,6 +270,9 @@ export function castFloor(
 
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < HEIGHT; y++) {
+    if (player.sightDist > 0 && Math.abs(dist) > player.sightDist) {
+      break; // Stop this floor column at fog distance
+    }
     const ix = wx | 0;
     const iy = wy | 0;
 
@@ -318,7 +324,7 @@ export function castCieling(
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
   //never draw above the horizon
-  const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT; // where wall starts
+  const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT;
   const startY = 0; // top of screen
   if (endY <= 0) {
     return;
@@ -334,12 +340,16 @@ export function castCieling(
   let lastZone = 0;
   let dist =
     CILEING_DIST_BY_ZONE?.[lastZone]?.[startY] ?? CIELING_ROW_DIST[startY];
+
   let wx = player.x + rayX * dist * invDot;
   let wy = player.y + rayY * dist * invDot;
   let runStartY = startY;
   let lastStyle = null;
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < endY; y++) {
+    if (player.sightDist > 0 && Math.abs(dist) > player.sightDist) {
+      break; // Stop this ceiling column at fog distance
+    }
     const ix = wx | 0;
     const iy = wy | 0;
     const zoneId =
@@ -423,6 +433,34 @@ export function castFloorFog(ctx) {
   ctx.fillRect(0, y0, WIDTH, h);
 }
 
+export function castCielingFog(ctx) {
+  const y0 = 0,
+    h = HALF_HEIGHT + 1;
+  const px = player.x | 0;
+  const py = player.y | 0;
+  const zIndex = zoneIdAt(px, py, gameStateObject.zones);
+
+  //Check cache first - O(1) access
+  let g = CIELING_FOG_GRADIENT_CACHE[zIndex];
+  if (!g) {
+    //Create and cache the gradient
+    const fogColor = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
+    const skyBack =
+      gameStateObject.zones[zIndex].cielingColorBack ||
+      gameStateObject.cielingColorBack ||
+      "#6495ED";
+    g = ctx.createLinearGradient(0, y0, 0, y0 + h);
+    g.addColorStop(0.0, "rgba(0,0,0,0)"); // fully clear at top
+    g.addColorStop(0.85, skyBack); // tint near horizon
+    g.addColorStop(0.95, fogColor); // strongest at horizon
+
+    CIELING_FOG_GRADIENT_CACHE[zIndex] = g;
+  }
+
+  ctx.fillStyle = g;
+  ctx.fillRect(0, y0, WIDTH, h);
+}
+
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
 
@@ -442,7 +480,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     ) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = 0;
-      wallTopY[screenColumnX] = HALF_HEIGHT;
+      wallTopY[screenColumnX] = wallTopY[screenColumnX - 1];
       continue;
     }
 
@@ -532,7 +570,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (hitTextureId === 0) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = 0;
-      wallTopY[screenColumnX] = HALF_HEIGHT;
+      wallTopY[screenColumnX] = wallTopY[screenColumnX - 1];
       continue;
     }
 

@@ -21,6 +21,7 @@ import {
   castFloorFog,
   cacheZoneIdAtGrid,
   rebuildRowDistLUT,
+  castCielingFog,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, spriteEnum, loadAsyncSprites } from "./Sprites.js";
@@ -178,7 +179,7 @@ function castAndDraw(nowSec) {
     for (let x = 0; x < WIDTH; x++) {
       castCieling(nowSec, cameraBasisVectors, x, 0);
     }
-    //castFloorFog(ctx);
+    castCielingFog(ctx);
   }
 
   //2 means fog zone + basic floor cover and since we don't use the fog zone
