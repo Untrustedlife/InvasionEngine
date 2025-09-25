@@ -277,17 +277,13 @@ export function castFloor(
     const iy = wy | 0;
 
     let zoneId = 0;
-    if (startY === HALF_HEIGHT && y === HALF_HEIGHT) {
-      zoneId = 0; //keep horizon special-case
-    } else {
-      zoneId =
-        ix >= 0 &&
-        iy >= 0 &&
-        ix < gameStateObject.MAP_W &&
-        iy < gameStateObject.MAP_H
-          ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
-          : 0;
-    }
+    zoneId =
+      ix >= 0 &&
+      iy >= 0 &&
+      ix < gameStateObject.MAP_W &&
+      iy < gameStateObject.MAP_H
+        ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
+        : lastZoneId;
 
     if (zoneId !== lastZoneId) {
       const color = zoneCss(lastZoneId);
