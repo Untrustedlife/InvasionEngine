@@ -243,41 +243,40 @@ export function castFloor(
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
 
-  fromY = wallBottomY[screenColumnX] ?? 0;
-  //never draw above the horizon
+  fromY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
   const startY = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
   if (startY >= HEIGHT) {
     return;
   }
-
-  //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
   const rayY = dirY + planeY * camX;
-
-  //Initialize world positions using first row distance
-  //1 / cos(theta) to remove tiny fisheye on floor
   const invDot = 1 / (dirX * rayX + dirY * rayY);
 
-  //Initialize world positions using first row *perp* distance, corrected
-  let dist = ROW_DIST[startY];
+  // Skip fogged rows at the top of the floor span
+  let y0 = startY;
+  if (player.sightDist > 0) {
+    while (y0 < HEIGHT && (ROW_DIST[y0] ?? Infinity) > player.sightDist) {
+      y0++;
+    }
+  }
+  if (y0 >= HEIGHT) {
+    return;
+  } // nothing visible in this column
+
+  // Init from first visible row
+  let dist = ROW_DIST[y0];
   let wx = player.x + rayX * dist * invDot;
   let wy = player.y + rayY * dist * invDot;
 
-  let lastZoneId = 0;
-  let runStartY = startY;
+  let runStartY = y0;
   let lastStyle = null;
-
-  //Walk rows, build a vertical scan based on the floors we can see
-  for (let y = startY; y < HEIGHT; y++) {
-    if (player.sightDist > 0 && Math.abs(dist) > player.sightDist) {
-      break; // Stop this floor column at fog distance
-    }
+  let lastZoneId = 0;
+  // Walk visible rows only
+  for (let y = y0; y < HEIGHT; y++) {
     const ix = wx | 0;
     const iy = wy | 0;
-
-    let zoneId = 0;
-    zoneId =
+    const zoneId =
       ix >= 0 &&
       iy >= 0 &&
       ix < gameStateObject.MAP_W &&
@@ -287,7 +286,6 @@ export function castFloor(
 
     if (zoneId !== lastZoneId) {
       const color = zoneCss(lastZoneId);
-      //No reason to swap rectangles if the color is the same
       if (color !== lastStyle) {
         ctx.fillStyle = color;
         lastStyle = color;
@@ -297,15 +295,14 @@ export function castFloor(
       runStartY = y;
     }
 
-    //step world coords using successive row distances
     const nextDist = ROW_DIST[y + 1] ?? dist;
-    const delta = nextDist - dist;
+    const delta = nextDist - dist; // (negative for floor)
     wx += rayX * delta * invDot;
     wy += rayY * delta * invDot;
     dist = nextDist;
   }
 
-  //Flush tail run
+  // Flush tail
   const color = zoneCss(lastZoneId);
   if (color !== lastStyle) {
     ctx.fillStyle = color;
@@ -344,7 +341,13 @@ export function castCieling(
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < endY; y++) {
     if (player.sightDist > 0 && Math.abs(dist) > player.sightDist) {
-      break; // Stop this ceiling column at fog distance
+      // flush up to the fog line and stop
+      const color = zoneCielingCss(lastZone);
+      if (color !== lastStyle) {
+        ctx.fillStyle = color;
+      }
+      ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
+      return; // <- important: no tail fill beyond fog
     }
     const ix = wx | 0;
     const iy = wy | 0;
@@ -475,7 +478,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       rayDirectionY > -1e-8
     ) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
-      wallBottomY[screenColumnX] = 0;
+      wallBottomY[screenColumnX] = HALF_HEIGHT;
       wallTopY[screenColumnX] = wallTopY[screenColumnX - 1];
       continue;
     }
@@ -565,7 +568,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     //Skip if no wall hit within range
     if (hitTextureId === 0) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
-      wallBottomY[screenColumnX] = 0;
+      wallBottomY[screenColumnX] = HALF_HEIGHT;
       wallTopY[screenColumnX] = wallTopY[screenColumnX - 1];
       continue;
     }
