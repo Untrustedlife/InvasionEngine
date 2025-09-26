@@ -1,6 +1,10 @@
-//Main raycasting renderer - casts one ray per screen column using DDA algorithm
-//Draws textured walls with distance shading and fills z-buffer for sprite occlusion
-//Could just add a sprite loader (all walls are 64x64)
+/**
+ * @fileoverview Main raycasting renderer - casts one ray per screen column using DDA algorithm.
+ * Draws textured walls with distance shading and fills z-buffer for sprite occlusion.
+ * This is the core rendering engine that handles wall casting, floor/ceiling projection,
+ * gradient caching, and fog effects.
+ */
+
 import { ctx, WIDTH, HEIGHT } from "./Dom.js";
 import { NEAR, PROJ_NEAR, FOG_START_FRAC, FOG_COLOR } from "./Constants.js";
 import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
@@ -13,11 +17,38 @@ import {
 } from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 import { WALL_HEIGHT_MAP } from "./SampleGame/Walltextures.js";
-//Z-buffer stores wall distances for sprite depth testing
+
+/**
+ * Z-buffer stores wall distances for sprite depth testing. Each index corresponds
+ * to a screen column and contains the perpendicular distance to the nearest wall.
+ *
+ * **Used by:**
+ * - `Main.js`: Sprites check `zBuffer[screenColumn]` to determine if they should
+ *   render in front of or behind walls for proper depth sorting
+ * - `Gameplay.js`: Uses `zBuffer[center]` to get wall distance at screen center
+ *   for interaction range calculations and entity targeting
+ *
+ * @type {Float32Array} Array of wall distances indexed by screen column
+ */
 export const zBuffer = new Float32Array(WIDTH);
+
+/**
+ * Half screen height, computed as HEIGHT >> 1 for performance (bitwise shift is faster than division).
+ * This represents the horizon line and is used extensively throughout rendering calculations.
+ *
+ * **Used by:**
+ * - `Main.js`: Used as horizon reference for floor gradient calculations and screen space positioning
+ * - **Internally**: Used as default wall bottom/top positions, gradient boundaries, fog calculations,
+ *   and as the reference point for floor/ceiling projection mathematics
+ *
+ * @type {number} Half of screen height (horizon line)
+ */
 export const HALF_HEIGHT = HEIGHT >> 1; //Bitwise shift is faster than division by 2
+
+/** @private Internal buffer storing bottom Y position of walls for each screen column */
 const wallBottomY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
 
+/** @private Internal buffer storing top Y position of walls for each screen column */
 const wallTopY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
 
 //Distance from camera to each screen row (used for floor projection)
@@ -28,6 +59,18 @@ const CIELING_ROW_DIST = new Float32Array(HEIGHT);
 const ROW_DIST_BY_ZONE = {};
 const CILEING_DIST_BY_ZONE = {};
 
+/**
+ * Rebuilds row distance lookup tables for floor and ceiling projection.
+ * Precomputes distance from camera to each screen row, accounting for player height
+ * and zone-specific floor depths and ceiling heights. This ensures floors and walls
+ * remain properly aligned regardless of player height without runtime hacks.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during map loading/switching and when player height changes
+ *   to ensure projection mathematics remain accurate
+ *
+ * @export
+ */
 export function rebuildRowDistLUT() {
   // Clear previous per-zone tables
   for (const key in CILEING_DIST_BY_ZONE) {
@@ -91,7 +134,17 @@ export const ZONE_GRID_CACHE = [];
 
 export const CIELING_FOG_GRADIENT_CACHE = [];
 
-//Clear all gradient caches (called when switching maps)
+/**
+ * Clears all gradient caches and zone color caches. Essential for preventing
+ * memory leaks and visual artifacts when switching between maps with different
+ * zone configurations, colors, or lighting schemes.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during map transitions to ensure clean state and prevent
+ *   stale gradients from previous maps from being used inappropriately
+ *
+ * @export
+ */
 export function clearGradientCaches() {
   CEILING_GRADIENT_CACHE.length = 0;
   FLOOR_FOG_GRADIENT_CACHE.length = 0;
@@ -167,6 +220,18 @@ function drawWallColumnImg(
 //Draw sprite column with alpha blending - preserves transparency
 const SPRITE_Y_ORIGIN_BOTTOM = false;
 
+/**
+ * Renders a simple gradient-based ceiling using zone-specific colors.
+ * Creates a linear gradient from top to horizon with configurable colors
+ * for front, back, and fog zones. Uses caching for performance.
+ *
+ * **Used by:**
+ * - `Main.js`: Called as alternative ceiling renderer when zone count <= 2
+ *   for simpler maps that don't require complex per-pixel ceiling projection
+ *
+ * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context
+ * @export
+ */
 export function classicCastCieling(ctx) {
   const px = player.x | 0;
   const py = player.y | 0;
@@ -223,6 +288,19 @@ function zoneCielingCss(zoneId) {
   return c;
 }
 
+/**
+ * Pre-computes and caches zone IDs for every map grid position.
+ * Builds a flat array indexed by (y * MAP_W + x) containing zone IDs for
+ * ultra-fast O(1) zone lookups during floor/ceiling rendering, avoiding
+ * repeated expensive zoneIdAt() calculations during the render loop.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during map loading to populate the zone grid cache
+ * - **Internally**: `castFloor()` and `castCieling()` use ZONE_GRID_CACHE for
+ *   instant zone lookups when projecting floor/ceiling colors
+ *
+ * @export
+ */
 export function cacheZoneIdAtGrid() {
   ZONE_GRID_CACHE.length = 0;
   const zones = gameStateObject.zones;
@@ -235,6 +313,22 @@ export function cacheZoneIdAtGrid() {
   }
 }
 
+/**
+ * Renders floor projection for a single screen column using ray casting.
+ * Projects floor textures/colors by casting a ray from camera through each screen row,
+ * computing world coordinates and sampling zone colors. Uses precomputed distance
+ * tables for efficient perspective-correct projection with fog culling support.
+ *
+ * **Used by:**
+ * - `Main.js`: Called in the main render loop for each screen column to draw
+ *   floors that appear below the horizon line and below rendered walls
+ *
+ * @param {number} nowSec - Current time in seconds for potential animation effects
+ * @param {Object} cameraBasisVectors - Camera direction and plane vectors {dirX, dirY, planeX, planeY}
+ * @param {number} screenColumnX - Screen column X coordinate to render
+ * @param {number} fromY - Starting Y position (defaults to wall bottom or horizon)
+ * @export
+ */
 export function castFloor(
   nowSec,
   cameraBasisVectors,
@@ -309,6 +403,22 @@ export function castFloor(
   }
   ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
 }
+/**
+ * Renders ceiling projection for a single screen column using ray casting.
+ * Projects ceiling colors by casting a ray from camera through each screen row above
+ * the horizon, computing world coordinates and sampling zone ceiling colors. Uses
+ * zone-specific ceiling heights and precomputed distance tables for proper projection.
+ *
+ * **Used by:**
+ * - `Main.js`: Called in the main render loop for each screen column to draw
+ *   ceilings that appear above the horizon line and above rendered walls
+ *
+ * @param {number} nowSec - Current time in seconds for potential animation effects
+ * @param {Object} cameraBasisVectors - Camera direction and plane vectors {dirX, dirY, planeX, planeY}
+ * @param {number} screenColumnX - Screen column X coordinate to render
+ * @param {number} fromY - Starting Y position (defaults to wall top or horizon)
+ * @export
+ */
 export function castCieling(
   nowSec,
   cameraBasisVectors,
@@ -389,6 +499,18 @@ export function castCieling(
   ctx.fillRect(screenColumnX, runStartY, 1, endY - runStartY);
 }
 
+/**
+ * Renders atmospheric haze effect as a subtle gradient overlay across the entire screen.
+ * Creates a dark blue tinted gradient that's strongest at the bottom, providing depth
+ * and atmosphere to the 3D environment. Uses caching for performance optimization.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during the render loop to add atmospheric depth and mood
+ *   to the scene before sprites are rendered
+ *
+ * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context
+ * @export
+ */
 export function castHaze(ctx) {
   //Check cache first
   let backgroundFogGradient = HAZE_GRADIENT_CACHE[0];
@@ -406,6 +528,19 @@ export function castHaze(ctx) {
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 }
 
+/**
+ * Renders floor fog effect using zone-specific fog colors.
+ * Creates a gradient that starts near the horizon and fades to transparent
+ * at the bottom, providing atmospheric depth to floor areas. Uses per-zone
+ * caching for performance and supports zone-specific fog colors.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during the render loop after floor rendering to add
+ *   fog effects that enhance depth perception and atmosphere
+ *
+ * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context
+ * @export
+ */
 export function castFloorFog(ctx) {
   const y0 = HALF_HEIGHT - 1,
     h = HEIGHT - y0;
@@ -432,6 +567,19 @@ export function castFloorFog(ctx) {
   ctx.fillRect(0, y0, WIDTH, h);
 }
 
+/**
+ * Renders ceiling fog effect using zone-specific colors and atmospheric blending.
+ * Creates a gradient from transparent at top to fog color near horizon, providing
+ * atmospheric depth to ceiling areas. The effect is strongest near the horizon line
+ * where ceiling meets the distance, enhancing the sense of depth and atmosphere.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during the render loop after ceiling rendering to add
+ *   fog effects that create atmospheric depth in ceiling areas
+ *
+ * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context
+ * @export
+ */
 export function castCielingFog(ctx) {
   const y0 = 0,
     h = HALF_HEIGHT + 1;
@@ -460,6 +608,24 @@ export function castCielingFog(ctx) {
   ctx.fillRect(0, y0, WIDTH, h);
 }
 
+/**
+ * Renders wall geometry using DDA raycasting algorithm with textured columns.
+ * Casts one ray per screen column, traces through the map grid until hitting walls,
+ * then renders textured wall slices with distance shading, fog effects, and proper
+ * UV mapping. Fills the z-buffer for sprite depth sorting and handles variable wall heights.
+ * This is the core 3D wall rendering function that creates the pseudo-3D environment.
+ *
+ * **Used by:**
+ * - `Main.js`: Called as the primary wall renderer in the main render loop,
+ *   executed after clearing but before floor/ceiling and sprite rendering
+ *
+ * @param {number} nowSec - Current time in seconds for texture animation effects
+ * @param {Object} cameraBasisVectors - Camera direction and plane vectors {dirX, dirY, planeX, planeY}
+ * @param {Array<Array<number>>} MAP - 2D map array where non-zero values represent wall texture IDs
+ * @param {number} MAP_W - Map width in grid cells
+ * @param {number} MAP_H - Map height in grid cells
+ * @export
+ */
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
 
