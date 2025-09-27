@@ -249,6 +249,12 @@ function renderVisibleSprites(cameraTransform) {
       continue;
     }
 
+    //Skip sprites out of fog bounds
+    const roughDistance = Math.hypot(sprite.x - player.x, sprite.y - player.y);
+    if (roughDistance > player.sightDist) {
+      continue;
+    }
+
     const projection = projectSprite(sprite, cameraTransform);
     if (!projection) {
       continue; //sprite is behind camera
