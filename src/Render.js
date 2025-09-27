@@ -465,12 +465,13 @@ export function castCieling(
     }
 
     if (dist > zBuffer[screenColumnX]) {
+      //&& y <= wallTopY[screenColumnX]) { (For when i add ""portals"".)
       const color = zoneCielingCss(lastZone);
       if (color !== lastStyle) {
         ctx.fillStyle = color;
       }
       ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
-      return; // <- important: no tail fill beyond fog
+      return; // <- important: no tail fill beyond wall that actually blocks ceiling
     }
     const ix = wx | 0;
     const iy = wy | 0;
