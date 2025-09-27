@@ -266,6 +266,21 @@ function renderVisibleSprites(cameraTransform) {
       continue;
     }
 
+    const sampleCount = 3;
+    let visibleSamples = 0;
+    for (let i = 0; i < sampleCount; i++) {
+      const x =
+        projection.drawStartX +
+        (i * (projection.drawEndX - projection.drawStartX)) / (sampleCount - 1);
+      if (projection.depth <= zBuffer[Math.floor(x)]) {
+        visibleSamples++;
+      }
+    }
+    // Skip only if no samples are visible
+    if (visibleSamples === 0) {
+      continue;
+    }
+
     //Calculate distance-based shading with fog effects
     const shadingInfo = calculateSpriteShading(projection);
 
