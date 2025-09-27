@@ -317,7 +317,7 @@ export function cacheZoneIdAtGrid() {
  * Renders floor projection for a single screen column using ray casting.
  * Projects floor textures/colors by casting a ray from camera through each screen row,
  * computing world coordinates and sampling zone colors. Uses precomputed distance
- * tables for efficient perspective-correct projection with fog culling support.
+ * tables for efficient perspective-correct projection with fog and zbuffer culling support.
  *
  * **Used by:**
  * - `Main.js`: Called in the main render loop for each screen column to draw
@@ -350,7 +350,11 @@ export function castFloor(
   // Skip fogged rows at the top of the floor span
   let y0 = startY;
   if (player.sightDist > 0) {
-    while (y0 < HEIGHT && (ROW_DIST[y0] ?? Infinity) > player.sightDist) {
+    while (
+      y0 < HEIGHT &&
+      (ROW_DIST[y0] ?? Infinity) > player.sightDist &&
+      Math.abs(ROW_DIST[y0] ?? Infinity) > zBuffer[screenColumnX]
+    ) {
       y0++;
     }
   }
@@ -459,6 +463,15 @@ export function castCieling(
       ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
       return; // <- important: no tail fill beyond fog
     }
+
+    if (dist > zBuffer[screenColumnX]) {
+      const color = zoneCielingCss(lastZone);
+      if (color !== lastStyle) {
+        ctx.fillStyle = color;
+      }
+      ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
+      return; // <- important: no tail fill beyond fog
+    }
     const ix = wx | 0;
     const iy = wy | 0;
     const zoneId =
@@ -498,7 +511,6 @@ export function castCieling(
   }
   ctx.fillRect(screenColumnX, runStartY, 1, endY - runStartY);
 }
-
 /**
  * Renders atmospheric haze effect as a subtle gradient overlay across the entire screen.
  * Creates a dark blue tinted gradient that's strongest at the bottom, providing depth
