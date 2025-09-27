@@ -511,6 +511,7 @@ export function castCieling(
   }
   ctx.fillRect(screenColumnX, runStartY, 1, endY - runStartY);
 }
+
 /**
  * Renders atmospheric haze effect as a subtle gradient overlay across the entire screen.
  * Creates a dark blue tinted gradient that's strongest at the bottom, providing depth
@@ -657,7 +658,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     ) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = HALF_HEIGHT;
-      wallTopY[screenColumnX] = wallTopY[screenColumnX - 1];
+      wallTopY[screenColumnX] = HALF_HEIGHT;
       continue;
     }
 
@@ -747,7 +748,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (hitTextureId === 0) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = HALF_HEIGHT;
-      wallTopY[screenColumnX] = wallTopY[screenColumnX - 1];
+      wallTopY[screenColumnX] = HALF_HEIGHT;
       continue;
     }
 
