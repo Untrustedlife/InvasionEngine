@@ -235,10 +235,7 @@ const SPRITE_Y_ORIGIN_BOTTOM = false;
 export function classicCastCieling(ctx) {
   const px = player.x | 0;
   const py = player.y | 0;
-  const zIndex =
-    ZONE_GRID_CACHE.length > 0
-      ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
-      : 0;
+  const zIndex = ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px];
 
   let sky = CEILING_GRADIENT_CACHE[zIndex];
   if (!sky) {
@@ -549,10 +546,7 @@ export function castFloorFog(ctx) {
     h = HEIGHT - y0;
   const px = player.x | 0;
   const py = player.y | 0;
-  const zIndex =
-    ZONE_GRID_CACHE.length > 0
-      ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
-      : 0;
+  const zIndex = ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px];
 
   let g = FLOOR_FOG_GRADIENT_CACHE[zIndex];
   if (!g) {
@@ -591,10 +585,7 @@ export function castCielingFog(ctx) {
     h = HALF_HEIGHT + 1;
   const px = player.x | 0;
   const py = player.y | 0;
-  const zIndex =
-    ZONE_GRID_CACHE.length > 0
-      ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
-      : 0;
+  const zIndex = ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px];
 
   //Check cache first - O(1) access
   let g = CIELING_FOG_GRADIENT_CACHE[zIndex];
