@@ -22,6 +22,7 @@ import {
   cacheZoneIdAtGrid,
   rebuildRowDistLUT,
   castCielingFog,
+  ZONE_GRID_CACHE,
 } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { sprites, spriteEnum, loadAsyncSprites } from "./Sprites.js";
@@ -188,7 +189,10 @@ function castAndDraw(nowSec) {
   if (gameStateObject.zones.length <= 2) {
     const px = player.x | 0;
     const py = player.y | 0;
-    const zIndex = zoneIdAt(px, py, gameStateObject.zones);
+    const zIndex =
+      ZONE_GRID_CACHE.length > 0
+        ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
+        : 0;
     let floor = SIMPLE_FLOOR_GRADIENT_CACHE[zIndex];
     if (!floor) {
       //Create and cache the gradient
