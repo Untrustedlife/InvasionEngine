@@ -363,13 +363,13 @@ export function castFloor(
   } // nothing visible in this column
 
   // Init from first visible row
-  let dist = ROW_DIST[y0];
+  let lastZoneId = 0;
+  let dist = ROW_DIST_BY_ZONE?.[lastZoneId]?.[y0] ?? ROW_DIST[y0];
   let wx = player.x + rayX * dist * invDot;
   let wy = player.y + rayY * dist * invDot;
 
   let runStartY = y0;
   let lastStyle = null;
-  let lastZoneId = 0;
   // Walk visible rows only
   for (let y = y0; y < HEIGHT; y++) {
     const ix = wx | 0;
@@ -393,7 +393,8 @@ export function castFloor(
       runStartY = y;
     }
 
-    const nextDist = ROW_DIST[y + 1] ?? dist;
+    const nextDist =
+      ROW_DIST_BY_ZONE?.[lastZoneId]?.[y + 1] ?? ROW_DIST[y + 1] ?? dist;
     const delta = nextDist - dist; // (negative for floor)
     wx += rayX * delta * invDot;
     wy += rayY * delta * invDot;
