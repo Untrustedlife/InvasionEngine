@@ -4,6 +4,8 @@ import { WIDTH, HEIGHT } from "./Dom.js";
 import { clamp } from "./Utils.js";
 import { player } from "./Player.js";
 import { spriteEnum } from "./Sprites.js";
+import { ZONE_GRID_CACHE } from "./Render.js";
+import { gameStateObject } from "./Map.js";
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
   return HEIGHT / distanceFromCamera;
@@ -76,23 +78,53 @@ export function projectSprite(sprite, cameraBasisVectors) {
   );
 
   //Calculate floor bias for ground sprites based on size and scale
-  //Use the same constants the walls use
-  const proj = HEIGHT; //matches projectHeight = HEIGHT / cameraSpaceY
-  const EYE = player.calculatePlayerHeight(); //match wall formula exactly
-  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if we implement pitch
 
+  //Use the same constants the walls use
+  const EYE = player.calculatePlayerHeight();
+  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if we implement pitch
+  let occludedBottom = 0; //Pixels occluded by liquid cover, from bottom up
   let startY, endY;
   if (sprite.ground) {
     //Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
     const bias = sprite.floorBiasFrac ?? 0.04;
+
+    // Move sprites lower if they are on a lower plane
+    const newZoneId =
+      ZONE_GRID_CACHE[(sprite.y | 0) * gameStateObject.MAP_W + (sprite.x | 0)];
+
+    const zone = gameStateObject.zones[newZoneId];
+    const newFloorAdjuster = 2 - (zone.floorDepth || 0); //0 is base floor depth, 1.2 is player height
+
+    //Bottom of sprite on floor
     const bottomY =
       horizon +
-      (HEIGHT * (2 - EYE)) / (2 * cameraSpaceY) -
+      (HEIGHT * (newFloorAdjuster - EYE)) / (2 * cameraSpaceY) -
       bias * finalSpriteHeight;
     const topY = bottomY - finalSpriteHeight;
 
     startY = Math.round(topY);
     endY = Math.round(bottomY);
+
+    if (zone) {
+      const fd = zone.floorDepth ?? 0;
+      // Submerge occlusion: hide the lower part of a sprite when it’s under liquid.
+      // Right now this only fires for “low water” because fd is tied to the base floor.
+      // Making “high water” (raised rivers/pools) work is trivial—
+      // just separate water height from floor height.
+      if (fd < 0) {
+        const waterDepth = fd < 0 ? -fd : 0; // world units below base
+        // Tunables (world-unit based, independent of player eye height)
+        const WATER_FULL_COVER_UNITS = 1.2; // depth at which we approach max cover
+        const depthNorm = clamp(waterDepth / WATER_FULL_COVER_UNITS, 0, 1);
+        // Quadratic ease (gentler start): depthNorm^2
+        const autoCover = depthNorm;
+        const coverFrac = clamp(autoCover, 0, 1);
+        occludedBottom = Math.min(
+          finalSpriteHeight - 1,
+          Math.round(finalSpriteHeight * coverFrac)
+        );
+      }
+    }
   } else {
     const topY = Math.round(horizon - finalSpriteHeight * 0.5);
     startY = topY;
@@ -111,6 +143,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
     depth: cameraSpaceY,
     size: finalSpriteHeight,
     width: drawEndX - drawStartX,
+    occludedBottom,
   };
 }
 //Debug helpers

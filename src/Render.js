@@ -378,7 +378,8 @@ export function castFloor(
   const kx = rayX * invDot;
   const ky = rayY * invDot;
   //classify zone using row dist. (Tried to do something fancier, didn't work out)
-  function zoneAtRow(row) {
+  let lastZoneId = 0;
+  function zoneAtRow(row, hintZone = 0) {
     const d = ROW_DIST[row] ?? ROW_DIST[ROW_DIST.length - 1] ?? Infinity;
     const wx = player.x + kx * d;
     const wy = player.y + ky * d;
@@ -388,13 +389,41 @@ export function castFloor(
       return ZONE_GRID_CACHE[iy * MAP_W + ix];
     }
     return 0;
+
+    // pass 1: classify using the hint zone's plane height
+    /*let d = ROW_DIST_BY_ZONE?.[hintZone]?.[row] ?? ROW_DIST[row];
+    let wx = player.x + kx * d;
+    let wy = player.y + ky * d;
+    let ix = Math.floor(wx);
+    let iy = Math.floor(wy);
+    const z =
+      ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H
+        ? ZONE_GRID_CACHE[iy * MAP_W + ix]
+        : hintZone;
+    if (z === hintZone) {
+      return z;
+    }
+
+    // pass 2: refine using the found zone's plane height
+    d = ROW_DIST_BY_ZONE?.[z]?.[row];
+    wx = player.x + kx * d;
+    wy = player.y + ky * d;
+    ix = Math.floor(wx);
+    iy = Math.floor(wy);
+    const z2 =
+      ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H
+        ? ZONE_GRID_CACHE[iy * MAP_W + ix]
+        : z;
+    return z2;*/
   }
+
   //adaptive stride for perf (big jumps far from horizon)
   const strideFor = (row) =>
     Math.max(8, Math.min(64, 8 + ((row - HALF_HEIGHT) >>> 3)));
 
   //painter state
-  let lastZoneId = zoneAtRow(y);
+  lastZoneId = zoneAtRow(y, lastZoneId);
+
   let runStartY = y;
   let lastStyle = null;
   while (y < HEIGHT) {
@@ -404,11 +433,11 @@ export function castFloor(
       break;
     }
     const yProbe = y + step;
-    const zProbe = zoneAtRow(yProbe);
+    const zProbe = zoneAtRow(yProbe, lastZoneId);
     if (zProbe === lastZoneId) {
       // quick midpoint check to avoid missing a thin boundary
       const mid = (y + yProbe) >> 1;
-      if (zoneAtRow(mid) === lastZoneId) {
+      if (zoneAtRow(mid, lastZoneId) === lastZoneId) {
         // whole block is one zone -> draw once
         const col = zoneCss(lastZoneId);
         if (col !== lastStyle) {
@@ -429,7 +458,7 @@ export function castFloor(
       hi = yProbe;
     while (hi - lo > 1) {
       const mid = (lo + hi) >> 1;
-      if (zoneAtRow(mid) === lastZoneId) {
+      if (zoneAtRow(mid, lastZoneId) === lastZoneId) {
         lo = mid;
       } else {
         hi = mid;
@@ -449,7 +478,7 @@ export function castFloor(
 
     //optional 1px "step" band
     //find the next zone at the boundary row *before* switching
-    const newZoneId = zoneAtRow(hi);
+    const newZoneId = zoneAtRow(hi, lastZoneId);
 
     //draw a 1px band only if floor depths differ
     const oldDepth = gameStateObject.zones[lastZoneId]?.floorDepth ?? 0;
@@ -459,8 +488,8 @@ export function castFloor(
     const wallD = zBuffer[screenColumnX] ?? Infinity;
 
     //skip band when it's at/under the wall edge or not strictly in front
-    const atWallEdge = hi <= wallEdgeY; // touching wall bottom
-    const occludedByWall = boundaryD >= wallD - 0.1; // wall is nearer/equal
+    const atWallEdge = hi === wallEdgeY; // touching wall bottom
+    const occludedByWall = boundaryD >= wallD - 0.11; // wall is nearer/equal
     const isFirstFloorRow = runStartY === wallEdgeY; // first boundary after start
 
     const drawDepthBand =

@@ -341,6 +341,22 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
   const spriteTopY = projection.drawStartY;
   const spriteHeight = projection.drawEndY - projection.drawStartY;
 
+  const occludedBottom = projection.occludedBottom | 0;
+  if (occludedBottom >= spriteHeight) {
+    ctx.filter = "none";
+    return; // fully hidden
+  }
+  const destVisibleHeight = spriteHeight - occludedBottom;
+  // Keep scale: crop proportional source height from top
+  const img = spriteEnum[sprite.img];
+  if (!img) {
+    ctx.filter = "none";
+    return;
+  }
+  const occludedFrac = occludedBottom / spriteHeight;
+  const sourceOccludedPixels = Math.round(img.height * occludedFrac);
+  const sourceVisibleHeight = img.height - sourceOccludedPixels;
+
   //Function to map screen column to texture X coordinate
   const mapScreenColumnToTextureX = (screenColumn) =>
     (((screenColumn - projection.drawStartX) * spriteEnum[sprite.img].width) /
@@ -393,11 +409,11 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
           currentRunTextureStart,
           0,
           sourceWidth,
-          spriteEnum[sprite.img].height,
+          sourceVisibleHeight,
           currentRunStart,
           spriteTopY,
           destinationWidth,
-          spriteHeight
+          destVisibleHeight
         );
       }
       currentRunStart = -1;
