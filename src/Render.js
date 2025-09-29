@@ -314,20 +314,28 @@ export function cacheZoneIdAtGrid() {
 }
 
 /**
- * Renders floor projection for a single screen column using ray casting.
- * Projects floor textures/colors by casting a ray from camera through each screen row,
- * computing world coordinates and sampling zone colors. Uses precomputed distance
- * tables for efficient perspective-correct projection with fog and zbuffer culling support.
+ * Render the floor for a single screen column below the horizon.
+ * Uses large row chunks with a small binary search to split only at zone
+ * boundaries; draws a 1-px band when adjacent zones have different
+ * floor depths.
  *
- * **Used by:**
- * - `Main.js`: Called in the main render loop for each screen column to draw
- *   floors that appear below the horizon line and below rendered walls
+ * @param {number} nowSec
+ *   Current time (reserved for animation; not used here).
+ * @param {{dirX:number, dirY:number, planeX:number, planeY:number}} cameraBasisVectors
+ *   Camera forward and plane vectors for this frame.
+ * @param {number} screenColumnX
+ *   Screen column index to draw.
+ * @param {number} [fromY=0]
+ *   Suggested start row; clamped to max(HALF_HEIGHT, wallBottomY[x]).
+ * @returns {void}
  *
- * @param {number} nowSec - Current time in seconds for potential animation effects
- * @param {Object} cameraBasisVectors - Camera direction and plane vectors {dirX, dirY, planeX, planeY}
- * @param {number} screenColumnX - Screen column X coordinate to render
- * @param {number} fromY - Starting Y position (defaults to wall bottom or horizon)
- * @export
+ * @summary
+ * - Skips rows hidden by fog or z-buffer.
+ * - Classifies zones with global ROW_DIST and a tiny directional bias
+ * - Fills one span per uniform zone run; 1-px band only when
+ *   floorDepth differs across the boundary.
+ * @uses WIDTH, HEIGHT, HALF_HEIGHT, player, zBuffer, ROW_DIST, ZONE_GRID_CACHE,
+ *       gameStateObject, zoneCss, wallBottomY, ctx
  */
 export function castFloor(
   nowSec,
@@ -336,77 +344,164 @@ export function castFloor(
   fromY = 0
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
-
+  //start row
   fromY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
-  const startY = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
-  if (startY >= HEIGHT) {
+  let y = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
+  if (y >= HEIGHT) {
     return;
   }
+
+  //column ray
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
   const rayY = dirY + planeY * camX;
-  const invDot = 1 / (dirX * rayX + dirY * rayY);
 
-  // Skip fogged rows at the top of the floor span
-  let y0 = startY;
+  //early cull (fog OR behind nearer wall)
   if (player.sightDist > 0) {
-    while (
-      y0 < HEIGHT &&
-      (ROW_DIST[y0] ?? Infinity) > player.sightDist &&
-      Math.abs(ROW_DIST[y0] ?? Infinity) > zBuffer[screenColumnX]
-    ) {
-      y0++;
+    const zClip = zBuffer[screenColumnX] ?? Infinity;
+    while (y < HEIGHT) {
+      const d = ROW_DIST[y] ?? Infinity;
+      if (d <= player.sightDist && d <= zClip) {
+        break;
+      }
+      y++;
+    }
+    if (y >= HEIGHT) {
+      return;
     }
   }
-  if (y0 >= HEIGHT) {
-    return;
-  } // nothing visible in this column
-
-  // Init from first visible row
-  let lastZoneId = 0;
-  let dist = ROW_DIST_BY_ZONE?.[lastZoneId]?.[y0] ?? ROW_DIST[y0];
-  let wx = player.x + rayX * dist * invDot;
-  let wy = player.y + rayY * dist * invDot;
-
-  let runStartY = y0;
-  let lastStyle = null;
-  // Walk visible rows only
-  for (let y = y0; y < HEIGHT; y++) {
+  const DEPTH_STEP_COLOR = "#000000";
+  const MAP_W = gameStateObject.MAP_W;
+  const MAP_H = gameStateObject.MAP_H;
+  //world pos from global distance
+  const invDot = 1 / (dirX * rayX + dirY * rayY);
+  const kx = rayX * invDot;
+  const ky = rayY * invDot;
+  //classify zone using row dist. (Tried to do something fancier, didn't work out)
+  function zoneAtRow(row) {
+    const d = ROW_DIST[row] ?? ROW_DIST[ROW_DIST.length - 1] ?? Infinity;
+    const wx = player.x + kx * d;
+    const wy = player.y + ky * d;
     const ix = wx | 0;
     const iy = wy | 0;
-    const zoneId =
-      ix >= 0 &&
-      iy >= 0 &&
-      ix < gameStateObject.MAP_W &&
-      iy < gameStateObject.MAP_H
-        ? ZONE_GRID_CACHE[iy * gameStateObject.MAP_W + ix]
-        : lastZoneId;
+    if (ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H) {
+      return ZONE_GRID_CACHE[iy * MAP_W + ix];
+    }
+    return 0;
+  }
+  //adaptive stride for perf (big jumps far from horizon)
+  const strideFor = (row) =>
+    Math.max(8, Math.min(64, 8 + ((row - HALF_HEIGHT) >>> 3)));
 
-    if (zoneId !== lastZoneId) {
-      const color = zoneCss(lastZoneId);
-      if (color !== lastStyle) {
-        ctx.fillStyle = color;
-        lastStyle = color;
+  //painter state
+  let lastZoneId = zoneAtRow(y);
+  let runStartY = y;
+  let lastStyle = null;
+  while (y < HEIGHT) {
+    // try a large jump
+    const step = Math.min(strideFor(y), HEIGHT - 1 - y);
+    if (step <= 0) {
+      break;
+    }
+    const yProbe = y + step;
+    const zProbe = zoneAtRow(yProbe);
+    if (zProbe === lastZoneId) {
+      // quick midpoint check to avoid missing a thin boundary
+      const mid = (y + yProbe) >> 1;
+      if (zoneAtRow(mid) === lastZoneId) {
+        // whole block is one zone -> draw once
+        const col = zoneCss(lastZoneId);
+        if (col !== lastStyle) {
+          ctx.fillStyle = col;
+          lastStyle = col;
+        }
+        const h = yProbe + 1 - runStartY;
+        if (h > 0) {
+          ctx.fillRect(screenColumnX, runStartY, 1, h);
+        }
+        y = yProbe + 1;
+        runStartY = y;
+        continue;
       }
-      ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
-      lastZoneId = zoneId;
-      runStartY = y;
+    }
+    //boundary inside [y, yProbe] — find first row where zone changes
+    let lo = y,
+      hi = yProbe;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (zoneAtRow(mid) === lastZoneId) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
     }
 
-    const nextDist =
-      ROW_DIST_BY_ZONE?.[lastZoneId]?.[y + 1] ?? ROW_DIST[y + 1] ?? dist;
-    const delta = nextDist - dist; // (negative for floor)
-    wx += rayX * delta * invDot;
-    wy += rayY * delta * invDot;
-    dist = nextDist;
+    //flush up to boundary
+    const col = zoneCss(lastZoneId);
+    if (col !== lastStyle) {
+      ctx.fillStyle = col;
+      lastStyle = col;
+    }
+    const h = hi - runStartY;
+    if (h > 0) {
+      ctx.fillRect(screenColumnX, runStartY, 1, h);
+    }
+
+    //optional 1px "step" band
+    //find the next zone at the boundary row *before* switching
+    const newZoneId = zoneAtRow(hi);
+
+    //draw a 1px band only if floor depths differ
+    const oldDepth = gameStateObject.zones[lastZoneId]?.floorDepth ?? 0;
+    const newDepth = gameStateObject.zones[newZoneId]?.floorDepth ?? 0;
+    const wallEdgeY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
+    const boundaryD = ROW_DIST[hi] ?? Infinity; // global, stable
+    const wallD = zBuffer[screenColumnX] ?? Infinity;
+
+    //skip band when it's at/under the wall edge or not strictly in front
+    const atWallEdge = hi <= wallEdgeY; // touching wall bottom
+    const occludedByWall = boundaryD >= wallD - 0.1; // wall is nearer/equal
+    const isFirstFloorRow = runStartY === wallEdgeY; // first boundary after start
+
+    const drawDepthBand =
+      !!DEPTH_STEP_COLOR &&
+      oldDepth !== newDepth &&
+      !atWallEdge &&
+      !occludedByWall &&
+      !isFirstFloorRow;
+
+    if (drawDepthBand) {
+      //variable thickness band: thicker when rising, thinner when dropping
+      const amount = oldDepth > newDepth ? 5 : 1; // rise = thicker, drop = thin
+      const y0 = hi;
+      const y1 = Math.min(HEIGHT, y0 + amount);
+      if (y1 > y0) {
+        if (ctx.fillStyle !== DEPTH_STEP_COLOR) {
+          ctx.fillStyle = DEPTH_STEP_COLOR;
+        }
+        ctx.fillRect(screenColumnX, y0, 1, y1 - y0);
+      }
+      lastStyle = null; // force next span color set
+      lastZoneId = newZoneId;
+      y = y1;
+      runStartY = y;
+      continue;
+    }
+
+    // switch to new zone and continue below the band only if we drew it
+    lastZoneId = newZoneId;
+    y = hi;
+    runStartY = y;
   }
 
-  // Flush tail
-  const color = zoneCss(lastZoneId);
-  if (color !== lastStyle) {
-    ctx.fillStyle = color;
+  // tail
+  if (runStartY < HEIGHT) {
+    const col = zoneCss(lastZoneId);
+    if (col !== lastStyle) {
+      ctx.fillStyle = col;
+    }
+    ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
   }
-  ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
 }
 /**
  * Renders ceiling projection for a single screen column using ray casting.
