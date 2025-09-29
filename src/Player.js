@@ -17,12 +17,28 @@ export const player = {
   height: 0.75,
   sightDist: 15,
   mouseSensitivity: 0.22,
+  height: 1.2, //0.8,
   calculatePlayerHeight: () => {
-    if (player.height < 0.01) {
+    if (2 - player.height < 0.01) {
       return 0.01;
     }
-    return player.height * 1;
+    // Get current zone floor depth offset
+    const floorDepth = player.getCurrentFloorDepth
+      ? player.getCurrentFloorDepth()
+      : 0;
+
+    return (2 - player.height - floorDepth) * 1;
   },
+  getCurrentZoneId: () => {
+    // This will be set by the movement/collision system
+    return player._currentZoneId || 0;
+  },
+  getCurrentFloorDepth: () => {
+    // This will be set by the movement/collision system
+    return player._currentFloorDepth || 0;
+  },
+  _currentZoneId: 0,
+  _currentFloorDepth: 0,
 };
 export const collisionRadius = 0.2;
 export let wave = 1;

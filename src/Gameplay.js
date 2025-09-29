@@ -14,7 +14,7 @@ import { clamp } from "./Utils.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
-import { zBuffer } from "./Render.js";
+import { zBuffer, rebuildRowDistLUT } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import {
   gameStateObject,
@@ -253,6 +253,21 @@ export function move(dt) {
     player.y = ny;
   } else {
     player.velY = 0;
+  }
+  // Check for zone changes and update player height accordingly
+  if (player.health >= 0) {
+    const newZoneId =
+      ZONE_GRID_CACHE[(player.y | 0) * gameStateObject.MAP_W + (player.x | 0)];
+    const newFloorDepth = gameStateObject.zones[newZoneId]?.floorDepth || 0;
+
+    if (
+      player._currentZoneId !== newZoneId ||
+      player._currentFloorDepth !== newFloorDepth
+    ) {
+      player._currentZoneId = newZoneId;
+      player._currentFloorDepth = newFloorDepth;
+      rebuildRowDistLUT(); // Rebuild LUT when floor depth changes
+    }
   }
 }
 
