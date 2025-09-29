@@ -14,7 +14,7 @@ import { clamp } from "./Utils.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
 import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
-import { zBuffer, rebuildRowDistLUT } from "./Render.js";
+import { zBuffer, rebuildRowDistLUT, ZONE_GRID_CACHE } from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import {
   gameStateObject,
