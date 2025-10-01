@@ -13,14 +13,15 @@ export const HEIGHT = LOGICAL_H;
 
 export const offscreen = new OffscreenCanvas(WIDTH, HEIGHT);
 
-export const ctx = offscreen.getContext("2d");
+export const ctx = offscreen.getContext("2d", { colorSpace: "srgb" });
 //Ensure crisp pixel-perfect scaling for the entire frame
 ctx.imageSmoothingEnabled = false;
 //visible context
-export const vctx = canvas.getContext("2d");
+export const vctx = canvas.getContext("2d", { colorSpace: "srgb" });
 
 //Ensure crisp pixel-perfect scaling for the entire frame
 vctx.imageSmoothingEnabled = false;
+canvas.style.filter = "brightness(1.15) contrast(1.06)";
 
 export const cMini = document.getElementById("mini");
 export const mctx = cMini.getContext("2d");

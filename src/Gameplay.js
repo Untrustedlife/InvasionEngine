@@ -16,13 +16,7 @@ import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
 import { zBuffer, rebuildRowDistLUT, ZONE_GRID_CACHE } from "./Render.js";
 import { projectSprite } from "./Projection.js";
-import {
-  gameStateObject,
-  EXIT_POS,
-  START_POS,
-  mapDefinitions,
-  zoneIdAt,
-} from "./Map.js";
+import { gameStateObject, EXIT_POS, START_POS, mapDefinitions } from "./Map.js";
 import { player, collisionRadius, wave, setWave } from "./Player.js";
 import { isSolidTile, collide } from "./Collision.js";
 import { ChangeMapLevel, tryCooldown } from "./Main.js";

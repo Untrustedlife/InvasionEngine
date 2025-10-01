@@ -43,13 +43,7 @@ import {
   buildEmptyTilesOnce,
 } from "./Gameplay.js";
 import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
-import {
-  gameStateObject,
-  mapDefinitions,
-  EXIT_POS,
-  START_POS,
-  zoneIdAt,
-} from "./Map.js";
+import { gameStateObject, mapDefinitions, EXIT_POS, START_POS } from "./Map.js";
 import { initAsyncTextures } from "./Textures.js";
 import { updateVisualEffects, renderVisualEffects } from "./Effects.js";
 let last = performance.now();

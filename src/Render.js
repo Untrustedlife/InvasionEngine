@@ -955,7 +955,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const projectionDistance =
       perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; //Faster than Math.max
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
-
     //Compute unclipped vertical segment and derive texture source window for any clipping
     const unclippedStartY =
       ((HEIGHT - wallLineHeight * player.calculatePlayerHeight()) / 2) | 0;
@@ -1130,7 +1129,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         }
       }
     }
-    //Apply distance fog
+    //Apply distance fog (adjusted to cover full visual height of tall / short walls)
     if (
       player.sightDist > 0 &&
       perpendicularDistance > player.sightDist * FOG_START_FRAC
@@ -1146,17 +1145,34 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         )
       );
       if (fogLerpFactor > 0) {
-        const px = player.x | 0;
-        const py = player.y | 0;
-        const zIndex =
-          ZONE_GRID_CACHE.length > 0
-            ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
-            : 0;
-        ctx.save();
-        ctx.globalAlpha = fogLerpFactor * 0.85;
-        ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
-        ctx.fillRect(screenColumnX, drawStartY, 1, drawEndY - drawStartY);
-        ctx.restore();
+        //Full vertical range of the wall on screen (can extend above original drawStartY if tall > 1)
+        //bottomY is the (float) bottom position already computed earlier; total height scales by 'tall'.
+        const fullWallBottomY = unclippedEndY; // same as previous drawEndY unclipped
+        const fullWallTopYFloat =
+          unclippedEndY - wallLineHeight * (tall > 0 ? tall : 1); //supports tall < 1
+        let fogY0 = fullWallTopYFloat | 0;
+        let fogY1 = fullWallBottomY | 0;
+        //Clip to screen
+        if (fogY0 < 0) {
+          fogY0 = 0;
+        }
+        if (fogY1 > HEIGHT) {
+          fogY1 = HEIGHT;
+        }
+        //Guard against inverted / zero height (e.g., extreme clipping)
+        if (fogY1 > fogY0) {
+          const px = player.x | 0;
+          const py = player.y | 0;
+          const zIndex =
+            ZONE_GRID_CACHE.length > 0
+              ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
+              : 0;
+          ctx.save();
+          ctx.globalAlpha = fogLerpFactor * 0.85;
+          ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
+          ctx.fillRect(screenColumnX, fogY0, 1, fogY1 - fogY0);
+          ctx.restore();
+        }
       }
     }
 
