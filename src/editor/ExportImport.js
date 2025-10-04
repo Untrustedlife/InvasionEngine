@@ -56,16 +56,19 @@ export class ExportImport {
       : [];
 
     const normalizedZones = zones.map((z) => ({
-      color: z.color ?? "#101b2e",
       x: z.x ?? 0,
       y: z.y ?? 0,
       w: z.w ?? 0,
       h: z.h ?? 0,
-      cielingColorFront: z.cielingColorFront ?? "",
-      cielingColorBack: z.cielingColorBack ?? "",
-      floorColorBack: z.floorColorBack ?? "",
-      fogColor: z.fogColor ?? "",
+      color: z.color ?? "#101b2e",
+      name: z.name ?? undefined,
+      cielingColorFront: z.cielingColorFront ?? undefined,
+      cielingColorBack: z.cielingColorBack ?? undefined,
+      ceilingHeight: z.ceilingHeight ?? undefined,
+      floorColorBack: z.floorColorBack ?? undefined,
+      fogColor: z.fogColor ?? undefined,
       spawnRules: Array.isArray(z.spawnRules) ? z.spawnRules : [],
+      floorDepth: z.floorDepth ?? undefined,
     }));
 
     const payload = {
@@ -75,6 +78,34 @@ export class ExportImport {
       startPos: playerStartPosition,
       ...(normalizedZones.length ? { zones: normalizedZones } : {}),
     };
+
+    // Add global map properties conditionally (only if different from defaults)
+    const defaultGlobalProps = {
+      dontSpawnKey: false,
+      floorColorFront: "#054213",
+      cielingColorFront: "#6495ed",
+      cielingColorBack: "#6495ED",
+      floorColorBack: "#03210A",
+    };
+
+    const globalProps = this.editor.globalMapProperties;
+    if (globalProps.dontSpawnKey !== defaultGlobalProps.dontSpawnKey) {
+      payload.dontSpawnKey = globalProps.dontSpawnKey;
+    }
+    if (globalProps.floorColorFront !== defaultGlobalProps.floorColorFront) {
+      payload.floorColorFront = globalProps.floorColorFront;
+    }
+    if (
+      globalProps.cielingColorFront !== defaultGlobalProps.cielingColorFront
+    ) {
+      payload.cielingColorFront = globalProps.cielingColorFront;
+    }
+    if (globalProps.cielingColorBack !== defaultGlobalProps.cielingColorBack) {
+      payload.cielingColorBack = globalProps.cielingColorBack;
+    }
+    if (globalProps.floorColorBack !== defaultGlobalProps.floorColorBack) {
+      payload.floorColorBack = globalProps.floorColorBack;
+    }
 
     const js = `${JSON.stringify(payload, null, 2)};\n`;
 
@@ -272,6 +303,57 @@ export class ExportImport {
       this.editor.zoneManager
     ) {
       this.editor.zoneManager.importZones(mapDataObject.zones);
+    }
+
+    //Import global map properties if provided
+    if (this.editor.globalMapProperties) {
+      // Set defaults
+      const defaultGlobalProps = {
+        dontSpawnKey: false,
+        floorColorFront: "#054213",
+        cielingColorFront: "#6495ed",
+        cielingColorBack: "#6495ED",
+        floorColorBack: "#03210A",
+      };
+
+      // Update properties from imported data
+      this.editor.globalMapProperties = {
+        dontSpawnKey:
+          mapDataObject.dontSpawnKey !== undefined
+            ? mapDataObject.dontSpawnKey
+            : defaultGlobalProps.dontSpawnKey,
+        floorColorFront:
+          mapDataObject.floorColorFront || defaultGlobalProps.floorColorFront,
+        cielingColorFront:
+          mapDataObject.cielingColorFront ||
+          defaultGlobalProps.cielingColorFront,
+        cielingColorBack:
+          mapDataObject.cielingColorBack || defaultGlobalProps.cielingColorBack,
+        floorColorBack:
+          mapDataObject.floorColorBack || defaultGlobalProps.floorColorBack,
+      };
+
+      // Update UI elements to reflect imported values
+      if (this.editor.elements.dontSpawnKey) {
+        this.editor.elements.dontSpawnKey.checked =
+          this.editor.globalMapProperties.dontSpawnKey;
+      }
+      if (this.editor.elements.floorColorFront) {
+        this.editor.elements.floorColorFront.value =
+          this.editor.globalMapProperties.floorColorFront;
+      }
+      if (this.editor.elements.cielingColorFront) {
+        this.editor.elements.cielingColorFront.value =
+          this.editor.globalMapProperties.cielingColorFront;
+      }
+      if (this.editor.elements.cielingColorBack) {
+        this.editor.elements.cielingColorBack.value =
+          this.editor.globalMapProperties.cielingColorBack;
+      }
+      if (this.editor.elements.floorColorBack) {
+        this.editor.elements.floorColorBack.value =
+          this.editor.globalMapProperties.floorColorBack;
+      }
     }
 
     //Re-render the editor with imported data

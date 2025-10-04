@@ -29,6 +29,9 @@ export class ZoneManager {
       cielingColorBack: "#271810",
       floorColorBack: "#101b2e",
       fogColor: "#101b2e",
+      floorDepth: 0,
+      name: "",
+      ceilingHeight: 2,
     };
   }
 
@@ -410,18 +413,53 @@ export class ZoneManager {
    * theres weird rendering issues (Can remove if we switch to a scanline system for floors)
    */
   exportZones() {
-    const zones = this.zones.map((zone) => ({
-      color: zone.color,
-      x: zone.x,
-      y: zone.y,
-      w: zone.w,
-      h: zone.h,
-      cielingColorFront: zone.cielingColorFront,
-      cielingColorBack: zone.cielingColorBack,
-      floorColorBack: zone.floorColorBack,
-      fogColor: zone.fogColor,
-      spawnRules: zone.spawnRules,
-    }));
+    const zones = this.zones.map((zone) => {
+      const exportedZone = {
+        x: zone.x,
+        y: zone.y,
+        w: zone.w,
+        h: zone.h,
+        spawnRules: zone.spawnRules,
+      };
+
+      // Only include properties that differ from defaults
+      exportedZone.color = zone.color;
+      if (
+        zone.cielingColorFront !== this.defaultZone.cielingColorFront &&
+        zone.cielingColorFront
+      ) {
+        exportedZone.cielingColorFront = zone.cielingColorFront;
+      }
+      if (
+        zone.cielingColorBack !== this.defaultZone.cielingColorBack &&
+        zone.cielingColorBack
+      ) {
+        exportedZone.cielingColorBack = zone.cielingColorBack;
+      }
+      if (
+        zone.floorColorBack !== this.defaultZone.floorColorBack &&
+        zone.floorColorBack
+      ) {
+        exportedZone.floorColorBack = zone.floorColorBack;
+      }
+      if (zone.fogColor !== this.defaultZone.fogColor && zone.fogColor) {
+        exportedZone.fogColor = zone.fogColor;
+      }
+      if (zone.floorDepth !== this.defaultZone.floorDepth && zone.floorDepth) {
+        exportedZone.floorDepth = zone.floorDepth;
+      }
+      if (zone.name !== this.defaultZone.name && zone.name.trim() !== "") {
+        exportedZone.name = zone.name;
+      }
+      if (
+        zone.ceilingHeight !== this.defaultZone.ceilingHeight &&
+        zone.ceilingHeight
+      ) {
+        exportedZone.ceilingHeight = zone.ceilingHeight;
+      }
+      return exportedZone;
+    });
+
     if (zones.length === 0 || zones[0].color !== "#101b2e") {
       zones.unshift({
         color: "#101b2e",
@@ -457,6 +495,13 @@ export class ZoneManager {
           floorColorBack:
             zoneData.floorColorBack || this.defaultZone.floorColorBack,
           fogColor: zoneData.fogColor || this.defaultZone.fogColor,
+          floorDepth:
+            zoneData.floorDepth !== undefined
+              ? zoneData.floorDepth
+              : this.defaultZone.floorDepth,
+          name: zoneData.name || this.defaultZone.name,
+          ceilingHeight:
+            zoneData.ceilingHeight || this.defaultZone.ceilingHeight,
           spawnRules: Array.isArray(zoneData.spawnRules)
             ? zoneData.spawnRules
             : [],
@@ -519,15 +564,23 @@ export class ZoneManager {
    * Get display information for all zones (for layer panel)
    */
   getZoneDisplayInfo() {
-    return this.zones.map((zone, index) => ({
-      id: zone.id,
-      index,
-      priority: index + 1, //Display as 1-based
-      name: `Zone ${zone.id} (${zone.x},${zone.y} - ${zone.w}x${zone.h})`,
-      color: zone.color,
-      bounds: `${zone.x},${zone.y} - ${zone.w}x${zone.h}`,
-      selected: zone.id === this.selectedZoneId,
-    }));
+    return this.zones.map((zone, index) => {
+      // Use custom name if provided, otherwise fall back to auto-generated format
+      const displayName =
+        zone.name && zone.name.trim() !== ""
+          ? `Zone: ${zone.name}`
+          : `Zone ${zone.id} (${zone.x},${zone.y} - ${zone.w}x${zone.h})`;
+
+      return {
+        id: zone.id,
+        index,
+        priority: index + 1, //Display as 1-based
+        name: displayName,
+        color: zone.color,
+        bounds: `${zone.x},${zone.y} - ${zone.w}x${zone.h}`,
+        selected: zone.id === this.selectedZoneId,
+      };
+    });
   }
 
   /**

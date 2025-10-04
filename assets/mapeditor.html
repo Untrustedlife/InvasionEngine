@@ -144,6 +144,21 @@
                     <input id="zoneFogColor" type="color" value="#000000" />
                   </div>
                 </div>
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>Floor Depth</label>
+                    <input id="zoneFloorDepth" type="number" value="0" />
+                  </div>
+                  <div class="control-group">
+                    <label>Name</label>
+                    <input id="zoneName" type="string" value="" />
+                  </div>
+                  <div class="control-group">
+                    <label>Ceiling Height</label>
+                    <input id="zoneCeilingHeight" type="number" value="0" />
+                  </div>
+                </div>
+
                 <div class="section-header">SPAWN RULES</div>
                 <div id="spawnRulesContainer">
                   <div id="spawnRulesList" class="spawn-rules-list">
@@ -245,6 +260,34 @@
           <!-- RIGHT: Import/Export Panel -->
           <section class="terminal-panel">
             <div class="panel-header">IMPORT / EXPORT</div>
+
+            <div class="section-header">GLOBAL MAP PROPERTIES</div>
+            <div class="control-row">
+              <div class="control-group">
+                <label>DONT SPAWN KEY</label>
+                <input id="dontSpawnKey" type="checkbox" />
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <label>FLOOR COLOR FRONT</label>
+                <input id="floorColorFront" type="color" value="#054213" />
+              </div>
+              <div class="control-group">
+                <label>CEILING COLOR FRONT</label>
+                <input id="cielingColorFront" type="color" value="#6495ed" />
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-group">
+                <label>CEILING COLOR BACK</label>
+                <input id="cielingColorBack" type="color" value="#6495ed" />
+              </div>
+              <div class="control-group">
+                <label>FLOOR COLOR BACK</label>
+                <input id="floorColorBack" type="color" value="#03210a" />
+              </div>
+            </div>
 
             <div class="section-header">EXPORT JAVASCRIPT</div>
             <div class="control-group">

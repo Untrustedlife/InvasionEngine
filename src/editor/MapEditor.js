@@ -33,6 +33,15 @@ export class MapEditor {
     //Editor mode state
     this.currentMode = "tile"; //'tile' or 'zone'
 
+    //Global map properties with defaults
+    this.globalMapProperties = {
+      dontSpawnKey: false,
+      floorColorFront: "#054213",
+      cielingColorFront: "#6495ed",
+      cielingColorBack: "#6495ED",
+      floorColorBack: "#03210A",
+    };
+
     //Components
     this.renderer = null;
     this.undoManager = null;
@@ -72,6 +81,12 @@ export class MapEditor {
       io: document.getElementById("io"),
       gridBtn: document.getElementById("gridBtn"),
       mapNameInput: document.getElementById("mapName"),
+      //Global map properties elements
+      dontSpawnKey: document.getElementById("dontSpawnKey"),
+      floorColorFront: document.getElementById("floorColorFront"),
+      cielingColorFront: document.getElementById("cielingColorFront"),
+      cielingColorBack: document.getElementById("cielingColorBack"),
+      floorColorBack: document.getElementById("floorColorBack"),
       //Mode switching elements
       modeBtn: document.getElementById("modeBtn"),
       tilePanel: document.getElementById("tilePanel"),
@@ -89,6 +104,9 @@ export class MapEditor {
       zoneCeilBack: document.getElementById("zoneCeilBack"),
       zoneFloorBack: document.getElementById("zoneFloorBack"),
       zoneFogColor: document.getElementById("zoneFogColor"),
+      zoneFloorDepth: document.getElementById("zoneFloorDepth"),
+      zoneCeilingHeight: document.getElementById("zoneCeilingHeight"),
+      zoneName: document.getElementById("zoneName"),
       deleteZoneBtn: document.getElementById("deleteZoneBtn"),
       //Zone mini panel
       zoneMiniPanel: document.getElementById("zoneMiniPanel"),
@@ -168,6 +186,26 @@ export class MapEditor {
 
     this.elements.zoneFogColor.oninput = () =>
       this.updateSelectedZoneFromInputs();
+
+    this.elements.zoneFloorDepth.oninput = () =>
+      this.updateSelectedZoneFromInputs();
+
+    this.elements.zoneName.oninput = () => this.updateSelectedZoneFromInputs();
+
+    this.elements.zoneCeilingHeight.oninput = () =>
+      this.updateSelectedZoneFromInputs();
+
+    //Global map properties events
+    this.elements.dontSpawnKey.onchange = () =>
+      this.updateGlobalMapProperties();
+    this.elements.floorColorFront.oninput = () =>
+      this.updateGlobalMapProperties();
+    this.elements.cielingColorFront.oninput = () =>
+      this.updateGlobalMapProperties();
+    this.elements.cielingColorBack.oninput = () =>
+      this.updateGlobalMapProperties();
+    this.elements.floorColorBack.oninput = () =>
+      this.updateGlobalMapProperties();
 
     //Input events
     this.elements.activeIdInput.oninput = () => {
@@ -606,6 +644,9 @@ export class MapEditor {
       cielingColorBack: this.elements.zoneCeilBack.value,
       floorColorBack: this.elements.zoneFloorBack.value,
       fogColor: this.elements.zoneFogColor.value,
+      floorDepth: parseInt(this.elements.zoneFloorDepth.value) || 0,
+      name: this.elements.zoneName.value || "",
+      ceilingHeight: this.elements.zoneCeilingHeight.value || 2,
     };
 
     this.zoneManager.updateZone(zone.id, newProps);
@@ -642,6 +683,9 @@ export class MapEditor {
       this.elements.zoneCeilBack.value = selectedZone.cielingColorBack;
       this.elements.zoneFloorBack.value = selectedZone.floorColorBack;
       this.elements.zoneFogColor.value = selectedZone.fogColor;
+      this.elements.zoneFloorDepth.value = selectedZone.floorDepth || 0;
+      this.elements.zoneName.value = selectedZone.name || "";
+      this.elements.zoneCeilingHeight.value = selectedZone.ceilingHeight || 2;
       this._updatingZoneUI = false;
     } else {
       this.elements.noZoneSelected.style.display = "block";
@@ -905,6 +949,19 @@ export class MapEditor {
     }
   }
   //#endregion
+
+  /**
+   * Update global map properties from UI inputs
+   */
+  updateGlobalMapProperties() {
+    this.globalMapProperties = {
+      dontSpawnKey: this.elements.dontSpawnKey.checked,
+      floorColorFront: this.elements.floorColorFront.value,
+      cielingColorFront: this.elements.cielingColorFront.value,
+      cielingColorBack: this.elements.cielingColorBack.value,
+      floorColorBack: this.elements.floorColorBack.value,
+    };
+  }
 }
 
 //#region Start Editor
