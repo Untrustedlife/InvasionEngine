@@ -38,7 +38,7 @@ export class ZoneManager {
   /**
    * Create a new zone with the specified bounds
    */
-  createZone(x, y, w, h) {
+  createZone(x, y, w, h, overrides = {}) {
     const zone = {
       id: this.zones.length, //ID = array index
       x: Math.min(x, x + w),
@@ -47,26 +47,28 @@ export class ZoneManager {
       h: Math.abs(h),
       ...this.defaultZone,
       spawnRules: [],
+      ...overrides,
     };
 
     const insertIndex = this.zones.length > 0 ? 1 : 0;
     this.zones.splice(insertIndex, 0, zone);
-    this.selectedZoneId = zone.id;
     this.reassignZoneIds();
+    // Select the newly created zone after ID reassignment
+    this.selectedZoneId = insertIndex;
     return zone;
   }
 
   /**
    * Create a new zone programmatically (for "Add Zone" button)
    */
-  addNewZone() {
+  addNewZone(overrides = {}) {
     //Create a default-sized zone in a visible area
     const defaultX = Math.floor(this.editor.width / 4);
     const defaultY = Math.floor(this.editor.height / 4);
     const defaultW = Math.floor(this.editor.width / 8);
     const defaultH = Math.floor(this.editor.height / 8);
 
-    return this.createZone(defaultX, defaultY, defaultW, defaultH);
+    return this.createZone(defaultX, defaultY, defaultW, defaultH, overrides);
   }
 
   /**

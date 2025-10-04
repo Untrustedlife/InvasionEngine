@@ -114,6 +114,7 @@ export class MapEditor {
       //Zone layer panel
       zoneLayerList: document.getElementById("zoneLayerList"),
       addZoneBtn: document.getElementById("addZoneBtn"),
+      duplicateZoneButton: document.getElementById("duplicateZoneButton"),
     };
 
     //Set initial values
@@ -167,6 +168,8 @@ export class MapEditor {
 
     //Zone events
     this.elements.addZoneBtn.onclick = () => this.addNewZone();
+    this.elements.duplicateZoneButton.onclick = () =>
+      this.duplicateSelectedZone();
     this.elements.deleteZoneBtn.onclick = () => this.deleteSelectedZone();
     this.elements.zoneX.oninput = () => this.updateSelectedZoneFromInputs();
     this.elements.zoneY.oninput = () => this.updateSelectedZoneFromInputs();
@@ -596,6 +599,18 @@ export class MapEditor {
   addNewZone() {
     if (this.zoneManager) {
       const newZone = this.zoneManager.addNewZone();
+      this.status(`Created zone #${newZone.id}`);
+      this.updateZoneUI();
+      this.updateZoneMiniPanel();
+      this.render();
+    }
+  }
+
+  duplicateSelectedZone() {
+    if (this.zoneManager) {
+      const newZone = this.zoneManager.addNewZone(
+        this.zoneManager.getSelectedZone()
+      );
       this.status(`Created zone #${newZone.id}`);
       this.updateZoneUI();
       this.updateZoneMiniPanel();
