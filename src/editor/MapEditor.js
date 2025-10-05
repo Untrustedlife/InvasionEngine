@@ -17,6 +17,13 @@ import { TileManager } from "./TileManager.js";
 import { ExportImport } from "./ExportImport.js";
 import { ZoneManager } from "./ZoneManager.js";
 import { ZoneRenderer } from "./ZoneRenderer.js";
+import { ToolManager } from "./tools/ToolManager.js";
+import { BrushTool } from "./tools/BrushTool.js";
+import {
+  HollowRectangleTool,
+  FilledRectangleTool,
+} from "./tools/RectangleTool.js";
+import { LineTool } from "./tools/LineTool.js";
 
 import { entityTypes } from "../both/SharedConstants.js";
 export class MapEditor {
@@ -49,6 +56,7 @@ export class MapEditor {
     this.exportImport = null;
     this.zoneManager = null;
     this.zoneRenderer = null;
+    this.toolManager = null;
 
     //Canvas interaction state
     this.painting = false;
@@ -133,7 +141,28 @@ export class MapEditor {
     this.zoneManager = new ZoneManager(this);
     this.zoneRenderer = new ZoneRenderer(this.renderer.canvasContext, this);
 
+    // Initialize tool system
+    this.initializeToolSystem();
+
     this.setActiveId(1);
+  }
+
+  /**
+   * Initialize the drawing tool system
+   */
+  initializeToolSystem() {
+    this.toolManager = new ToolManager(this);
+
+    // Register all available tools
+    this.toolManager.registerTool("brush", new BrushTool());
+    this.toolManager.registerTool("hollow-rect", new HollowRectangleTool());
+    this.toolManager.registerTool("filled-rect", new FilledRectangleTool());
+    this.toolManager.registerTool("line", new LineTool());
+
+    // Initialize tool UI after DOM is ready
+    setTimeout(() => {
+      this.toolManager.initializeUI();
+    }, 0);
   }
 
   bindEvents() {
@@ -233,7 +262,7 @@ export class MapEditor {
 
     canvas.addEventListener("mousemove", (e) => this.handleMouseMove(e));
     canvas.addEventListener("mousedown", (e) => this.handleMouseDown(e));
-    canvas.addEventListener("mouseup", () => this.endStroke());
+    canvas.addEventListener("mouseup", (e) => this.handleMouseUp(e));
     canvas.addEventListener("mouseleave", () => this.endStroke());
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   }
@@ -304,15 +333,13 @@ export class MapEditor {
     if (isWithinMapBounds) {
       if (this.currentMode === "zone") {
         this.handleZoneMouseMove(cellCoordinates);
-      } else {
-        const currentTileId = this.map[cellCoordinates.y][cellCoordinates.x];
-        this.status(
-          `(x:${cellCoordinates.x}, y:${cellCoordinates.y}) id:${currentTileId}`
+      } else if (this.toolManager) {
+        // Delegate to tool manager for tile mode
+        this.toolManager.onMouseMove(
+          cellCoordinates.x,
+          cellCoordinates.y,
+          mouseEvent
         );
-
-        if (this.painting) {
-          this.paintCell(cellCoordinates.x, cellCoordinates.y, this.activeId);
-        }
       }
     }
   }
@@ -333,19 +360,30 @@ export class MapEditor {
 
     if (this.currentMode === "zone") {
       this.handleZoneMouseDown(cellCoordinates, mouseEvent);
-    } else {
-      if (mouseEvent.button === 2) {
-        //Right-click eyedropper tool - pick tile ID from clicked cell
-        const clickedTileId = this.map[cellCoordinates.y][cellCoordinates.x];
-        this.setActiveId(clickedTileId);
-        return;
-      }
-
-      //Left-click paint mode - start painting stroke
-      this.painting = true;
-      this.strokeChanges = [];
-      this.paintCell(cellCoordinates.x, cellCoordinates.y, this.activeId);
+    } else if (this.toolManager) {
+      // Delegate to tool manager for tile mode
+      this.toolManager.onMouseDown(
+        cellCoordinates.x,
+        cellCoordinates.y,
+        mouseEvent
+      );
     }
+  }
+
+  handleMouseUp(mouseEvent) {
+    const cellCoordinates = this.renderer.cellFromEvent(mouseEvent);
+
+    if (this.currentMode === "tile" && this.toolManager) {
+      // Delegate to tool manager for tile mode
+      this.toolManager.onMouseUp(
+        cellCoordinates.x,
+        cellCoordinates.y,
+        mouseEvent
+      );
+    }
+
+    // Call the existing endStroke for zone operations and legacy support
+    this.endStroke();
   }
 
   endStroke() {
@@ -854,6 +892,11 @@ export class MapEditor {
     if (this.zoneRenderer) {
       const overlayMode = this.currentMode === "zone" ? "zone" : "tile";
       this.zoneRenderer.drawZones(overlayMode);
+    }
+
+    //Draw tool previews for tile mode
+    if (this.currentMode === "tile" && this.toolManager) {
+      this.toolManager.drawPreviews(this.renderer.canvasContext);
     }
 
     //Update layer panel if in zone mode

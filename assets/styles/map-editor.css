@@ -388,6 +388,61 @@ canvas:focus {
 }
 
 /* ===========================================
+   TOOL SELECTION UI - Drawing Tools
+   =========================================== */
+
+/* Tool selection container */
+.tool-selection {
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid var(--nodeos-node-color);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+/* Tool buttons container */
+.tool-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+/* Individual tool buttons */
+.tool-btn {
+  background: #000;
+  border: 1px solid var(--nodeos-color);
+  color: var(--nodeos-node-color);
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.tool-btn:hover {
+  background: var(--nodeos-color);
+  color: #000;
+  transform: translateY(-1px);
+}
+
+/* Active tool button */
+.tool-btn.active {
+  background: var(--nodeos-color);
+  color: #000;
+  border-color: var(--nodeos-color);
+  box-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+}
+
+.tool-btn.active:hover {
+  background: var(--nodeos-node-color);
+  border-color: var(--nodeos-node-color);
+}
+
+/* ===========================================
    SPECIAL ELEMENTS - Compact versions
    =========================================== */
 
