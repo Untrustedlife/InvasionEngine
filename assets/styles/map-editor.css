@@ -268,7 +268,16 @@ body {
 }
 
 /* All inputs - compact terminal style */
-input[type="number"],
+input[type="number"] {
+  background: #000;
+  border: 1px solid var(--nodeos-color);
+  color: var(--nodeos-color);
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  padding: 3px;
+  width: 40px;
+}
+
 input[type="text"],
 input {
   background: #000;
