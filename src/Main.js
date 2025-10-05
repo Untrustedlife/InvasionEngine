@@ -270,7 +270,7 @@ function renderVisibleSprites(cameraTransform) {
         visibleSamples++;
       }
     }
-    // Skip only if no samples are visible
+    //Skip only if no samples are visible
     if (visibleSamples === 0) {
       continue;
     }
@@ -338,10 +338,10 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
   const occludedBottom = projection.occludedBottom | 0;
   if (occludedBottom >= spriteHeight) {
     ctx.filter = "none";
-    return; // fully hidden
+    return; //fully hidden
   }
   const destVisibleHeight = spriteHeight - occludedBottom;
-  // Keep scale: crop proportional source height from top
+  //Keep scale: crop proportional source height from top
   const img = spriteEnum[sprite.img];
   if (!img) {
     ctx.filter = "none";

@@ -248,7 +248,7 @@ export function move(dt) {
   } else {
     player.velY = 0;
   }
-  // Check for zone changes and update player height accordingly
+  //Check for zone changes and update player height accordingly
   if (player.health >= 0) {
     const newZoneId =
       ZONE_GRID_CACHE[(player.y | 0) * gameStateObject.MAP_W + (player.x | 0)];
@@ -260,7 +260,7 @@ export function move(dt) {
     ) {
       player._currentZoneId = newZoneId;
       player._currentFloorDepth = newFloorDepth;
-      rebuildRowDistLUT(); // Rebuild LUT when floor depth changes
+      rebuildRowDistLUT(); //Rebuild LUT when floor depth changes
     }
   }
 }

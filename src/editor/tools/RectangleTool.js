@@ -14,7 +14,7 @@ export class HollowRectangleTool extends BaseTool {
 
   onMouseDown(mapX, mapY, event) {
     if (event.button === 2) {
-      // Right-click eyedropper
+      //Right-click eyedropper
       const clickedTileId = this.getTileAt(mapX, mapY);
       this.editor.setActiveId(clickedTileId);
       this.editor.status(`Picked tile ID: ${clickedTileId}`);
@@ -34,7 +34,7 @@ export class HollowRectangleTool extends BaseTool {
       this.updatePreview(mapX, mapY);
     }
 
-    // Update status
+    //Update status
     const currentTileId = this.getTileAt(mapX, mapY);
     if (this.isDrawing) {
       const width = Math.abs(mapX - this.startX) + 1;
@@ -76,16 +76,16 @@ export class HollowRectangleTool extends BaseTool {
     const { startX, startY, endX, endY } = previewData;
     const cellSize = this.editor.cellSize;
 
-    // Calculate rectangle bounds
+    //Calculate rectangle bounds
     const minX = Math.min(startX, endX);
     const maxX = Math.max(startX, endX);
     const minY = Math.min(startY, endY);
     const maxY = Math.max(startY, endY);
 
-    // Draw hollow rectangle preview
+    //Draw hollow rectangle preview
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
-        // Only draw the border
+        //Only draw the border
         if (x === minX || x === maxX || y === minY || y === maxY) {
           if (this.isInBounds(x, y)) {
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
@@ -99,16 +99,16 @@ export class HollowRectangleTool extends BaseTool {
     const changes = [];
     const newTileId = this.editor.activeId;
 
-    // Calculate rectangle bounds
+    //Calculate rectangle bounds
     const minX = Math.min(startX, endX);
     const maxX = Math.max(startX, endX);
     const minY = Math.min(startY, endY);
     const maxY = Math.max(startY, endY);
 
-    // Draw hollow rectangle
+    //Draw hollow rectangle
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
-        // Only draw the border
+        //Only draw the border
         if (x === minX || x === maxX || y === minY || y === maxY) {
           if (this.isInBounds(x, y)) {
             const previousTileId = this.getTileAt(x, y);
@@ -143,7 +143,7 @@ export class FilledRectangleTool extends BaseTool {
 
   onMouseDown(mapX, mapY, event) {
     if (event.button === 2) {
-      // Right-click eyedropper
+      //Right-click eyedropper
       const clickedTileId = this.getTileAt(mapX, mapY);
       this.editor.setActiveId(clickedTileId);
       this.editor.status(`Picked tile ID: ${clickedTileId}`);
@@ -163,7 +163,7 @@ export class FilledRectangleTool extends BaseTool {
       this.updatePreview(mapX, mapY);
     }
 
-    // Update status
+    //Update status
     const currentTileId = this.getTileAt(mapX, mapY);
     if (this.isDrawing) {
       const width = Math.abs(mapX - this.startX) + 1;
@@ -205,13 +205,13 @@ export class FilledRectangleTool extends BaseTool {
     const { startX, startY, endX, endY } = previewData;
     const cellSize = this.editor.cellSize;
 
-    // Calculate rectangle bounds
+    //Calculate rectangle bounds
     const minX = Math.min(startX, endX);
     const maxX = Math.max(startX, endX);
     const minY = Math.min(startY, endY);
     const maxY = Math.max(startY, endY);
 
-    // Draw filled rectangle preview
+    //Draw filled rectangle preview
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
         if (this.isInBounds(x, y)) {
@@ -225,13 +225,13 @@ export class FilledRectangleTool extends BaseTool {
     const changes = [];
     const newTileId = this.editor.activeId;
 
-    // Calculate rectangle bounds
+    //Calculate rectangle bounds
     const minX = Math.min(startX, endX);
     const maxX = Math.max(startX, endX);
     const minY = Math.min(startY, endY);
     const maxY = Math.max(startY, endY);
 
-    // Draw filled rectangle
+    //Draw filled rectangle
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
         if (this.isInBounds(x, y)) {

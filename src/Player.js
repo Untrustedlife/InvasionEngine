@@ -22,7 +22,7 @@ export const player = {
     if (2 - player.height < 0.01) {
       return 0.01;
     }
-    // Get current zone floor depth offset
+    //Get current zone floor depth offset
     const floorDepth = player.getCurrentFloorDepth
       ? player.getCurrentFloorDepth()
       : 0;
@@ -30,11 +30,11 @@ export const player = {
     return (2 - player.height - floorDepth) * 1;
   },
   getCurrentZoneId: () => {
-    // This will be set by the movement/collision system
+    //This will be set by the movement/collision system
     return player._currentZoneId || 0;
   },
   getCurrentFloorDepth: () => {
-    // This will be set by the movement/collision system
+    //This will be set by the movement/collision system
     return player._currentFloorDepth || 0;
   },
   _currentZoneId: 0,

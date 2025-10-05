@@ -17,7 +17,7 @@ export class BrushTool extends BaseTool {
    */
   onMouseDown(mapX, mapY, event) {
     if (event.button === 2) {
-      // Right-click eyedropper tool - pick tile ID from clicked cell
+      //Right-click eyedropper tool - pick tile ID from clicked cell
       const clickedTileId = this.getTileAt(mapX, mapY);
       this.editor.setActiveId(clickedTileId);
       this.editor.status(`Picked tile ID: ${clickedTileId}`);
@@ -25,7 +25,7 @@ export class BrushTool extends BaseTool {
     }
 
     if (event.button === 0 && this.isInBounds(mapX, mapY)) {
-      // Left-click paint mode - start painting stroke
+      //Left-click paint mode - start painting stroke
       this.isDrawing = true;
       this.strokeChanges = [];
       this.paintCell(mapX, mapY);
@@ -40,7 +40,7 @@ export class BrushTool extends BaseTool {
       this.paintCell(mapX, mapY);
     }
 
-    // Update status
+    //Update status
     const currentTileId = this.getTileAt(mapX, mapY);
     this.editor.status(
       `(x:${mapX}, y:${mapY}) id:${currentTileId} | ${this.getDescription()}`
@@ -89,10 +89,10 @@ export class BrushTool extends BaseTool {
     const newTileId = this.editor.activeId;
 
     if (previousTileId === newTileId) {
-      return; // No change needed
+      return; //No change needed
     }
 
-    // Store change for undo system
+    //Store change for undo system
     this.strokeChanges.push({
       x: mapX,
       y: mapY,
@@ -100,7 +100,7 @@ export class BrushTool extends BaseTool {
       next: newTileId,
     });
 
-    // Apply change immediately for visual feedback
+    //Apply change immediately for visual feedback
     this.editor.map[mapY][mapX] = newTileId;
     this.editor.renderer.drawCell(mapX, mapY);
   }

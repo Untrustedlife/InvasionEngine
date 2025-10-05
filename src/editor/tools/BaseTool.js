@@ -37,7 +37,7 @@ export class BaseTool {
    * @param {MouseEvent} event - Original mouse event
    */
   onMouseDown(mapX, mapY, event) {
-    // Override in subclasses
+    //Override in subclasses
   }
 
   /**
@@ -47,7 +47,7 @@ export class BaseTool {
    * @param {MouseEvent} event - Original mouse event
    */
   onMouseMove(mapX, mapY, event) {
-    // Override in subclasses
+    //Override in subclasses
   }
 
   /**
@@ -57,7 +57,7 @@ export class BaseTool {
    * @param {MouseEvent} event - Original mouse event
    */
   onMouseUp(mapX, mapY, event) {
-    // Override in subclasses
+    //Override in subclasses
   }
 
   /**
@@ -66,7 +66,7 @@ export class BaseTool {
    * @returns {boolean} - True if event was handled
    */
   onKeyDown(event) {
-    // Override in subclasses
+    //Override in subclasses
     return false;
   }
 
@@ -88,17 +88,17 @@ export class BaseTool {
       return;
     }
 
-    // Save current context state
+    //Save current context state
     ctx.save();
 
-    // Set preview style
+    //Set preview style
     ctx.globalAlpha = 0.5;
     ctx.fillStyle = this.getPreviewColor();
 
-    // Draw preview based on data
+    //Draw preview based on data
     this.renderPreview(ctx, this.previewData);
 
-    // Restore context state
+    //Restore context state
     ctx.restore();
   }
 
@@ -108,7 +108,7 @@ export class BaseTool {
    * @param {Object} previewData - Preview data
    */
   renderPreview(ctx, previewData) {
-    // Override in subclasses
+    //Override in subclasses
   }
 
   /**
@@ -147,7 +147,7 @@ export class BaseTool {
       return;
     }
 
-    // Apply changes to map
+    //Apply changes to map
     changes.forEach((change) => {
       if (
         change.x >= 0 &&
@@ -159,10 +159,10 @@ export class BaseTool {
       }
     });
 
-    // Create undo point
+    //Create undo point
     this.editor.undoManager.pushUndo(changes, this.editor.map);
 
-    // Re-render
+    //Re-render
     this.editor.render();
   }
 

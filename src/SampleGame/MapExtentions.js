@@ -52,6 +52,7 @@ export const sampleMaps = [
         floorColorBack: "#03210a",
         spawnRules: [],
         floorDepth: -0.5,
+        isLiquid: true,
       },
       {
         x: 3,

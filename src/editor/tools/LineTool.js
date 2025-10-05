@@ -15,7 +15,7 @@ export class LineTool extends BaseTool {
 
   onMouseDown(mapX, mapY, event) {
     if (event.button === 2) {
-      // Right-click eyedropper
+      //Right-click eyedropper
       const clickedTileId = this.getTileAt(mapX, mapY);
       this.editor.setActiveId(clickedTileId);
       this.editor.status(`Picked tile ID: ${clickedTileId}`);
@@ -35,7 +35,7 @@ export class LineTool extends BaseTool {
       this.updatePreview(mapX, mapY);
     }
 
-    // Update status
+    //Update status
     const currentTileId = this.getTileAt(mapX, mapY);
     if (this.isDrawing) {
       const distance = Math.sqrt(
@@ -78,10 +78,10 @@ export class LineTool extends BaseTool {
     const { startX, startY, endX, endY } = previewData;
     const cellSize = this.editor.cellSize;
 
-    // Get line points using Bresenham's algorithm
+    //Get line points using Bresenham's algorithm
     const linePoints = this.getLinePoints(startX, startY, endX, endY);
 
-    // Draw preview line
+    //Draw preview line
     linePoints.forEach(({ x, y }) => {
       if (this.isInBounds(x, y)) {
         ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
@@ -93,10 +93,10 @@ export class LineTool extends BaseTool {
     const changes = [];
     const newTileId = this.editor.activeId;
 
-    // Get line points using Bresenham's algorithm
+    //Get line points using Bresenham's algorithm
     const linePoints = this.getLinePoints(startX, startY, endX, endY);
 
-    // Apply changes to map
+    //Apply changes to map
     linePoints.forEach(({ x, y }) => {
       if (this.isInBounds(x, y)) {
         const previousTileId = this.getTileAt(x, y);

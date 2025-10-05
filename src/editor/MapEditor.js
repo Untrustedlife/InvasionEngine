@@ -141,7 +141,7 @@ export class MapEditor {
     this.zoneManager = new ZoneManager(this);
     this.zoneRenderer = new ZoneRenderer(this.renderer.canvasContext, this);
 
-    // Initialize tool system
+    //Initialize tool system
     this.initializeToolSystem();
 
     this.setActiveId(1);
@@ -153,13 +153,13 @@ export class MapEditor {
   initializeToolSystem() {
     this.toolManager = new ToolManager(this);
 
-    // Register all available tools
+    //Register all available tools
     this.toolManager.registerTool("brush", new BrushTool());
     this.toolManager.registerTool("hollow-rect", new HollowRectangleTool());
     this.toolManager.registerTool("filled-rect", new FilledRectangleTool());
     this.toolManager.registerTool("line", new LineTool());
 
-    // Initialize tool UI after DOM is ready
+    //Initialize tool UI after DOM is ready
     setTimeout(() => {
       this.toolManager.initializeUI();
     }, 0);
@@ -334,7 +334,7 @@ export class MapEditor {
       if (this.currentMode === "zone") {
         this.handleZoneMouseMove(cellCoordinates);
       } else if (this.toolManager) {
-        // Delegate to tool manager for tile mode
+        //Delegate to tool manager for tile mode
         this.toolManager.onMouseMove(
           cellCoordinates.x,
           cellCoordinates.y,
@@ -361,7 +361,7 @@ export class MapEditor {
     if (this.currentMode === "zone") {
       this.handleZoneMouseDown(cellCoordinates, mouseEvent);
     } else if (this.toolManager) {
-      // Delegate to tool manager for tile mode
+      //Delegate to tool manager for tile mode
       this.toolManager.onMouseDown(
         cellCoordinates.x,
         cellCoordinates.y,
@@ -374,7 +374,7 @@ export class MapEditor {
     const cellCoordinates = this.renderer.cellFromEvent(mouseEvent);
 
     if (this.currentMode === "tile" && this.toolManager) {
-      // Delegate to tool manager for tile mode
+      //Delegate to tool manager for tile mode
       this.toolManager.onMouseUp(
         cellCoordinates.x,
         cellCoordinates.y,
@@ -382,7 +382,7 @@ export class MapEditor {
       );
     }
 
-    // Call the existing endStroke for zone operations and legacy support
+    //Call the existing endStroke for zone operations and legacy support
     this.endStroke();
   }
 

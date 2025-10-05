@@ -25,12 +25,12 @@ export class ToolManager {
 
     this.tools.set(id, tool);
 
-    // Add to order array if not already present
+    //Add to order array if not already present
     if (!this.toolOrder.includes(id)) {
       this.toolOrder.push(id);
     }
 
-    // Set as current tool if it's the first one
+    //Set as current tool if it's the first one
     if (!this.currentTool) {
       this.setCurrentTool(id);
     }
@@ -78,16 +78,16 @@ export class ToolManager {
       return false;
     }
 
-    // Deactivate current tool
+    //Deactivate current tool
     if (this.currentTool) {
       this.currentTool.onDeactivate();
     }
 
-    // Activate new tool
+    //Activate new tool
     this.currentTool = tool;
     this.currentTool.onActivate(this.editor);
 
-    // Update UI
+    //Update UI
     this.updateToolUI();
 
     return true;
@@ -201,10 +201,10 @@ export class ToolManager {
       return;
     }
 
-    // Update tool buttons
+    //Update tool buttons
     this.updateToolButtons();
 
-    // Update status with tool info
+    //Update status with tool info
     if (this.editor && this.editor.status) {
       this.editor.status(`Tool: ${this.currentTool.getDisplayName()}`);
     }
@@ -250,16 +250,16 @@ export class ToolManager {
       return;
     }
 
-    // Create tool selection container
+    //Create tool selection container
     const toolContainer = document.createElement("div");
     toolContainer.className = "tool-selection";
     toolContainer.innerHTML = '<div class="section-header">TOOLS</div>';
 
-    // Create button container
+    //Create button container
     const buttonContainer = document.createElement("div");
     buttonContainer.className = "tool-buttons";
 
-    // Create buttons for each tool
+    //Create buttons for each tool
     this.getAllTools().forEach(({ id, tool }) => {
       const button = document.createElement("button");
       button.className = "tool-btn";
@@ -276,13 +276,13 @@ export class ToolManager {
 
     toolContainer.appendChild(buttonContainer);
 
-    // Insert tool container after the first button row
+    //Insert tool container after the first button row
     canvasControls.parentNode.insertBefore(
       toolContainer,
       canvasControls.nextSibling
     );
 
-    // Update initial button states
+    //Update initial button states
     this.updateToolButtons();
   }
 

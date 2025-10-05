@@ -79,7 +79,7 @@ export class ExportImport {
       ...(normalizedZones.length ? { zones: normalizedZones } : {}),
     };
 
-    // Add global map properties conditionally (only if different from defaults)
+    //Add global map properties conditionally (only if different from defaults)
     const defaultGlobalProps = {
       dontSpawnKey: false,
       floorColorFront: "#054213",
@@ -307,7 +307,7 @@ export class ExportImport {
 
     //Import global map properties if provided
     if (this.editor.globalMapProperties) {
-      // Set defaults
+      //Set defaults
       const defaultGlobalProps = {
         dontSpawnKey: false,
         floorColorFront: "#054213",
@@ -316,7 +316,7 @@ export class ExportImport {
         floorColorBack: "#03210A",
       };
 
-      // Update properties from imported data
+      //Update properties from imported data
       this.editor.globalMapProperties = {
         dontSpawnKey:
           mapDataObject.dontSpawnKey !== undefined
@@ -333,7 +333,7 @@ export class ExportImport {
           mapDataObject.floorColorBack || defaultGlobalProps.floorColorBack,
       };
 
-      // Update UI elements to reflect imported values
+      //Update UI elements to reflect imported values
       if (this.editor.elements.dontSpawnKey) {
         this.editor.elements.dontSpawnKey.checked =
           this.editor.globalMapProperties.dontSpawnKey;

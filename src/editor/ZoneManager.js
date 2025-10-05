@@ -53,7 +53,7 @@ export class ZoneManager {
     const insertIndex = this.zones.length > 0 ? 1 : 0;
     this.zones.splice(insertIndex, 0, zone);
     this.reassignZoneIds();
-    // Select the newly created zone after ID reassignment
+    //Select the newly created zone after ID reassignment
     this.selectedZoneId = insertIndex;
     return zone;
   }
@@ -424,7 +424,7 @@ export class ZoneManager {
         spawnRules: zone.spawnRules,
       };
 
-      // Only include properties that differ from defaults
+      //Only include properties that differ from defaults
       exportedZone.color = zone.color;
       if (
         zone.cielingColorFront !== this.defaultZone.cielingColorFront &&
@@ -567,7 +567,7 @@ export class ZoneManager {
    */
   getZoneDisplayInfo() {
     return this.zones.map((zone, index) => {
-      // Use custom name if provided, otherwise fall back to auto-generated format
+      //Use custom name if provided, otherwise fall back to auto-generated format
       const displayName =
         zone.name && zone.name.trim() !== ""
           ? `Zone: ${zone.name}`

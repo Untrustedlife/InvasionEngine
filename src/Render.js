@@ -72,7 +72,7 @@ const CILEING_DIST_BY_ZONE = {};
  * @export
  */
 export function rebuildRowDistLUT() {
-  // Clear previous per-zone tables
+  //Clear previous per-zone tables
   for (const key in CILEING_DIST_BY_ZONE) {
     delete CILEING_DIST_BY_ZONE[key];
   }
@@ -100,7 +100,7 @@ export function rebuildRowDistLUT() {
   for (let i = 0; i < gameStateObject.zones.length; i++) {
     const zone = gameStateObject.zones[i];
     if (zone.ceilingHeight !== undefined) {
-      CILEING_DIST_BY_ZONE[i] = new Float32Array(HEIGHT); // Allocate the array first
+      CILEING_DIST_BY_ZONE[i] = new Float32Array(HEIGHT); //Allocate the array first
       for (let y = 0; y < HEIGHT; y++) {
         const dy = y - horizon; //>0 below horizon
         const cileingHeight = zone.ceilingHeight;
@@ -114,7 +114,7 @@ export function rebuildRowDistLUT() {
       const newFloorDepth = zone.floorDepth; //Ground level
       const newFloorAdjuster = 2 - newFloorDepth;
       const newEyeScale = HEIGHT * (newFloorAdjuster - EYE) * 0.5; //matches sprite projection
-      ROW_DIST_BY_ZONE[i] = new Float32Array(HEIGHT); // Allocate the array first
+      ROW_DIST_BY_ZONE[i] = new Float32Array(HEIGHT); //Allocate the array first
       for (let y = 0; y < HEIGHT; y++) {
         const dy = y - horizon; //>0 below horizon
         ROW_DIST_BY_ZONE[i][y] = dy !== 0 ? newEyeScale / dy : 1e-6; //avoid div-by-zero
@@ -390,7 +390,7 @@ export function castFloor(
     }
     return 0;
 
-    // pass 1: classify using the hint zone's plane height
+    //pass 1: classify using the hint zone's plane height
     /*let d = ROW_DIST_BY_ZONE?.[hintZone]?.[row] ?? ROW_DIST[row];
     let wx = player.x + kx * d;
     let wy = player.y + ky * d;
@@ -404,7 +404,7 @@ export function castFloor(
       return z;
     }
 
-    // pass 2: refine using the found zone's plane height
+    //pass 2: refine using the found zone's plane height
     d = ROW_DIST_BY_ZONE?.[z]?.[row];
     wx = player.x + kx * d;
     wy = player.y + ky * d;
@@ -427,7 +427,7 @@ export function castFloor(
   let runStartY = y;
   let lastStyle = null;
   while (y < HEIGHT) {
-    // try a large jump
+    //try a large jump
     const step = Math.min(strideFor(y), HEIGHT - 1 - y);
     if (step <= 0) {
       break;
@@ -435,10 +435,10 @@ export function castFloor(
     const yProbe = y + step;
     const zProbe = zoneAtRow(yProbe, lastZoneId);
     if (zProbe === lastZoneId) {
-      // quick midpoint check to avoid missing a thin boundary
+      //quick midpoint check to avoid missing a thin boundary
       const mid = (y + yProbe) >> 1;
       if (zoneAtRow(mid, lastZoneId) === lastZoneId) {
-        // whole block is one zone -> draw once
+        //whole block is one zone -> draw once
         const col = zoneCss(lastZoneId);
         if (col !== lastStyle) {
           ctx.fillStyle = col;
@@ -484,13 +484,13 @@ export function castFloor(
     const oldDepth = gameStateObject.zones[lastZoneId]?.floorDepth ?? 0;
     const newDepth = gameStateObject.zones[newZoneId]?.floorDepth ?? 0;
     const wallEdgeY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
-    const boundaryD = ROW_DIST[hi] ?? Infinity; // global, stable
+    const boundaryD = ROW_DIST[hi] ?? Infinity; //global, stable
     const wallD = zBuffer[screenColumnX] ?? Infinity;
 
     //skip band when it's at/under the wall edge or not strictly in front
-    const atWallEdge = hi === wallEdgeY; // touching wall bottom
-    const occludedByWall = boundaryD >= wallD - 0.11; // wall is nearer/equal
-    const isFirstFloorRow = runStartY === wallEdgeY; // first boundary after start
+    const atWallEdge = hi === wallEdgeY; //touching wall bottom
+    const occludedByWall = boundaryD >= wallD - 0.11; //wall is nearer/equal
+    const isFirstFloorRow = runStartY === wallEdgeY; //first boundary after start
 
     const drawDepthBand =
       !!DEPTH_STEP_COLOR &&
@@ -501,7 +501,42 @@ export function castFloor(
 
     if (drawDepthBand) {
       //variable thickness band: thicker when rising, thinner when dropping
-      const amount = oldDepth > newDepth ? 5 : 1; // rise = thicker, drop = thin
+      const oldZone = gameStateObject.zones[lastZoneId] || {};
+      const newZone = gameStateObject.zones[newZoneId] || {};
+      const oldDepth = oldZone.floorDepth ?? 0; //negative or 0
+      const newDepth = newZone.floorDepth ?? 0; //negative or 0
+      const oldIsLiquid = !!oldZone.isLiquid;
+      const newIsLiquid = !!newZone.isLiquid;
+
+      let amount = 0;
+      if (oldIsLiquid || newIsLiquid) {
+        //liquid: keep legacy 5:1 thickness
+        amount = oldDepth > newDepth ? 5 : 1;
+      } else {
+        //non-liquid: scale thickness to actual floor depth delta, projected by distance
+        const depthDeltaUnits = Math.abs(oldDepth - newDepth); //units (negative depths -> positive delta)
+        //Prefer per-zone distance if available, else fall back to global boundary distance
+        const dOld = ROW_DIST_BY_ZONE?.[lastZoneId]?.[hi];
+        const dNew = ROW_DIST_BY_ZONE?.[newZoneId]?.[hi];
+        let d = boundaryD;
+        if (Number.isFinite(dOld) || Number.isFinite(dNew)) {
+          d = Math.min(
+            dOld ?? Infinity,
+            dNew ?? Infinity,
+            boundaryD ?? Infinity
+          );
+          if (!Number.isFinite(d)) {
+            d = boundaryD;
+          }
+        }
+        //Project vertical step to pixels. Derived from bottomY = horizon + eyeScale/d, where
+        //deltaEyeScale = HEIGHT * (oldDepth - newDepth) * 0.5
+        const thicknessPx =
+          (HEIGHT * depthDeltaUnits * 0.5) / Math.max(1e-3, d);
+        //Clamp to sane on-screen band
+        amount = Math.max(1, thicknessPx | 0);
+        amount = oldDepth > newDepth ? amount : 2;
+      }
       const y0 = hi;
       const y1 = Math.min(HEIGHT, y0 + amount);
       if (y1 > y0) {
@@ -516,14 +551,13 @@ export function castFloor(
       runStartY = y;
       continue;
     }
-
-    // switch to new zone and continue below the band only if we drew it
+    //switch to new zone and continue below the band only if we drew it
     lastZoneId = newZoneId;
     y = hi;
     runStartY = y;
   }
 
-  // tail
+  //tail
   if (runStartY < HEIGHT) {
     const col = zoneCss(lastZoneId);
     if (col !== lastStyle) {
@@ -557,10 +591,10 @@ export function castCieling(
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
   //never draw above the horizon
   const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT;
-  const startY = 0; // top of screen
+  const startY = 0; //top of screen
   if (endY <= 0) {
     return;
-  } // nothing to draw
+  } //nothing to draw
   //Ray for this column (same as walls)
   const camX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
   const rayX = dirX + planeX * camX;
@@ -580,13 +614,13 @@ export function castCieling(
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < endY; y++) {
     if (player.sightDist > 0 && Math.abs(dist) > player.sightDist) {
-      // flush up to the fog line and stop
+      //flush up to the fog line and stop
       const color = zoneCielingCss(lastZone);
       if (color !== lastStyle) {
         ctx.fillStyle = color;
       }
       ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
-      return; // <- important: no tail fill beyond fog
+      return; //<- important: no tail fill beyond fog
     }
 
     if (dist > zBuffer[screenColumnX]) {
@@ -596,7 +630,7 @@ export function castCieling(
         ctx.fillStyle = color;
       }
       ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
-      return; // <- important: no tail fill beyond wall that actually blocks ceiling
+      return; //<- important: no tail fill beyond wall that actually blocks ceiling
     }
     const ix = wx | 0;
     const iy = wy | 0;
@@ -736,9 +770,9 @@ export function castCielingFog(ctx) {
       gameStateObject.cielingColorBack ||
       "#6495ED";
     g = ctx.createLinearGradient(0, y0, 0, y0 + h);
-    g.addColorStop(0.0, "rgba(0,0,0,0)"); // fully clear at top
-    g.addColorStop(0.85, skyBack); // tint near horizon
-    g.addColorStop(0.95, fogColor); // strongest at horizon
+    g.addColorStop(0.0, "rgba(0,0,0,0)"); //fully clear at top
+    g.addColorStop(0.85, skyBack); //tint near horizon
+    g.addColorStop(0.95, fogColor); //strongest at horizon
 
     CIELING_FOG_GRADIENT_CACHE[zIndex] = g;
   }
@@ -1147,7 +1181,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       if (fogLerpFactor > 0) {
         //Full vertical range of the wall on screen (can extend above original drawStartY if tall > 1)
         //bottomY is the (float) bottom position already computed earlier; total height scales by 'tall'.
-        const fullWallBottomY = unclippedEndY; // same as previous drawEndY unclipped
+        const fullWallBottomY = unclippedEndY; //same as previous drawEndY unclipped
         const fullWallTopYFloat =
           unclippedEndY - wallLineHeight * (tall > 0 ? tall : 1); //supports tall < 1
         let fogY0 = fullWallTopYFloat | 0;
