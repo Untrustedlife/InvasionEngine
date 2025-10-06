@@ -58,7 +58,7 @@ const CIELING_ROW_DIST = new Float32Array(HEIGHT);
 //idd will be key for zone ID, value will be precomputed row distance array
 const ROW_DIST_BY_ZONE = {};
 const CILEING_DIST_BY_ZONE = {};
-
+const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
 /**
  * Rebuilds row distance lookup tables for floor and ceiling projection.
  * Precomputes distance from camera to each screen row, accounting for player height
@@ -80,7 +80,6 @@ export function rebuildRowDistLUT() {
     delete ROW_DIST_BY_ZONE[key];
   }
 
-  const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
   const EYE = player.calculatePlayerHeight(); //same EYE as in sprite code
 
   const floorDepth = 0; //Ground level
@@ -990,6 +989,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; //Faster than Math.max
     let wallLineHeight = (HEIGHT / projectionDistance) | 0;
     //Compute unclipped vertical segment and derive texture source window for any clipping
+    const EYE = player.calculatePlayerHeight(); //same as sprites
+    const horizon = HALF_HEIGHT;
+    const eyeScale = HEIGHT * (2 - EYE) * 0.5; //matches sprite/LUT scale
     const unclippedStartY =
       ((HEIGHT - wallLineHeight * player.calculatePlayerHeight()) / 2) | 0;
     const unclippedEndY = unclippedStartY + wallLineHeight;
@@ -1207,6 +1209,209 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
           ctx.fillRect(screenColumnX, fogY0, 1, fogY1 - fogY0);
           ctx.restore();
         }
+      }
+    }
+
+    //Draw farther wall only if it is taller (>1x)
+    let newTall = tall;
+    if ((wallTopY[screenColumnX] | 0) > 0) {
+      let uncoveredTop = wallTopY[screenColumnX] | 0; //visible band is [0, uncoveredTop)
+      //Continue DDA stepping from current state
+      let contMapX = currentMapX;
+      let contMapY = currentMapY;
+      let contSideX = sideDistanceX;
+      let contSideY = sideDistanceY;
+      let contWallSide = wallSide;
+
+      let safety = 0;
+      while (
+        uncoveredTop > 0 &&
+        //this makes sure we dont draw beyond the clipping plane
+        safety++ < player.sightDist - perpendicularDistance
+      ) {
+        //Step to next grid boundary
+        if (contSideX < contSideY) {
+          contSideX += deltaDistanceX;
+          contMapX += stepDirectionX;
+          contWallSide = 0;
+        } else {
+          contSideY += deltaDistanceY;
+          contMapY += stepDirectionY;
+          contWallSide = 1;
+        }
+
+        if (
+          contMapX < 0 ||
+          contMapY < 0 ||
+          contMapX >= MAP_W ||
+          contMapY >= MAP_H
+        ) {
+          break;
+        }
+
+        const contCellTexId = MAP[contMapY][contMapX] | 0;
+        if (contCellTexId <= 0) {
+          //Prevents tall walls in the distance from being rendered on top of close walls
+          //There must be some weird physical law that makes math work out this way
+          newTall += 0.25;
+          continue; // empty space
+        }
+
+        // Distance to this farther wall (perp/fisheye-corrected)
+        const contPerp =
+          contWallSide === 0
+            ? contSideX - deltaDistanceX
+            : contSideY - deltaDistanceY;
+        if (player.sightDist > 0 && contPerp > player.sightDist) {
+          break;
+        }
+
+        const proj2 = Math.max(PROJ_NEAR, contPerp);
+        const lineH2 = (HEIGHT / proj2) | 0;
+        const tall2 = WALL_HEIGHT_MAP[contCellTexId];
+
+        //Only render a farther wall if it is strictly taller than the previous wall + incurred tallness
+        if (tall2 <= newTall) {
+          continue;
+        }
+
+        //Project vertical placement for the farther wall using same eyeScale/horizon
+        const bottom2 = horizon + eyeScale / contPerp;
+        const fullTop2 = bottom2 - lineH2 * tall2;
+
+        // Must reach into the uncovered band above the near wall
+        if (!(fullTop2 < uncoveredTop)) {
+          continue;
+        }
+
+        // UV for farther wall (column)
+        const hitX2 = player.x + contPerp * rayDirectionX;
+        const hitY2 = player.y + contPerp * rayDirectionY;
+        const u2 =
+          contWallSide === 0 ? hitY2 - (hitY2 | 0) : hitX2 - (hitX2 | 0);
+        const texCanvas2 = TEX[contCellTexId];
+        const texData2 = TEXCACHE[contCellTexId] || TEXCACHE[4];
+        const texW2 = texCanvas2 ? texCanvas2.width | 0 : texData2.w | 0;
+        let texX2 = (u2 * texW2) | 0;
+        if (
+          (contWallSide === 0 && stepDirectionX > 0) ||
+          (contWallSide === 1 && stepDirectionY < 0)
+        ) {
+          texX2 = texW2 - texX2 - 1;
+        }
+        if (texX2 < 0) {
+          texX2 = 0;
+        }
+        if (texX2 >= texW2) {
+          texX2 = texW2 - 1;
+        }
+
+        const texH2 = (texCanvas2 ? texCanvas2.height : texData2.h || 64) | 0;
+        const shade2 = (1 / (1 + contPerp * 0.25)) * (contWallSide ? 0.5 : 1);
+
+        // Draw tiled: base unit, then full repeats, then optional fractional top
+        const segH2 = lineH2; // one unit wall height on screen
+        const texPerPix2 = texH2 / Math.max(1, segH2);
+
+        // base slice
+        const baseTop = bottom2 - segH2;
+        const baseBot = bottom2;
+        let y0 = baseTop;
+        let y1 = Math.min(uncoveredTop, baseBot);
+        let visH = y1 - y0;
+        if (visH > 0) {
+          const srcY = (y0 - baseTop) * texPerPix2;
+          const srcH = visH * texPerPix2;
+          drawWallColumnImg(
+            ctx,
+            screenColumnX,
+            y0,
+            y1,
+            texCanvas2,
+            texX2,
+            shade2,
+            srcY,
+            srcH,
+            contCellTexId
+          );
+          if (y0 < uncoveredTop) {
+            uncoveredTop = y0;
+            if (uncoveredTop < (wallTopY[screenColumnX] | 0)) {
+              wallTopY[screenColumnX] = uncoveredTop;
+            }
+          }
+        }
+
+        // full extra repeats above base
+        const fullRepeats2 = Math.floor(tall2) - 1;
+        for (let i = 0; i < fullRepeats2 && uncoveredTop > 0; i++) {
+          const topUnc2 = baseTop - segH2 * (i + 1);
+          const botUnc2 = baseBot - segH2 * (i + 1);
+          y0 = topUnc2;
+          y1 = Math.min(uncoveredTop, botUnc2) + 1;
+          visH = y1 - y0;
+          if (visH <= 0) {
+            continue;
+          }
+          const srcY = (y0 - topUnc2) * texPerPix2;
+          const srcH = visH * texPerPix2;
+          drawWallColumnImg(
+            ctx,
+            screenColumnX,
+            y0,
+            y1,
+            texCanvas2,
+            texX2,
+            shade2,
+            srcY,
+            srcH,
+            contCellTexId
+          );
+          if (y0 < uncoveredTop) {
+            uncoveredTop = y0;
+            if (uncoveredTop < (wallTopY[screenColumnX] | 0)) {
+              wallTopY[screenColumnX] = uncoveredTop;
+            }
+          }
+        }
+
+        // fractional top slice if any
+        const remFrac2 = tall2 - (1 + fullRepeats2);
+        if (remFrac2 > 1e-6 && uncoveredTop > 0) {
+          const partH2 = segH2 * remFrac2;
+          const botUnc2 = baseTop - segH2 * Math.max(0, fullRepeats2);
+          const topUnc2 = botUnc2 - partH2;
+          y0 = topUnc2;
+          y1 = Math.min(uncoveredTop, botUnc2);
+          visH = y1 - y0;
+          if (visH > 0) {
+            const unitTopUnc2 = botUnc2 - segH2;
+            let srcY = ((y0 - unitTopUnc2) * texPerPix2) % texH2;
+            if (srcY < 0) {
+              srcY += texH2;
+            }
+            const srcH = visH * texPerPix2;
+            drawWallColumnImg(
+              ctx,
+              screenColumnX,
+              y0,
+              y1,
+              texCanvas2,
+              texX2,
+              shade2,
+              srcY,
+              srcH,
+              contCellTexId
+            );
+            if (y0 < uncoveredTop) {
+              uncoveredTop = y0;
+              if (uncoveredTop < (wallTopY[screenColumnX] | 0)) {
+                wallTopY[screenColumnX] = uncoveredTop;
+              }
+            }
+          }
+        }
+        newTall = tall2; //update to new taller height
       }
     }
 
