@@ -801,6 +801,46 @@ export function castCielingFog(ctx) {
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
 
+  function drawFogBand(screenX, y0f, y1f, dist) {
+    if (player.sightDist <= 0) {
+      return;
+    }
+    const start = player.sightDist * FOG_START_FRAC;
+    const end = player.sightDist;
+    if (dist <= start) {
+      return;
+    }
+
+    let y0 = y0f | 0;
+    let y1 = y1f | 0;
+    if (y0 < 0) {
+      y0 = 0;
+    }
+    if (y1 > HEIGHT) {
+      y1 = HEIGHT;
+    }
+    if (y1 <= y0) {
+      return;
+    }
+
+    const t = Math.min(
+      1,
+      Math.max(0, (dist - start) / Math.max(1e-6, end - start))
+    );
+    const px = player.x | 0;
+    const py = player.y | 0;
+    const zIndex =
+      ZONE_GRID_CACHE.length > 0
+        ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px] | 0
+        : 0;
+
+    ctx.save();
+    ctx.globalAlpha = t * 0.85;
+    ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
+    ctx.fillRect(screenX, y0, 1, y1 - y0);
+    ctx.restore();
+  }
+
   //Cast one ray per screen column
   for (let screenColumnX = 0; screenColumnX < WIDTH; screenColumnX++) {
     //Map screen X to camera plane [-1, +1], offset by 0.5 to center pixel
@@ -1008,6 +1048,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     //Draw wall column using fast canvas method
     const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
     wallTopY[screenColumnX] = drawStartY * tall;
+
+    const nearTopFull = drawEndY - wallLineHeight * (tall > 0 ? tall : 1);
+    const nearTopY = nearTopFull;
+    wallTopY[screenColumnX] = nearTopY;
     if (visibleHeight <= 0) {
       zBuffer[screenColumnX] = perpendicularDistance;
       continue;
@@ -1166,50 +1210,12 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       }
     }
     //Apply distance fog (adjusted to cover full visual height of tall / short walls)
-    if (
-      player.sightDist > 0 &&
-      perpendicularDistance > player.sightDist * FOG_START_FRAC
-    ) {
-      const fogStartDistance = player.sightDist * FOG_START_FRAC;
-      const fogEndDistance = player.sightDist;
-      const fogLerpFactor = Math.min(
-        1,
-        Math.max(
-          0,
-          (perpendicularDistance - fogStartDistance) /
-            Math.max(1e-6, fogEndDistance - fogStartDistance)
-        )
-      );
-      if (fogLerpFactor > 0) {
-        //Full vertical range of the wall on screen (can extend above original drawStartY if tall > 1)
-        //bottomY is the (float) bottom position already computed earlier; total height scales by 'tall'.
-        const fullWallBottomY = unclippedEndY; //same as previous drawEndY unclipped
-        const fullWallTopYFloat =
-          unclippedEndY - wallLineHeight * (tall > 0 ? tall : 1); //supports tall < 1
-        let fogY0 = fullWallTopYFloat | 0;
-        let fogY1 = fullWallBottomY | 0;
-        //Clip to screen
-        if (fogY0 < 0) {
-          fogY0 = 0;
-        }
-        if (fogY1 > HEIGHT) {
-          fogY1 = HEIGHT;
-        }
-        //Guard against inverted / zero height (e.g., extreme clipping)
-        if (fogY1 > fogY0) {
-          const px = player.x | 0;
-          const py = player.y | 0;
-          const zIndex =
-            ZONE_GRID_CACHE.length > 0
-              ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px]
-              : 0;
-          ctx.save();
-          ctx.globalAlpha = fogLerpFactor * 0.85;
-          ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
-          ctx.fillRect(screenColumnX, fogY0, 1, fogY1 - fogY0);
-          ctx.restore();
-        }
-      }
+    {
+      //fog for the near visible band only (use near distance)
+      const nearTopFull = drawEndY - wallLineHeight * (tall > 0 ? tall : 1);
+      const fogY0 = Math.max(0, Math.ceil(nearTopFull));
+      const fogY1 = Math.min(HEIGHT, unclippedEndY);
+      drawFogBand(screenColumnX, fogY0, fogY1, perpendicularDistance);
     }
 
     //Draw farther wall only if it is taller (>1x)
@@ -1251,9 +1257,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
         const contCellTexId = MAP[contMapY][contMapX] | 0;
         if (contCellTexId <= 0) {
-          //Prevents tall walls in the distance from being rendered on top of close walls
-          //There must be some weird physical law that makes math work out this way
-          newTall += 0.25;
           continue; // empty space
         }
 
@@ -1340,6 +1343,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
               wallTopY[screenColumnX] = uncoveredTop;
             }
           }
+          drawFogBand(screenColumnX, y0, y1, contPerp);
         }
 
         // full extra repeats above base
@@ -1373,6 +1377,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
               wallTopY[screenColumnX] = uncoveredTop;
             }
           }
+          drawFogBand(screenColumnX, y0, y1, contPerp);
         }
 
         // fractional top slice if any
@@ -1409,6 +1414,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
                 wallTopY[screenColumnX] = uncoveredTop;
               }
             }
+            drawFogBand(screenColumnX, y0, y1, contPerp);
           }
         }
         newTall = tall2; //update to new taller height
