@@ -1,1 +1,0 @@
-This is where all sample game specific functionality will be moved.
