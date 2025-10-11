@@ -786,12 +786,18 @@ export function castCielingFog(ctx) {
 }
 
 /**
- * Main raycasting function using DDA algorithm to render textured walls.
- * Casts one ray per screen column, traces through the map grid until hitting walls,
- * then renders textured wall slices with distance shading, fog effects, and proper
- * UV mapping. Fills the z-buffer for sprite depth sorting and handles variable wall
- * heights. This is the core 3D wall rendering function that creates the pseudo-3D environment.
+ * Core wall raycasting renderer (DDA).
  *
+ * For each screen column, casts a ray through the grid until it hits a wall,
+ * then draws a textured slice with distance-based shading/fog and correct UVs.
+ * Populates the z-buffer for sprite depth sorting and supports variable wall
+ * heights, far-over-near wall stacking, and ceiling clipping.
+ *
+ * TODO:
+ * - Implement floor clipping.
+ * - Add a separate ceiling z-buffer so short near walls don’t occlude higher far ceilings in the same zone.
+ * - Add a separate floor z-buffer for counters/low geometry for the same reason.
+ *   (With these in place, we can support counters and other Arena-style features.)
  * **Used by:**
  * - `Main.js`: Called as the primary wall renderer in the main render loop,
  *   executed after scene clearing but before floor/ceiling and sprite rendering
@@ -968,7 +974,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     }
     perpendicularDistance = Math.max(NEAR, perpendicularDistance);
 
-    //For UVs: keep front-wall stabilization only; no side pushing
+    //For UVs: keep front-wall stabilization only;
     const UV_NEAR_DISTANCE = 0; //front-facing stabilization (center)
     const normalXForward = wallSide === 0 ? stepDirectionX : 0;
     const normalYForward = wallSide === 1 ? stepDirectionY : 0;
@@ -1005,12 +1011,13 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
     //Select texture based on material ID
     const textureData = TEXCACHE[hitTextureId];
+
     const textureCanvas = TEX[hitTextureId];
     const textureWidth = textureCanvas
       ? textureCanvas.width | 0
       : textureData.w | 0;
 
-    //Convert to texel column and apply direction-based flip (no UV warping)
+    //Convert to texel column and apply direction-based flip
     let textureColumnX = (textureCoordinateU * textureWidth) | 0;
     //Flip only by step/side rule to keep u monotonic across a wall face
     if (
@@ -1026,7 +1033,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       textureColumnX = textureWidth - 1;
     }
 
-    //Project wall height to screen space (no corner softening)
+    //Project wall height to screen space
     const projectionDistance = Math.max(PROJ_NEAR, perpendicularDistance);
     const wallLineHeight = (HEIGHT / projectionDistance) | 0;
 
@@ -1048,7 +1055,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       drawEndY = HEIGHT;
     }
 
-    //Draw wall column over floors so i can override fog
+    //Clip walls to ceilings
+    // TODO: ALso clip on floors?
     const faceX = currentMapX - (wallSide === 0 ? stepDirectionX : 0);
     const faceY = currentMapY - (wallSide === 1 ? stepDirectionY : 0);
     let faceZoneId = 0;
@@ -1068,7 +1076,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const visibleHeight = drawEndY - drawStartY;
     wallBottomY[screenColumnX] = drawEndY;
     wallTopY[screenColumnX] = drawStartY;
-    // FIX: use the true near-wall top (tall units), not just the 1-unit top
     const nearTopFull = bottomY - wallLineHeight * (tall > 0 ? tall : 1);
     const nearTopY = nearTopFull;
     wallTopY[screenColumnX] = nearTopY;
@@ -1232,7 +1239,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       }
     }
     {
-      // fog for the near visible band only (use near distance)
+      //fog for the near visible band only (use near distance)
       const nearTopFull = bottomY - wallLineHeight * (tall > 0 ? tall : 1);
       const fogY0 = Math.max(0, Math.ceil(nearTopFull));
       const fogY1 = Math.min(HEIGHT, unclippedEndY);
@@ -1278,10 +1285,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
         const contCellId = MAP[contMapY][contMapX] | 0;
         if (contCellId <= 0) {
-          continue; // empty space
+          continue; //empty space
         }
 
-        // Distance to this farther wall (perp/fisheye-corrected)
+        //Distance to this farther wall
         const contPerp =
           contWallSide === 0
             ? contSideX - deltaDistanceX
@@ -1294,8 +1301,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         const lineH2 = (HEIGHT / proj2) | 0;
         let tall2 = WALL_MAP[contCellId].height;
 
-        //Clamp to zone cileing height if taller
-        //TODO: Need to handle cases where you can see through an opening including a cieling height change like  a build style portal system and OnLy draw the tall wall slice.
+        //Clip to zone cileing height if taller
+        //TODO: Need to handle cases where you can see through an opening including a cieling height change like
+        //a build style portal system and OnLy draw the tall wall slice. But bot the base wall slice as walls in front of tall walls cilip fine
         zoneId =
           faceZoneId >= 0
             ? faceZoneId
