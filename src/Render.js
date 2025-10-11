@@ -7,7 +7,13 @@
 
 import { ctx, WIDTH, HEIGHT } from "./Dom.js";
 import { NEAR, PROJ_NEAR, FOG_START_FRAC, FOG_COLOR } from "./Constants.js";
-import { TEXCACHE, TEX, SHADE_LEVELS, SHADED_TEX } from "./Textures.js";
+import {
+  TEXCACHE,
+  TEX,
+  SHADE_LEVELS,
+  SHADED_TEX,
+  WALL_MAP,
+} from "./Textures.js";
 import { player } from "./Player.js";
 import {
   gameStateObject,
@@ -16,7 +22,6 @@ import {
   zoneIdAt,
 } from "./Map.js";
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
-import { WALL_HEIGHT_MAP } from "./SampleGame/Walltextures.js";
 
 /**
  * Z-buffer stores wall distances for sprite depth testing. Each index corresponds
@@ -781,17 +786,17 @@ export function castCielingFog(ctx) {
 }
 
 /**
- * Renders wall geometry using DDA raycasting algorithm with textured columns.
+ * Main raycasting function using DDA algorithm to render textured walls.
  * Casts one ray per screen column, traces through the map grid until hitting walls,
  * then renders textured wall slices with distance shading, fog effects, and proper
- * UV mapping. Fills the z-buffer for sprite depth sorting and handles variable wall heights.
- * This is the core 3D wall rendering function that creates the pseudo-3D environment.
+ * UV mapping. Fills the z-buffer for sprite depth sorting and handles variable wall
+ * heights. This is the core 3D wall rendering function that creates the pseudo-3D environment.
  *
  * **Used by:**
  * - `Main.js`: Called as the primary wall renderer in the main render loop,
- *   executed after clearing but before floor/ceiling and sprite rendering
+ *   executed after scene clearing but before floor/ceiling and sprite rendering
  *
- * @param {number} nowSec - Current time in seconds for texture animation effects
+ * @param {number} nowSec - Current time in seconds for texture animation effects (e.g., flesh texture)
  * @param {Object} cameraBasisVectors - Camera direction and plane vectors {dirX, dirY, planeX, planeY}
  * @param {Array<Array<number>>} MAP - 2D map array where non-zero values represent wall texture IDs
  * @param {number} MAP_W - Map width in grid cells
@@ -800,6 +805,8 @@ export function castCielingFog(ctx) {
  */
 export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
+  //Pre-compute culling flags outside the inner loop for performance
+  const hasFarPlaneCulling = player.sightDist > 0;
 
   function drawFogBand(screenX, y0f, y1f, dist) {
     if (player.sightDist <= 0) {
@@ -848,7 +855,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const rayDirectionX = dirX + planeX * cameraPlaneX;
     const rayDirectionY = dirY + planeY * cameraPlaneX;
 
-    //Skip rays with near-zero direction immediately
+    //Early exit: skip rays with near-zero direction (would cause numerical instability)
     if (
       rayDirectionX < 1e-8 &&
       rayDirectionX > -1e-8 &&
@@ -863,12 +870,11 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
     const rayDirXRecip = 1 / (rayDirectionX || 1e-9);
     const rayDirYRecip = 1 / (rayDirectionY || 1e-9);
-
     //DDA setup - current map position
     let currentMapX = player.x | 0;
     let currentMapY = player.y | 0;
 
-    //Distance to cross one grid cell (inline abs() for performance (called 320+ times per frame))
+    //Distance to cross one grid cell - inline abs() for performance (called 320+ times per frame)
     const deltaDistanceX = rayDirXRecip < 0 ? -rayDirXRecip : rayDirXRecip;
     const deltaDistanceY = rayDirYRecip < 0 ? -rayDirYRecip : rayDirYRecip;
 
@@ -881,7 +887,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       stepDirectionX = 1;
       sideDistanceX = (currentMapX + 1.0 - player.x) * deltaDistanceX;
     }
-
     if (rayDirectionY < 0) {
       stepDirectionY = -1;
       sideDistanceY = (player.y - currentMapY) * deltaDistanceY;
@@ -910,8 +915,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         wallSide = 1;
       }
 
-      //Far plane culling
-      if (player.sightDist > 0) {
+      //Far plane culling - use pre-computed flag to avoid repeated condition check
+      if (hasFarPlaneCulling) {
         const approximateDistance = Math.min(sideDistanceX, sideDistanceY);
         if (approximateDistance > player.sightDist) {
           wallHit = false;
@@ -943,8 +948,11 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       }
     }
 
+    const originalHitTextureId = hitTextureId;
+    hitTextureId = WALL_MAP?.[originalHitTextureId].textures[0][0] || "hedge";
+
     //Skip if no wall hit within range
-    if (hitTextureId === 0) {
+    if (originalHitTextureId === 0) {
       zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = HALF_HEIGHT;
       wallTopY[screenColumnX] = HALF_HEIGHT;
@@ -958,11 +966,10 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     } else {
       perpendicularDistance = sideDistanceY - deltaDistanceY;
     }
-    perpendicularDistance =
-      NEAR > perpendicularDistance ? NEAR : perpendicularDistance;
+    perpendicularDistance = Math.max(NEAR, perpendicularDistance);
 
     //For UVs: keep front-wall stabilization only; no side pushing
-    const UV_NEAR_DISTANCE = 0.0; //front-facing stabilization (center)
+    const UV_NEAR_DISTANCE = 0; //front-facing stabilization (center)
     const normalXForward = wallSide === 0 ? stepDirectionX : 0;
     const normalYForward = wallSide === 1 ? stepDirectionY : 0;
     const incidenceForward = Math.abs(
@@ -973,7 +980,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     const isFrontFacing =
       incidenceForward >= FRONT_INCIDENCE &&
       Math.abs(cameraPlaneX) <= CAMERA_CENTER;
-
     const distanceForUV =
       isFrontFacing && perpendicularDistance < UV_NEAR_DISTANCE
         ? UV_NEAR_DISTANCE
@@ -987,28 +993,25 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let textureCoordinateU;
     if (wallSide === 0) {
       //x-side (vertical wall): use fractional part of Y
-      textureCoordinateU = hitPositionY - (hitPositionY | 0); //bitwise or (For positive)  is same as math.floor
+      textureCoordinateU = hitPositionY - (hitPositionY | 0);
     } else {
       //y-side (horizontal wall): use fractional part of X
-      textureCoordinateU = hitPositionX - (hitPositionX | 0); //bitwise or (For positive)  is same as math.floor
+      textureCoordinateU = hitPositionX - (hitPositionX | 0);
     }
-    //Fast clamp to [0, 0.999999] range
-    textureCoordinateU =
-      textureCoordinateU < 0
-        ? 0
-        : textureCoordinateU > 0.999999
-        ? 0.999999
-        : textureCoordinateU + 1e-6;
+    textureCoordinateU = Math.min(
+      0.999999,
+      Math.max(0.0, textureCoordinateU + 1e-6)
+    );
 
     //Select texture based on material ID
-    const textureData = TEXCACHE[hitTextureId] || TEXCACHE[4];
+    const textureData = TEXCACHE[hitTextureId];
     const textureCanvas = TEX[hitTextureId];
     const textureWidth = textureCanvas
       ? textureCanvas.width | 0
       : textureData.w | 0;
 
-    //Convert to texel column and apply direction-based flip
-    let textureColumnX = (textureCoordinateU * textureWidth) | 0; //bitwise or (For positive)  is same as math.floor
+    //Convert to texel column and apply direction-based flip (no UV warping)
+    let textureColumnX = (textureCoordinateU * textureWidth) | 0;
     //Flip only by step/side rule to keep u monotonic across a wall face
     if (
       (wallSide === 0 && stepDirectionX > 0) ||
@@ -1016,25 +1019,26 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     ) {
       textureColumnX = textureWidth - textureColumnX - 1;
     }
-    //Fast clamp to texture bounds
-    textureColumnX =
-      textureColumnX < 0
-        ? 0
-        : textureColumnX >= textureWidth
-        ? textureWidth - 1
-        : textureColumnX;
+    if (textureColumnX < 0) {
+      textureColumnX = 0;
+    }
+    if (textureColumnX >= textureWidth) {
+      textureColumnX = textureWidth - 1;
+    }
 
-    //Project wall height to screen space
-    const projectionDistance =
-      perpendicularDistance < PROJ_NEAR ? PROJ_NEAR : perpendicularDistance; //Faster than Math.max
-    let wallLineHeight = (HEIGHT / projectionDistance) | 0;
+    //Project wall height to screen space (no corner softening)
+    const projectionDistance = Math.max(PROJ_NEAR, perpendicularDistance);
+    const wallLineHeight = (HEIGHT / projectionDistance) | 0;
+
     //Compute unclipped vertical segment and derive texture source window for any clipping
     const EYE = player.calculatePlayerHeight(); //same as sprites
     const horizon = HALF_HEIGHT;
     const eyeScale = HEIGHT * (2 - EYE) * 0.5; //matches sprite/LUT scale
-    const unclippedStartY =
-      ((HEIGHT - wallLineHeight * player.calculatePlayerHeight()) / 2) | 0;
-    const unclippedEndY = unclippedStartY + wallLineHeight;
+
+    //depth = perpendicularDistance
+    const bottomY = horizon + eyeScale / perpendicularDistance; //floor-aligned
+    const unclippedEndY = bottomY | 0; //wall bottom
+    const unclippedStartY = (bottomY - wallLineHeight) | 0; //wall top
     let drawStartY = unclippedStartY;
     let drawEndY = unclippedEndY;
     if (drawStartY < 0) {
@@ -1043,13 +1047,29 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     if (drawEndY > HEIGHT) {
       drawEndY = HEIGHT;
     }
+
+    //Draw wall column over floors so i can override fog
+    const faceX = currentMapX - (wallSide === 0 ? stepDirectionX : 0);
+    const faceY = currentMapY - (wallSide === 1 ? stepDirectionY : 0);
+    let faceZoneId = 0;
+    if (faceX >= 0 && faceY >= 0 && faceX < MAP_W && faceY < MAP_H) {
+      faceZoneId = ZONE_GRID_CACHE[faceY * MAP_W + faceX] | 0;
+    }
+    let tall = WALL_MAP[originalHitTextureId].height || 1;
+
+    let zoneId =
+      faceZoneId >= 0
+        ? faceZoneId
+        : ZONE_GRID_CACHE[currentMapY * MAP_W + currentMapX] | 0;
+    let zone = gameStateObject.zones[zoneId];
+    let ceilingHeight = zone.ceilingHeight || 2;
+    tall = ceilingHeight / 2 < tall && !zone.outside ? ceilingHeight / 2 : tall;
+
     const visibleHeight = drawEndY - drawStartY;
     wallBottomY[screenColumnX] = drawEndY;
-    //Draw wall column using fast canvas method
-    const tall = WALL_HEIGHT_MAP[hitTextureId] || 1;
-    wallTopY[screenColumnX] = drawStartY * tall;
-
-    const nearTopFull = drawEndY - wallLineHeight * (tall > 0 ? tall : 1);
+    wallTopY[screenColumnX] = drawStartY;
+    // FIX: use the true near-wall top (tall units), not just the 1-unit top
+    const nearTopFull = bottomY - wallLineHeight * (tall > 0 ? tall : 1);
     const nearTopY = nearTopFull;
     wallTopY[screenColumnX] = nearTopY;
     if (visibleHeight <= 0) {
@@ -1062,7 +1082,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         : textureData.h || TEX[hitTextureId]?.height || 64) | 0;
     const sourceY =
       (drawStartY - unclippedStartY) *
-      (textureHeight / (wallLineHeight > 1 ? wallLineHeight : 1));
+      (textureHeight / Math.max(1, wallLineHeight));
     const sourceHeight =
       visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
 
@@ -1071,11 +1091,11 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       (1 / (1 + perpendicularDistance * 0.25)) * (wallSide ? 0.5 : 1);
 
     //Animated effect for flesh texture
-    if (hitTextureId === 7) {
+    if (WALL_MAP[originalHitTextureId].animated) {
       shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
     }
 
-    if (tall == 1.0) {
+    if (tall === 1.0) {
       drawWallColumnImg(
         ctx,
         screenColumnX,
@@ -1116,6 +1136,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
 
         const y0 = Math.max(0, Math.ceil(topUnc));
         const y1 = Math.min(HEIGHT, Math.floor(botUnc));
+        //wallTopY[screenColumnX] += y1;
         const visH = y1 - y0;
         if (visH <= 0) {
           continue;
@@ -1134,11 +1155,11 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
           shadeAmount,
           srcY,
           srcH,
-          1
+          WALL_MAP[originalHitTextureId].textures[0][i + 1]
         );
       }
 
-      //partial bottom slice for fractional heights
+      //partial top slice for fractional heights
       const remFrac = tall - (1 + fullRepeats);
       if (remFrac > 1e-6) {
         const partH = segH * remFrac;
@@ -1148,6 +1169,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         //clip
         const y0 = Math.max(0, Math.ceil(topUnc));
         const y1 = Math.min(HEIGHT, Math.floor(botUnc));
+        //wallTopY[screenColumnX] += y1;
         const visH = y1 - y0;
         if (visH > 0) {
           const unitTopUnc = botUnc - segH;
@@ -1167,7 +1189,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
             shadeAmount,
             srcY,
             srcH,
-            1
+            WALL_MAP[originalHitTextureId].textures[0][1 + fullRepeats]
           );
         }
       }
@@ -1209,10 +1231,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         }
       }
     }
-    //Apply distance fog (adjusted to cover full visual height of tall / short walls)
     {
-      //fog for the near visible band only (use near distance)
-      const nearTopFull = drawEndY - wallLineHeight * (tall > 0 ? tall : 1);
+      // fog for the near visible band only (use near distance)
+      const nearTopFull = bottomY - wallLineHeight * (tall > 0 ? tall : 1);
       const fogY0 = Math.max(0, Math.ceil(nearTopFull));
       const fogY1 = Math.min(HEIGHT, unclippedEndY);
       drawFogBand(screenColumnX, fogY0, fogY1, perpendicularDistance);
@@ -1255,8 +1276,8 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
           break;
         }
 
-        const contCellTexId = MAP[contMapY][contMapX] | 0;
-        if (contCellTexId <= 0) {
+        const contCellId = MAP[contMapY][contMapX] | 0;
+        if (contCellId <= 0) {
           continue; // empty space
         }
 
@@ -1265,19 +1286,34 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
           contWallSide === 0
             ? contSideX - deltaDistanceX
             : contSideY - deltaDistanceY;
-        if (player.sightDist > 0 && contPerp > player.sightDist) {
+        if (hasFarPlaneCulling && contPerp > player.sightDist) {
           break;
         }
 
         const proj2 = Math.max(PROJ_NEAR, contPerp);
         const lineH2 = (HEIGHT / proj2) | 0;
-        const tall2 = WALL_HEIGHT_MAP[contCellTexId];
+        let tall2 = WALL_MAP[contCellId].height;
 
-        //Only render a farther wall if it is strictly taller than the previous wall + incurred tallness
+        //Clamp to zone cileing height if taller
+        //TODO: Need to handle cases where you can see through an opening including a cieling height change like  a build style portal system and OnLy draw the tall wall slice.
+        zoneId =
+          faceZoneId >= 0
+            ? faceZoneId
+            : ZONE_GRID_CACHE[contMapY * MAP_W + contMapX] | 0;
+        zone = gameStateObject.zones[zoneId];
+        ceilingHeight = zone.ceilingHeight || 2;
+        tall2 =
+          ceilingHeight / 2 < tall2 && !zone.outside
+            ? ceilingHeight / 2
+            : tall2;
+
+        //Its always at least the second texture in the list
+        const originalTallHitTextureId = contCellId;
+
+        //Only render a farther wall if it i;s strictly taller than the previous wall + incurred tallness
         if (tall2 <= newTall) {
           continue;
         }
-
         //Project vertical placement for the farther wall using same eyeScale/horizon
         const bottom2 = horizon + eyeScale / contPerp;
         const fullTop2 = bottom2 - lineH2 * tall2;
@@ -1286,14 +1322,21 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
         if (!(fullTop2 < uncoveredTop)) {
           continue;
         }
+        const textureId = WALL_MAP?.[contCellId]?.textures[0][newTall | 0];
 
+        /*console.log(
+          textureId,
+          newTall,
+          WALL_MAP?.[contCellId]?.textures[0][newTall | 0]
+        );*/
         // UV for farther wall (column)
         const hitX2 = player.x + contPerp * rayDirectionX;
         const hitY2 = player.y + contPerp * rayDirectionY;
         const u2 =
           contWallSide === 0 ? hitY2 - (hitY2 | 0) : hitX2 - (hitX2 | 0);
-        const texCanvas2 = TEX[contCellTexId];
-        const texData2 = TEXCACHE[contCellTexId] || TEXCACHE[4];
+        const texCanvas2 = TEX[textureId];
+        const texData2 = TEXCACHE[textureId];
+
         const texW2 = texCanvas2 ? texCanvas2.width | 0 : texData2.w | 0;
         let texX2 = (u2 * texW2) | 0;
         if (
@@ -1335,7 +1378,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
             shade2,
             srcY,
             srcH,
-            contCellTexId
+            textureId
           );
           if (y0 < uncoveredTop) {
             uncoveredTop = y0;
@@ -1359,6 +1402,12 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
           }
           const srcY = (y0 - topUnc2) * texPerPix2;
           const srcH = visH * texPerPix2;
+
+          /*console.log(
+            i,
+            newTall,
+            WALL_MAP?.[originalTallHitTextureId]?.textures[0][(newTall | 0) + i]
+          );*/
           drawWallColumnImg(
             ctx,
             screenColumnX,
@@ -1369,7 +1418,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
             shade2,
             srcY,
             srcH,
-            contCellTexId
+            WALL_MAP?.[originalTallHitTextureId]?.textures[0][(newTall | 0) + i]
           );
           if (y0 < uncoveredTop) {
             uncoveredTop = y0;
@@ -1406,7 +1455,9 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
               shade2,
               srcY,
               srcH,
-              contCellTexId
+              WALL_MAP?.[originalTallHitTextureId]?.textures[0][
+                (newTall | 0) + fullRepeats2
+              ]
             );
             if (y0 < uncoveredTop) {
               uncoveredTop = y0;
@@ -1421,7 +1472,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       }
     }
 
-    //Store distance for sprite depth testing
+    //Store distance for sprite depth testing (nearest only)
     zBuffer[screenColumnX] = perpendicularDistance;
   }
 }

@@ -6,6 +6,7 @@ import { player } from "./Player.js";
 import { TAU } from "./Utils.js";
 import { gameStateObject } from "./Map.js";
 import { spriteColorMap, colorMap } from "./SampleGame/MiniMapConstants.js";
+import { WALL_MAP } from "./Textures.js";
 //Draw minimap: tiles -> sprites -> player (draw order matters)
 const SCALE = 6; //pixels per tile
 const VIEW = 20; //tiles shown per side
@@ -32,7 +33,7 @@ export function drawMinimap(sprites) {
       const mapX = startX + x;
       //Safe lookup (treat OOB as empty)
       const cell = gameStateObject.MAP[mapY]?.[mapX] ?? 0;
-      const color = colorMap[cell] || "#000000"; //default to black if unknown
+      const color = WALL_MAP[cell].miniMapColor || "#000000"; //default to black if unknown
       mctx.fillStyle = color;
       mctx.fillRect(PAD + x * SCALE, PAD + y * SCALE, SCALE - 1, SCALE - 1); //1px gutters
     }

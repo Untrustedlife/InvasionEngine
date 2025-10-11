@@ -2,6 +2,7 @@
 //Handles solid tiles, special doors, and player movement bounds
 import { gameStateObject } from "./Map.js";
 import { player } from "./Player.js";
+import { WALL_MAP } from "./Textures.js";
 
 //Check if tile at (x,y) blocks movement
 //Special cases: EXIT(5) and BLUE_DOOR(6) are walkable, FORCEFIELD(7) needs blue key
@@ -15,21 +16,10 @@ export function isSolidTile(x, y) {
     return true;
   }
   const cell = gameStateObject.MAP[y | 0][x | 0];
-  if (cell === 0) {
-    return false;
-  }
-  if (cell === 5) {
-    return false;
-  }
-
   if (cell === 7) {
     return !player.hasBlueKey;
-  }
-  if (cell === 6) {
-    return false;
-  }
-  if (cell === 9) {
-    return false;
+  } else if (WALL_MAP[cell]) {
+    return WALL_MAP[cell].collide;
   }
   return true;
 }

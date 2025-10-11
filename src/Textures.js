@@ -2,16 +2,15 @@
 //TEX array holds texture canvases, TEXCACHE pre-slices them into vertical columns
 import { clamp } from "./Utils.js";
 import { SampleGameWallTextures } from "./SampleGame/WallTextures.js";
-
+import { GAME_WALL_MAP, TEX_KEYS } from "./SampleGame/Walltextures.js";
 //Create a canvas element with specified dimensions for texture generation
 function makeTex(textureWidth = 64, textureHeight = 64) {
   const canvas = new OffscreenCanvas(textureWidth, textureHeight);
   return canvas;
 }
 
-//preinitialize array of 7 empty textures and a 0th null for "nothing here"
-export const TEX = new Array(8).fill(null);
-
+export const TEX = { empty: null }; //Copy from SampleGame/Walltextures.js
+export const WALL_MAP = { ...GAME_WALL_MAP };
 //Convert texture to column-major format for fast vertical sampling
 export function cacheColumns(tex) {
   const g = tex.getContext("2d");
@@ -32,22 +31,6 @@ export function cacheColumns(tex) {
   return { cols, w: tex.width, h: tex.height };
 }
 
-//Pre-sliced texture columns for fast rendering
-export const TEXCACHE = TEX.map((tex) => (tex ? cacheColumns(tex) : null));
-
-export function addLoadedTextures(loadedTextures) {
-  TEX.push(...loadedTextures);
-  rebuildTextureCache();
-}
-
-//Rebuild TEXCACHE when new textures are added
-function rebuildTextureCache() {
-  TEXCACHE.length = 0; //Clear existing cache
-  TEX.forEach((tex) => {
-    TEXCACHE.push(tex ? cacheColumns(tex) : null);
-  });
-}
-
 //In RC Invasion this is only length 21 with 0.05 increments, but we want smoother shading since our walls are way bigger,
 //this is still WAY mor eoptimized then doing it per wall per frame every frame even if we reach int0 82 shade levels
 //Eliminates 115k+ expensive operations per second
@@ -55,25 +38,41 @@ function rebuildTextureCache() {
 export const SHADE_LEVELS = Array.from({ length: 82 }, (_, i) => i * 0.0125);
 export const SHADED_TEX = {};
 
+//Pre-sliced texture columns for fast rendering
+export const TEXCACHE = Object.fromEntries(
+  Object.entries(TEX).map(([key, tex]) => [key, tex ? cacheColumns(tex) : null])
+);
+
+//Rebuild TEXCACHE when new textures are added
+function rebuildTextureCache() {
+  // clear existing keys
+  for (const k of Object.keys(TEXCACHE)) {
+    delete TEXCACHE[k];
+  }
+  for (const [key, tex] of Object.entries(TEX)) {
+    TEXCACHE[key] = tex ? cacheColumns(tex) : null;
+  }
+}
+
 function precomputeShading() {
-  //Build pre-shaded versions of all textures at startup so we can just grab the images at runtime and avoid extra drawImage calls (Can probably do the same for sprites...)
-  for (let texId = 1; texId < TEX.length; texId++) {
-    if (!TEX[texId]) {
+  // Build pre-shaded versions keyed by the same TEX keys
+  for (const [key, texCanvas] of Object.entries(TEX)) {
+    if (!texCanvas) {
       continue;
     }
-    SHADED_TEX[texId] = {};
+    SHADED_TEX[key] = {};
     for (const shadeLevel of SHADE_LEVELS) {
       const shadedCanvas = new OffscreenCanvas(
-        TEX[texId].width,
-        TEX[texId].height
+        texCanvas.width,
+        texCanvas.height
       );
       const g = shadedCanvas.getContext("2d");
-      g.drawImage(TEX[texId], 0, 0);
-      const colorValue = (shadeLevel * 255) | 0;
+      g.drawImage(texCanvas, 0, 0);
+      const v = (shadeLevel * 255) | 0;
       g.globalCompositeOperation = "multiply";
-      g.fillStyle = `rgb(${colorValue},${colorValue},${colorValue})`;
+      g.fillStyle = `rgb(${v},${v},${v})`;
       g.fillRect(0, 0, shadedCanvas.width, shadedCanvas.height);
-      SHADED_TEX[texId][shadeLevel] = shadedCanvas;
+      SHADED_TEX[key][shadeLevel] = shadedCanvas;
     }
   }
 }
@@ -132,14 +131,11 @@ async function loadImagesToTex(descriptors) {
     );
     return;
   }
-
   const promises = descriptors.map(async (desc, i) => {
     const { index, image } = desc || {};
     try {
       const tex = await loadWallTexture(image);
-      if (index && index >= 0) {
-        TEX[index] = tex;
-      }
+      TEX[index] = tex;
       return tex;
     } catch (error) {
       console.warn(

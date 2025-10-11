@@ -1,3 +1,5 @@
+import { WALL_MAP } from "../Textures.js";
+
 /**
  * Map Editor Constants
  * Configuration values specific to the map editor functionality
@@ -15,17 +17,17 @@ export const MAX_TILE_ID = 255;
 
 //Default tile definitions
 export const DEFAULT_TILES = [
-  { id: 0, name: "empty", color: "#0b1020" },
-  { id: 1, name: "backroomswall", color: "#ECDE60" },
-  { id: 2, name: "panel", color: "#707a88" },
-  { id: 3, name: "hedge", color: "#00e676" },
-  { id: 4, name: "door", color: "#996633" },
-  { id: 5, name: "exit", color: "#FFE300" },
-  { id: 6, name: "blue_door", color: "#3561ff" },
-  { id: 7, name: "Forcefield", color: "#00FFFF" },
   { id: -1, name: "infoPlayerStart", color: "#00FF00" },
   { id: -2, name: "infoPlayerExit", color: "#FF0000" },
 ];
+
+Object.entries(WALL_MAP).forEach(([id, def]) => {
+  DEFAULT_TILES.push({
+    id: Number(id),
+    name: def.name,
+    color: def.miniMapColor,
+  });
+});
 
 //Special tile IDs for export processing
 export const SPECIAL_TILES = {

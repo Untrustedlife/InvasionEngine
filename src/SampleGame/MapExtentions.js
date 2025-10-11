@@ -40,6 +40,7 @@ export const sampleMaps = [
         color: "#054213",
         cielingColorFront: "#6495ed",
         spawnRules: [],
+        outside: true,
       },
       {
         x: 0,
@@ -53,6 +54,7 @@ export const sampleMaps = [
         spawnRules: [],
         floorDepth: -0.5,
         isLiquid: true,
+        outside: true,
       },
       {
         x: 3,
@@ -89,6 +91,7 @@ export const sampleMaps = [
         cielingColorFront: "#6495ed",
         cielingColorBack: "#00000000",
         floorColorBack: "#03210a",
+        outside: true,
         spawnRules: [],
       },
     ],
