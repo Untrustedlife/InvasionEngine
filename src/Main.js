@@ -320,11 +320,59 @@ function calculateSpriteShading(projection) {
   return { quantizedShade };
 }
 
-//Render sprite using batched column drawing for performance
+function calculateFogIntensity(depth) {
+  if (player.sightDist <= 0) {
+    return 0;
+  }
+
+  const fogStart = player.sightDist * FOG_START_FRAC; //Same as walls
+  const fogEnd = player.sightDist;
+
+  if (depth <= fogStart) {
+    return 0;
+  }
+  if (depth >= fogEnd) {
+    return 1;
+  }
+
+  return (depth - fogStart) / (fogEnd - fogStart);
+}
+
+function buildFogFilter(projection, shadingInfo) {
+  const filterParts = [];
+  if (shadingInfo.quantizedShade < 0.999) {
+    filterParts.push(`brightness(${shadingInfo.quantizedShade})`);
+  }
+  const fogIntensity = calculateFogIntensity(projection.depth);
+  //const px = player.x | 0;
+  //const py = player.y | 0;
+  //const zIndex = ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px] | 0;
+  //const fogColor = gameStateObject.zones[zIndex]?.fogColor || FOG_COLOR;
+  //const fogHSL = hexToHue(fogColor);
+  //const hueShift = (fogHSL - 360) * fogIntensity; // Shift towards fog hue
+  filterParts.push(`opacity(${1 - fogIntensity})`);
+  return filterParts.length > 0 ? filterParts.join(" ") : null;
+}
+
+/**
+ * Renders sprite using optimized column batching for performance.
+ * Uses z-buffer depth testing to only render sprite columns that are in front
+ * of walls, and batches contiguous visible columns into single draw calls to
+ * minimize GPU state changes and improve rendering performance.
+ *
+ * **Used by:**
+ * - **Internally**: Called in renderVisibleSprites() for each visible sprite
+ *   to perform the actual rendering with depth testing and optimization
+ *
+ * @param {Object} sprite - Sprite entity to render
+ * @param {Object} projection - Screen space projection data for the sprite
+ * @param {Object} shadingInfo - Brightness and shading information
+ */
 function renderSpriteWithBatching(sprite, projection, shadingInfo) {
   //Apply brightness filter once per sprite
-  if (shadingInfo.quantizedShade < 0.999) {
-    ctx.filter = `brightness(${shadingInfo.quantizedShade})`;
+  const fogFilter = buildFogFilter(projection, shadingInfo);
+  if (fogFilter) {
+    ctx.filter = fogFilter;
   }
 
   //Calculate texture mapping parameters
@@ -338,10 +386,10 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
   const occludedBottom = projection.occludedBottom | 0;
   if (occludedBottom >= spriteHeight) {
     ctx.filter = "none";
-    return; //fully hidden
+    return; // fully hidden
   }
   const destVisibleHeight = spriteHeight - occludedBottom;
-  //Keep scale: crop proportional source height from top
+  // Keep scale: crop proportional source height from top
   const img = spriteEnum[sprite.img];
   if (!img) {
     ctx.filter = "none";
