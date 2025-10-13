@@ -386,10 +386,10 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
   const occludedBottom = projection.occludedBottom | 0;
   if (occludedBottom >= spriteHeight) {
     ctx.filter = "none";
-    return; // fully hidden
+    return; //fully hidden
   }
   const destVisibleHeight = spriteHeight - occludedBottom;
-  // Keep scale: crop proportional source height from top
+  //crop proportional source height from top
   const img = spriteEnum[sprite.img];
   if (!img) {
     ctx.filter = "none";
@@ -463,7 +463,7 @@ function renderSpriteWithBatching(sprite, projection, shadingInfo) {
   }
 }
 
-//Draw the bow weapon in the HUD
+//Draw the weapon in the HUD
 function drawWeaponHUD(nowSec) {
   if (!spriteEnum.pitchfork) {
     return;
