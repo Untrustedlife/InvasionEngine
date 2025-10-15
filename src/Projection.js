@@ -86,37 +86,53 @@ export function projectSprite(sprite, cameraBasisVectors) {
   let startY, endY;
   if (sprite.ground) {
     //Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
-    const bias = sprite.floorBiasFrac ?? 0.04;
 
-    //Move sprites lower if they are on a lower plane
+    // Move sprites lower if they are on a lower plane
     const newZoneId =
       ZONE_GRID_CACHE[(sprite.y | 0) * gameStateObject.MAP_W + (sprite.x | 0)];
 
     const zone = gameStateObject.zones[newZoneId];
-    const newFloorAdjuster = 2 - (zone.floorDepth || 0); //0 is base floor depth, 1.2 is player height
 
+    // Convert floor-depth units to the same vertical units as EYE.
+    // One floor step = 0.5 of a wall-height unit.
+    const playerDepth = player.getCurrentFloorDepth() || 0;
+    const spriteDepth = zone.floorDepth || 0;
+
+    let bottomYF;
     //Bottom of sprite on floor
-    const bottomY =
-      horizon +
-      (HEIGHT * (newFloorAdjuster - EYE)) / (2 * cameraSpaceY) -
-      bias * finalSpriteHeight;
+    if (spriteDepth <= playerDepth) {
+      const newFloorAdjuster = 2 - (zone.floorDepth || 0); //0 is base floor depth, 1.2 is player height
+      bottomYF =
+        horizon + (HEIGHT * (newFloorAdjuster - EYE) * 0.5) / cameraSpaceY;
+    } else {
+      //When sprite is above you on a floor project based on player eye height and depth delta
+      //This makes sprites on upper floors rise up when they are above you a bit
+      const depthDeltaInHeightUnits = 0.5 * (playerDepth - spriteDepth);
+      // Base wall height is 2 height units. Shift by relative depth delta.
+      const floorAdjust = 2 + depthDeltaInHeightUnits;
+      bottomYF = horizon + (HEIGHT * (floorAdjust - EYE) * 0.5) / cameraSpaceY;
+    }
+
+    //Dont want to use fast floor here since it can be negative
+    const bottomY = Math.floor(bottomYF + 1e-6);
+
     const topY = bottomY - finalSpriteHeight;
 
-    startY = Math.round(topY);
-    endY = Math.round(bottomY);
+    startY = topY;
+    endY = bottomY;
 
     if (zone && zone.isLiquid) {
       const fd = zone.floorDepth ?? 0;
-      //Submerge occlusion: hide the lower part of a sprite when it’s under liquid.
-      //Right now this only fires for “low water” because fd is tied to the base floor.
-      //Making “high water” (raised rivers/pools) work is trivial—
-      //just separate water height from floor height.
+      // Submerge occlusion: hide the lower part of a sprite when it’s under liquid.
+      // Right now this only fires for “low water” because fd is tied to the base floor.
+      // Making “high water” (raised rivers/pools) work is trivial—
+      // just separate water height from floor height.
       if (fd < 0) {
-        const waterDepth = fd < 0 ? -fd : 0; //world units below base
-        //Tunables (world-unit based, independent of player eye height)
-        const WATER_FULL_COVER_UNITS = 1.2; //depth at which we approach max cover
+        const waterDepth = fd < 0 ? -fd : 0; // world units below base
+        // Tunables (world-unit based, independent of player eye height)
+        const WATER_FULL_COVER_UNITS = 1.2; // depth at which we approach max cover
         const depthNorm = clamp(waterDepth / WATER_FULL_COVER_UNITS, 0, 1);
-        //Quadratic ease (gentler start): depthNorm^2
+        // Quadratic ease (gentler start): depthNorm^2
         const autoCover = depthNorm;
         const coverFrac = clamp(autoCover, 0, 1);
         occludedBottom = Math.min(

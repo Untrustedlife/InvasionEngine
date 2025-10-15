@@ -393,8 +393,7 @@ export function castFloor(
       return ZONE_GRID_CACHE[iy * MAP_W + ix];
     }
     return 0;
-
-    //pass 1: classify using the hint zone's plane height
+    // pass 1: classify using the hint zone's plane height
     /*let d = ROW_DIST_BY_ZONE?.[hintZone]?.[row] ?? ROW_DIST[row];
     let wx = player.x + kx * d;
     let wy = player.y + ky * d;
@@ -408,7 +407,7 @@ export function castFloor(
       return z;
     }
 
-    //pass 2: refine using the found zone's plane height
+    // pass 2: refine using the found zone's plane height
     d = ROW_DIST_BY_ZONE?.[z]?.[row];
     wx = player.x + kx * d;
     wy = player.y + ky * d;
@@ -431,7 +430,7 @@ export function castFloor(
   let runStartY = y;
   let lastStyle = null;
   while (y < HEIGHT) {
-    //try a large jump
+    // try a large jump
     const step = Math.min(strideFor(y), HEIGHT - 1 - y);
     if (step <= 0) {
       break;
@@ -439,10 +438,10 @@ export function castFloor(
     const yProbe = y + step;
     const zProbe = zoneAtRow(yProbe, lastZoneId);
     if (zProbe === lastZoneId) {
-      //quick midpoint check to avoid missing a thin boundary
+      // quick midpoint check to avoid missing a thin boundary
       const mid = (y + yProbe) >> 1;
       if (zoneAtRow(mid, lastZoneId) === lastZoneId) {
-        //whole block is one zone -> draw once
+        // whole block is one zone -> draw once
         const col = zoneCss(lastZoneId);
         if (col !== lastStyle) {
           ctx.fillStyle = col;
@@ -488,13 +487,14 @@ export function castFloor(
     const oldDepth = gameStateObject.zones[lastZoneId]?.floorDepth ?? 0;
     const newDepth = gameStateObject.zones[newZoneId]?.floorDepth ?? 0;
     const wallEdgeY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
-    const boundaryD = ROW_DIST[hi] ?? Infinity; //global, stable
+    const boundaryD =
+      ROW_DIST_BY_ZONE?.[lastZoneId]?.[hi] ?? ROW_DIST[hi] ?? Infinity; // global, stable
     const wallD = zBuffer[screenColumnX] ?? Infinity;
 
     //skip band when it's at/under the wall edge or not strictly in front
-    const atWallEdge = hi === wallEdgeY; //touching wall bottom
-    const occludedByWall = boundaryD >= wallD - 0.11; //wall is nearer/equal
-    const isFirstFloorRow = runStartY === wallEdgeY; //first boundary after start
+    const atWallEdge = hi === wallEdgeY; // touching wall bottom
+    const occludedByWall = boundaryD >= wallD - 0.11; // wall is nearer/equal
+    const isFirstFloorRow = runStartY === wallEdgeY; // first boundary after start
 
     const drawDepthBand =
       !!DEPTH_STEP_COLOR &&
@@ -504,22 +504,22 @@ export function castFloor(
       !isFirstFloorRow;
 
     if (drawDepthBand) {
-      //variable thickness band: thicker when rising, thinner when dropping
       const oldZone = gameStateObject.zones[lastZoneId] || {};
       const newZone = gameStateObject.zones[newZoneId] || {};
-      const oldDepth = oldZone.floorDepth ?? 0; //negative or 0
-      const newDepth = newZone.floorDepth ?? 0; //negative or 0
+      const oldDepth = oldZone.floorDepth ?? 0; // negative or 0
+      const newDepth = newZone.floorDepth ?? 0; // negative or 0
       const oldIsLiquid = !!oldZone.isLiquid;
       const newIsLiquid = !!newZone.isLiquid;
 
       let amount = 0;
       if (oldIsLiquid || newIsLiquid) {
-        //liquid: keep legacy 5:1 thickness
-        amount = oldDepth > newDepth ? 5 : 1;
+        // liquid: keep legacy 7:2 thickness
+        amount = oldDepth > newDepth ? 7 : 2;
       } else {
-        //non-liquid: scale thickness to actual floor depth delta, projected by distance
-        const depthDeltaUnits = Math.abs(oldDepth - newDepth); //units (negative depths -> positive delta)
-        //Prefer per-zone distance if available, else fall back to global boundary distance
+        //Replace with proper projection portals and walls that are lower height then floors that floors get drawn on top of then you can climb on them or whatever
+        // non-liquid: scale thickness to actual floor depth delta, projected by distance
+        const depthDeltaUnits = oldDepth - newDepth; // units (negative depths -> positive delta)
+        // Prefer per-zone distance if available, else fall back to global boundary distance
         const dOld = ROW_DIST_BY_ZONE?.[lastZoneId]?.[hi];
         const dNew = ROW_DIST_BY_ZONE?.[newZoneId]?.[hi];
         let d = boundaryD;
@@ -533,35 +533,41 @@ export function castFloor(
             d = boundaryD;
           }
         }
-        //Project vertical step to pixels. Derived from bottomY = horizon + eyeScale/d, where
-        //deltaEyeScale = HEIGHT * (oldDepth - newDepth) * 0.5
-        const thicknessPx =
-          (HEIGHT * depthDeltaUnits * 0.5) / Math.max(1e-3, d);
-        //Clamp to sane on-screen band
+        // Project vertical step to pixels. Derived from bottomY = horizon + eyeScale/d, where
+        // deltaEyeScale = HEIGHT * (oldDepth - newDepth) * 0.5
+        const thicknessPx = (HEIGHT * depthDeltaUnits * 0.5) / d;
+        // Clamp to sane on-screen band
         amount = Math.max(1, thicknessPx | 0);
         amount = oldDepth > newDepth ? amount : 2;
       }
+
       const y0 = hi;
-      const y1 = Math.min(HEIGHT, y0 + amount);
-      if (y1 > y0) {
-        if (ctx.fillStyle !== DEPTH_STEP_COLOR) {
-          ctx.fillStyle = DEPTH_STEP_COLOR;
+      const y1 = y0 + amount;
+      if (zoneAtRow(hi, lastZoneId) !== zoneAtRow(y1 - 1, newZoneId)) {
+        lastStyle = null; // force next span color set
+        lastZoneId = newZoneId;
+      } else {
+        if (y1 > y0) {
+          if (ctx.fillStyle !== DEPTH_STEP_COLOR) {
+            ctx.fillStyle = DEPTH_STEP_COLOR;
+          }
+          ctx.fillRect(screenColumnX, y0, 1, y1 - y0);
         }
-        ctx.fillRect(screenColumnX, y0, 1, y1 - y0);
+        lastStyle = null; // force next span color set
+        lastZoneId = newZoneId;
+        y = y1;
+        runStartY = y;
+        continue;
       }
-      lastStyle = null; // force next span color set
-      lastZoneId = newZoneId;
-      y = y1;
-      runStartY = y;
-      continue;
     }
-    //switch to new zone and continue below the band only if we drew it
+
+    // switch to new zone and continue below the band only if we drew it
     lastZoneId = newZoneId;
     y = hi;
     runStartY = y;
   }
 
-  //tail
+  // tail
   if (runStartY < HEIGHT) {
     const col = zoneCss(lastZoneId);
     if (col !== lastStyle) {
