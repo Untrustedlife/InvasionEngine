@@ -2,6 +2,9 @@
 //'.' = transparent, letters map to palette colors, integer scaling preserves pixel crispness
 //I made a tool for making these, but that code is a mess.
 import { clamp } from "./Utils.js";
+import { supportsImageBitmap } from "./Dom.js";
+
+export const SPRITE_BITMAPS = {};
 
 export const spriteEnum = {
   aiDrone1: null,
@@ -15,6 +18,24 @@ export const spriteEnum = {
   pitchfork: null,
   bow: null,
 };
+
+//Convert canvas to ImageBitmap for optimal sprite rendering
+async function canvasToImageBitmap(canvas) {
+  if (!supportsImageBitmap || !canvas) {
+    return canvas; // Fallback to canvas
+  }
+  try {
+    // Use transferToImageBitmap if available (more efficient)
+    if (canvas.transferToImageBitmap) {
+      return canvas.transferToImageBitmap();
+    }
+    // Otherwise use createImageBitmap
+    return await createImageBitmap(canvas);
+  } catch (error) {
+    console.warn("Sprite ImageBitmap conversion failed, using canvas:", error);
+    return canvas;
+  }
+}
 
 //Can add simple function for loading an actual image if i want heh
 export function makeSprite(pattern, palette, scale = 1) {
@@ -115,6 +136,29 @@ export async function loadAsyncSprites() {
   spriteEnum.aiDrone3 = await makeSpriteLoad("aiDrone3.png", 3);
   spriteEnum.ball = await makeSpriteLoad("Palantrash1.png", 3);
   spriteEnum.sparkle = await makeSpriteLoad("sparkle.png", 3);
+
+  // Convert all sprites to ImageBitmaps for optimal performance
+  const conversionPromises = [
+    { key: "food", canvas: spriteEnum.food },
+    { key: "bow", canvas: spriteEnum.bow },
+    { key: "pitchfork", canvas: spriteEnum.pitchfork },
+    { key: "keycard1", canvas: spriteEnum.keycard1 },
+    { key: "barrel", canvas: spriteEnum.barrel },
+    { key: "aiDrone1", canvas: spriteEnum.aiDrone1 },
+    { key: "aiDrone2", canvas: spriteEnum.aiDrone2 },
+    { key: "aiDrone3", canvas: spriteEnum.aiDrone3 },
+    { key: "ball", canvas: spriteEnum.ball },
+    { key: "sparkle", canvas: spriteEnum.sparkle },
+  ].map(async ({ key, canvas }) => {
+    const optimizedSprite = await canvasToImageBitmap(canvas);
+    spriteEnum[key] = optimizedSprite;
+    SPRITE_BITMAPS[key] = optimizedSprite;
+    return { key, optimizedSprite };
+  });
+
+  // Wait for all conversions to complete
+  await Promise.all(conversionPromises);
 }
+
 //Runtime list of active sprites (enemies, pickups, effects)
 export const sprites = [];

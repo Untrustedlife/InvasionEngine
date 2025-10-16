@@ -538,7 +538,7 @@ export function castFloor(
         const thicknessPx = (HEIGHT * depthDeltaUnits * 0.5) / d;
         // Clamp to sane on-screen band
         amount = Math.max(1, thicknessPx | 0);
-        amount = oldDepth > newDepth ? amount : 2;
+        amount = oldDepth > newDepth ? amount : 0;
       }
 
       const y0 = hi;

@@ -108,7 +108,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
       //When sprite is above you on a floor project based on player eye height and depth delta
       //This makes sprites on upper floors rise up when they are above you a bit
       const depthDeltaInHeightUnits = 0.5 * (playerDepth - spriteDepth);
-      // Base wall height is 2 height units. Shift by relative depth delta.
+      //Base wall height is 2 nunits. Shift by relative depth delta.
       const floorAdjust = 2 + depthDeltaInHeightUnits;
       bottomYF = horizon + (HEIGHT * (floorAdjust - EYE) * 0.5) / cameraSpaceY;
     }

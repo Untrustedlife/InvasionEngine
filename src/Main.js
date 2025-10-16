@@ -1,6 +1,6 @@
 //Main game loop and rendering orchestrator
 //Handles frame loop, wall/sprite rendering with z-buffer occlusion, HUD, and game state
-import { canvas } from "./Dom.js";
+import { canvas, supportsImageBitmap } from "./Dom.js";
 import {
   FOG_START_FRAC,
   START_HEALTH,
@@ -553,7 +553,11 @@ function loop(now) {
   tickGameOver(dt);
   //Overlay FPS last so it sits on top
   drawFPS(smoothFps);
-  vctx.drawImage(offscreen, 0, 0);
+  if (supportsImageBitmap) {
+    vctx.drawImage(offscreen.transferToImageBitmap(), 0, 0);
+  } else {
+    vctx.drawImage(offscreen, 0, 0);
+  }
   requestAnimationFrame(loop);
 }
 

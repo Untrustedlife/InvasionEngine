@@ -35,3 +35,8 @@ export const msg = document.getElementById("msg");
 
 export const btnReset = document.getElementById("btnReset");
 export const btnToggleMap = document.getElementById("btnToggleMap");
+
+export const supportsImageBitmap =
+  typeof createImageBitmap !== "undefined" &&
+  typeof ImageBitmap !== "undefined";
+
