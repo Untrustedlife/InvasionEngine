@@ -4,13 +4,16 @@ This open-source repo is now **deprecated**. All new development is happening in
 
 **What changed**
 
-- I rewrote the renderer _from scratch_ in this repo to reach **feature-parity** with my current closed source engine, so it includes the new rendering features you’ve seen in recent builds. Of realmchild invasion. https://untrustedlife.com/realmchildinvasion
+- I rewrote the renderer _from scratch_ in this repo to reach **feature-parity** with my current closed source engine, so it includes the new rendering features you’ve seen in recent builds.
+- Of realmchild invasion. https://untrustedlife.com/realmchildinvasion
 
 -No code was copied wholesale over from the closed project—keeping the “no crossing streams” rule to respect licenses and contributor rights.
--No code was copied at all from the open source version to the clsoed version once it landed here.
+
+-No code was copied at all from the open source version to the closed version once it landed here.
 
 **Why deprecate?**
-Maintaining two engines (one open-source with ported features and one closed) was **exhausting**, especially while ensuring code never moved from OSS → closed. The split slowed me down and added a lot of overhead. And i kind of dreaded this final rewrite.
+Maintaining two engines (one open-source with ported features and one closed) was **exhausting**, especially while ensuring code never moved from OSS → closed. The split slowed me down and added a lot of overhead. 
+And I kind of dreaded this final rewrite.
 
 **What to expect here**
 
