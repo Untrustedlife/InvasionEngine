@@ -16,10 +16,13 @@ import {
 } from "../Gameplay.js";
 import { SFX } from "../Audio.js";
 import { ENTITY_DAMAGE, HEALTH_FROM_FOOD } from "../Constants.js";
-import { rollDice, chooseRandomElementFromArray } from "../UntrustedUtils.js";
+import {
+  rollDice,
+  getRandomElementFromArray,
+  clamp,
+} from "../UntrustedUtils.js";
 import { tryCooldown } from "../Main.js";
 import { createExplosionEffect, createFlashScreenEffect } from "../Effects.js";
-import { clamp } from "../Utils.js";
 
 //Game-specific entity templates
 export const GAME_ENTITY_TEMPLATES = {
@@ -137,13 +140,13 @@ export const GAME_ENTITY_BEHAVIOR = {
       if (fired) {
         if (entity.health > 1) {
           let murderMessages = ["Ball Hit!"];
-          addMsg(chooseRandomElementFromArray(murderMessages));
+          addMsg(getRandomElementFromArray(murderMessages));
           entity.health -= 1;
           SFX.killedEntity();
         } else {
           entity.alive = false;
           let murderMessages = ["Ball Busted!"];
-          addMsg(chooseRandomElementFromArray(murderMessages));
+          addMsg(getRandomElementFromArray(murderMessages));
           SFX.killedEntity();
         }
       } else {
@@ -238,7 +241,7 @@ export const GAME_ENTITY_BEHAVIOR = {
           "Entity destroyed!",
           "Entity purged!",
         ];
-        addMsg(chooseRandomElementFromArray(murderMessages));
+        addMsg(getRandomElementFromArray(murderMessages));
         SFX.killedEntity();
       } else {
         addMsg("No arrows.");

@@ -1,3 +1,28 @@
+## ⚠️ Deprecation Notice — October 21, 2025
+
+This open-source repo is now **deprecated**. All new development is happening in the **closed-source** version of the engine.
+
+**What changed**
+
+- I rewrote the renderer _from scratch_ in this repo to reach **feature-parity** with my current closed source engine, so it includes the new rendering features you’ve seen in recent builds. Of realmchild invasion. https://untrustedlife.com/realmchildinvasion
+
+-No code was copied wholesale over from the closed project—keeping the “no crossing streams” rule to respect licenses and contributor rights.
+-No code was copied at all from the open source version to the clsoed version once it landed here.
+
+**Why deprecate?**
+Maintaining two engines (one open-source with ported features and one closed) was **exhausting**, especially while ensuring code never moved from OSS → closed. The split slowed me down and added a lot of overhead. And i kind of dreaded this final rewrite.
+
+**What to expect here**
+
+- I’ll still **check in regularly** to review and merge reasonable PRs. If they ever show up.
+- Security/compat fixes may land, but **no new features** will be developed in this repo.
+- The engine, as it stands, is **highly capable** and can power serious projects.
+
+**Future**
+I may **open-source the new main engine** down the line if/when it makes sense. Until then, this repository remains available as a stable, feature-rich reference.
+
+> 🔎 Looking for the actively developed version? It currently lives in a closed repo.
+
 Play the currently deployed sample game "ArcaneIncursion" here:
 https://untrustedlife.github.io/InvasionEngine
 

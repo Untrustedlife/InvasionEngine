@@ -35,3 +35,11 @@ export {
   WEAPON_COOLDOWN,
   MAX_SPEED,
 };
+
+//Vignette effect parameters
+export const VIGNETTE_BASE = 0.3;
+export const VIGNETTE_NEAR_BOOST = 6;
+export const VIGNETTE_NEAR_START = 1;
+export const VIGNETTE_NEAR_END = 0.6;
+export const VIGNETTE_NEAR_SCALE = 0.05;
+export const VIGNETTE_SHIFT_FRAC = 0.22;

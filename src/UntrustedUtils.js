@@ -5,7 +5,7 @@
  * @returns {T} A random element from the array.
  * @throws Will throw an error if the array is empty or not an array.
  */
-export function chooseRandomElementFromArray(array) {
+export function getRandomElementFromArray(array) {
   if (!Array.isArray(array) || array.length === 0) {
     throw new Error("Array must be non-empty.");
   }
@@ -23,7 +23,7 @@ export function rollDice(x) {
   if (x <= 0) {
     throw new Error("The maximum value must be greater than 0.");
   }
-  return Math.floor(Math.random() * x) + 1;
+  return ((Math.random() * x) | 0) + 1;
 }
 
 /**
@@ -33,18 +33,7 @@ export function rollDice(x) {
  * @returns {number} A random integer between 0 and x-1 (inclusive).
  */
 export function rollDiceTwo(x) {
-  return Math.floor(Math.random() * x);
-}
-
-/**
- * Lerps between start and end by t (0 to 1).
- * @param {number} start
- * @param {number} end
- * @param {number} t
- * @returns
- */
-export function lerp(start, end, t) {
-  return start + (end - start) * t;
+  return (Math.random() * x) | 0;
 }
 
 /**
@@ -83,6 +72,10 @@ export function nearestIndexInAscendingOrder(arr, value) {
   return value - arr[hi] <= arr[lo] - value ? hi : lo;
 }
 
+export function lerp(start, end, t) {
+  return start + (end - start) * t;
+}
+
 //Fast hex color to rgb array and back
 //Assumes valid input, no error checking
 //Much faster than regex or string-splitting methods
@@ -107,3 +100,50 @@ export function rgbToCss(r, g, b) {
   b = b < 0 ? 0 : b > 255 ? 255 : b | 0;
   return `rgb(${r},${g},${b})`;
 }
+
+export function hexToHue(hex) {
+  //strip '#', accept 3/4/6/8 digit hex; ignore alpha if present
+  const s = hex.charCodeAt(0) === 35 ? hex.slice(1) : hex;
+  let r, g, b;
+
+  if (s.length === 3 || s.length === 4) {
+    //#rgb / #rgba → expand
+    r = parseInt(s[0] + s[0], 16);
+    g = parseInt(s[1] + s[1], 16);
+    b = parseInt(s[2] + s[2], 16);
+  } else {
+    //#rrggbb / #rrggbbaa → read first 6
+    const n = parseInt(s.slice(0, 6), 16);
+    r = (n >>> 16) & 255;
+    g = (n >>> 8) & 255;
+    b = n & 255;
+  }
+
+  const max = r > g ? (r > b ? r : b) : g > b ? g : b;
+  const min = r < g ? (r < b ? r : b) : g < b ? g : b;
+  const d = max - min;
+  if (d === 0) {
+    return 0;
+  } //grayscale
+
+  //compute hue in degrees directly
+  let h;
+  if (max === r) {
+    h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+  } else if (max === g) {
+    h = ((b - r) / d + 2) * 60;
+  } else {
+    h = ((r - g) / d + 4) * 60;
+  }
+  return h >= 360 ? h - 360 : h; //normalize [0, 360)
+}
+
+//Math helpers for raycaster
+
+//Clamps value v between bounds a and b
+export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+export const fastClamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+//Full turn in radians (2π) for angle calculations
+export const TAU = Math.PI * 2;

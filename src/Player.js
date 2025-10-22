@@ -14,7 +14,6 @@ export const player = {
   weaponAnim: -1.0,
   tenacity: 20,
   maxTenacity: 20,
-  height: 0.75,
   sightDist: 15,
   mouseSensitivity: 0.22,
   height: 1.2, //0.8,

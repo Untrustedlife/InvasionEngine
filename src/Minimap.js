@@ -3,7 +3,7 @@
 
 import { cMini, mctx } from "./Dom.js";
 import { player } from "./Player.js";
-import { TAU } from "./Utils.js";
+import { TAU } from "./UntrustedUtils.js";
 import { gameStateObject } from "./Map.js";
 import { spriteColorMap, colorMap } from "./SampleGame/MiniMapConstants.js";
 import { WALL_MAP } from "./Textures.js";

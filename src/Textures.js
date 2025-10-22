@@ -1,8 +1,17 @@
 //Procedural wall textures with pre-sliced column caching for fast rendering
 //TEX array holds texture canvases, TEXCACHE pre-slices them into vertical columns
-import { clamp } from "./Utils.js";
+import { clamp } from "./UntrustedUtils.js";
 import { SampleGameWallTextures } from "./SampleGame/WallTextures.js";
 import { GAME_WALL_MAP, TEX_KEYS } from "./SampleGame/Walltextures.js";
+
+export const DirectionEnum = {
+  NORTH: "NORTH",
+  SOUTH: "SOUTH",
+  EAST: "EAST",
+  WEST: "WEST",
+  ALL: "ALL",
+};
+export const TEXTURE_HEIGHT = 64;
 //Create a canvas element with specified dimensions for texture generation
 function makeTex(textureWidth = 64, textureHeight = 64) {
   const canvas = new OffscreenCanvas(textureWidth, textureHeight);

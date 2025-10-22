@@ -1,7 +1,7 @@
 //ASCII-art sprite generator - each character maps to a pixel color
 //'.' = transparent, letters map to palette colors, integer scaling preserves pixel crispness
 //I made a tool for making these, but that code is a mess.
-import { clamp } from "./Utils.js";
+import { clamp } from "./UntrustedUtils.js";
 import { supportsImageBitmap } from "./Dom.js";
 
 export const SPRITE_BITMAPS = {};

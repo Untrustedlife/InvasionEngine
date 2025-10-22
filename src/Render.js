@@ -1,50 +1,80 @@
 /**
- * @fileoverview Main raycasting renderer - casts one ray per screen column using DDA algorithm.
- * Draws textured walls with distance shading and fills z-buffer for sprite occlusion.
- * This is the core rendering engine that handles wall casting, floor/ceiling projection,
- * gradient caching, and fog effects.
+ * @fileoverview Main raycasting renderer using DDA algorithm for RealmChild Invasion.
+ * Renders textured walls with distance shading, fills z-buffer for sprite occlusion,
+ * and handles floor/ceiling projection with zone-based coloring. This is the core
+ * rendering engine that creates the pseudo-3D environment using raycasting techniques.
  */
 
 import { ctx, WIDTH, HEIGHT } from "./Dom.js";
-import { NEAR, PROJ_NEAR, FOG_START_FRAC, FOG_COLOR } from "./Constants.js";
+import { FOG_START_FRAC, FOG_COLOR } from "./Constants.js";
 import {
   TEXCACHE,
-  TEX,
   SHADE_LEVELS,
   SHADED_TEX,
-  WALL_MAP,
+  TEXTURE_HEIGHT,
 } from "./Textures.js";
 import { player } from "./Player.js";
 import {
   gameStateObject,
   getZoneBaseRgb,
-  getZoneCielingRgb,
   zoneIdAt,
+  getZoneCielingRgb,
 } from "./Map.js";
+import { WALL_MAP, DirectionEnum } from "./Textures.js";
+
 import { nearestIndexInAscendingOrder } from "./UntrustedUtils.js";
 
 /**
- * Z-buffer stores wall distances for sprite depth testing. Each index corresponds
- * to a screen column and contains the perpendicular distance to the nearest wall.
+ * Per-pixel height buffer storing wall distances for portal and sprite depth testing.
+ * 2D array indexed as [y][x] containing perpendicular distance to wall at each pixel.
+ * Faster than Map for frequent reads/writes.
  *
- * **Used by:**
- * - `Main.js`: Sprites check `zBuffer[screenColumn]` to determine if they should
- *   render in front of or behind walls for proper depth sorting
- * - `Gameplay.js`: Uses `zBuffer[center]` to get wall distance at screen center
- *   for interaction range calculations and entity targeting
- *
- * @type {Float32Array} Array of wall distances indexed by screen column
+ * @type {Float32Array[]} Array of HEIGHT Float32Arrays, each containing WIDTH values
  */
-export const zBuffer = new Float32Array(WIDTH);
+export const pixelHeightBuffer = new Float32Array(WIDTH * HEIGHT).fill(
+  Number.POSITIVE_INFINITY
+);
+const wallSegmentBuffer = [];
+/**
+ * Get per-pixel wall distance for portal and sprite depth testing.
+ *
+ * @param {number} screenX - Screen X coordinate
+ * @param {number} screenY - Screen Y coordinate
+ * @returns {number} Perpendicular distance to wall, or Infinity if no wall
+ * @export
+ */
+export function getPixelDepth(screenX, screenY) {
+  if (screenX < 0 || screenX >= WIDTH || screenY < 0 || screenY >= HEIGHT) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return pixelHeightBuffer[screenY * WIDTH + screenX];
+}
+
+export function setPixelDepth(screenX, screenY, depth) {
+  if (screenX < 0 || screenX >= WIDTH || screenY < 0 || screenY >= HEIGHT) {
+    return;
+  } else {
+    pixelHeightBuffer[screenY * WIDTH + screenX] = depth;
+  }
+}
 
 /**
- * Half screen height, computed as HEIGHT >> 1 for performance (bitwise shift is faster than division).
- * This represents the horizon line and is used extensively throughout rendering calculations.
+ * Clear the per-pixel buffer at start of each frame.
+ * @export
+ */
+export function clearPixelHeightBuffer() {
+  pixelHeightBuffer.fill(Number.POSITIVE_INFINITY);
+}
+/**
+ * Half screen height constant, computed using bitwise shift for performance.
+ * Represents the horizon line and serves as the reference point for all
+ * vertical rendering calculations including floor/ceiling projection.
  *
  * **Used by:**
- * - `Main.js`: Used as horizon reference for floor gradient calculations and screen space positioning
- * - **Internally**: Used as default wall bottom/top positions, gradient boundaries, fog calculations,
- *   and as the reference point for floor/ceiling projection mathematics
+ * - `Main.js`: Used as horizon reference for floor gradient calculations,
+ *   screen space positioning, and as boundary for rendering operations
+ * - **Internally**: Used throughout for wall positioning, gradient boundaries,
+ *   fog calculations, and floor/ceiling projection mathematics
  *
  * @type {number} Half of screen height (horizon line)
  */
@@ -52,9 +82,17 @@ export const HALF_HEIGHT = HEIGHT >> 1; //Bitwise shift is faster than division 
 
 /** @private Internal buffer storing bottom Y position of walls for each screen column */
 const wallBottomY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
-
-/** @private Internal buffer storing top Y position of walls for each screen column */
-const wallTopY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
+/**
+ * Array storing top Y position of walls for each screen column. Used by the
+ * rendering system to track wall boundaries and determine rendering regions.
+ *
+ * **Used by:**
+ * - `Main.js`: References wall top positions for rendering calculations and
+ *   determining ceiling rendering boundaries
+ *
+ * @type {Int16Array} Array of wall top Y positions indexed by screen column
+ */
+export const wallTopY = new Int16Array(WIDTH).fill(HALF_HEIGHT);
 
 //Distance from camera to each screen row (used for floor projection)
 //This keeps floors and walls aligned at any playerHeight without hacks.
@@ -63,16 +101,17 @@ const CIELING_ROW_DIST = new Float32Array(HEIGHT);
 //idd will be key for zone ID, value will be precomputed row distance array
 const ROW_DIST_BY_ZONE = {};
 const CILEING_DIST_BY_ZONE = {};
-const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
+
 /**
- * Rebuilds row distance lookup tables for floor and ceiling projection.
- * Precomputes distance from camera to each screen row, accounting for player height
- * and zone-specific floor depths and ceiling heights. This ensures floors and walls
- * remain properly aligned regardless of player height without runtime hacks.
+ * Rebuilds distance lookup tables for floor and ceiling projection calculations.
+ * Precomputes the distance from camera to each screen row, accounting for player height
+ * and zone-specific floor depths and ceiling heights. This ensures proper perspective
+ * projection and alignment between floors/ceilings and walls without runtime calculations.
  *
  * **Used by:**
- * - `Main.js`: Called during map loading/switching and when player height changes
- *   to ensure projection mathematics remain accurate
+ * - `Main.js`: Called during map loading/switching to initialize projection tables
+ * - `Gameplay.js`: Called when player height changes (e.g., when taking damage and
+ *   crouching) to maintain correct perspective projection
  *
  * @export
  */
@@ -85,6 +124,7 @@ export function rebuildRowDistLUT() {
     delete ROW_DIST_BY_ZONE[key];
   }
 
+  const horizon = HALF_HEIGHT; //same 'horizon' used for sprites
   const EYE = player.calculatePlayerHeight(); //same EYE as in sprite code
 
   const floorDepth = 0; //Ground level
@@ -128,119 +168,141 @@ export function rebuildRowDistLUT() {
 }
 
 rebuildRowDistLUT();
-
-//Gradient caches - arrays indexed by zone ID for O(1) access
-export const CEILING_GRADIENT_CACHE = [];
-export const FLOOR_FOG_GRADIENT_CACHE = [];
-export const HAZE_GRADIENT_CACHE = [];
-export const SIMPLE_FLOOR_GRADIENT_CACHE = [];
-export const ZONE_GRID_CACHE = [];
-
-export const CIELING_FOG_GRADIENT_CACHE = [];
-
 /**
- * Clears all gradient caches and zone color caches. Essential for preventing
- * memory leaks and visual artifacts when switching between maps with different
- * zone configurations, colors, or lighting schemes.
+ * Draw a 1-pixel wide vertical wall slice from a (pre-shaded) texture.
  *
- * **Used by:**
- * - `Main.js`: Called during map transitions to ensure clean state and prevent
- *   stale gradients from previous maps from being used inappropriately
- *
- * @export
+ * @param {CanvasRenderingContext2D} ctx              - Destination 2D context.
+ * @param {number} screenColumnX                      - X position on the screen to draw to.
+ * @param {number} destTopY                           - Top Y of the slice on screen.
+ * @param {number} destBottomY                        - Bottom Y of the slice on screen.
+ * @param {number} textureHeight - Source texture canvas/atlas height.
+ * @param {number} textureColumnX                     - Source X (in px) of the 1px texture column.
+ * @param {number} shadeAmount                        - Shade amount used to pick a pre-shaded variant.
+ * @param {number} sourceStartY                       - Source Y start within the texture.
+ * @param {number} sourceHeight                       - Source height within the texture.
+ * @param {number|string} textureId                   - Key/index into SHADED_TEX.
  */
-export function clearGradientCaches() {
-  CEILING_GRADIENT_CACHE.length = 0;
-  FLOOR_FOG_GRADIENT_CACHE.length = 0;
-  HAZE_GRADIENT_CACHE.length = 0;
-  SIMPLE_FLOOR_GRADIENT_CACHE.length = 0;
-  CIELING_FOG_GRADIENT_CACHE.length = 0;
-  ZONE_CSS.clear();
-  ZONE_CIELING_CSS.clear();
-}
-
-//Wall slice draw: sample a 1px-wide column from the source texture
-//and scale to the destination height using drawImage. Apply uniform shading
-//via Canvas2D filter brightness for speed. This avoids per-pixel ImageData work.
-//srcY/srcH select the portion of the source column to map to the visible segment
 function drawWallColumnImg(
-  g,
-  x,
-  y0,
-  y1,
-  texCanvas,
-  texX,
-  shade,
-  srcY,
-  srcH,
-  texId
+  ctx,
+  screenColumnX,
+  destTopY,
+  destBottomY,
+  textureHeight,
+  textureColumnX,
+  shadeAmount,
+  sourceStartY,
+  sourceHeight,
+  textureId
 ) {
-  if (!texCanvas) {
-    return;
-  }
-  const columnHeight = y1 - y0;
-
+  const columnHeight = destBottomY - destTopY;
   if (columnHeight <= 0) {
     return;
   }
-
-  //Draw the column slice
-  const rawSourceY = srcY || 0;
-
+  if (!textureHeight) {
+    return;
+  }
+  if (destTopY >= HEIGHT || destBottomY <= 0) {
+    return;
+  }
+  const height = textureHeight;
+  const rawSourceY = sourceStartY || 0;
   const clampedSourceY =
-    rawSourceY < 0
-      ? 0
-      : rawSourceY > texCanvas.height
-      ? texCanvas.height
-      : rawSourceY;
-
-  const rawSourceHeight = srcH || texCanvas.height;
-  const maxAllowedHeight = texCanvas.height - clampedSourceY;
-
+    rawSourceY < 0 ? 0 : rawSourceY > height ? height : rawSourceY;
+  const rawSourceHeight = sourceHeight || height;
+  const maxAllowedHeight = height - clampedSourceY;
   const clampedSourceHeight =
     rawSourceHeight < 0
       ? 0
       : rawSourceHeight > maxAllowedHeight
       ? maxAllowedHeight
       : rawSourceHeight;
+  if (clampedSourceHeight <= 0) {
+    return;
+  }
+  let clampedDestTopY = destTopY;
+  let clampedDestBottomY = destBottomY;
+  let sourceYOffset = 0;
 
-  //Use pre-shaded texture
-  //This can make animated textures act a bit weird. In RC Invasion I skip it
-  //for texture 7 (the animated one). Here it’s fine, I’m pushing a bit more perf.
-  const closestShade = nearestIndexInAscendingOrder(SHADE_LEVELS, shade);
-  g.drawImage(
-    SHADED_TEX[texId][SHADE_LEVELS[closestShade]],
-    texX,
-    clampedSourceY,
+  // Clamp top
+  if (clampedDestTopY < 0) {
+    const pixelsClipped = -clampedDestTopY;
+    sourceYOffset += (pixelsClipped / columnHeight) * clampedSourceHeight;
+    clampedDestTopY = 0;
+  }
+
+  // Clamp bottom
+  if (clampedDestBottomY > HEIGHT) {
+    clampedDestBottomY = HEIGHT;
+  }
+
+  const finalColumnHeight = clampedDestBottomY - clampedDestTopY;
+  if (finalColumnHeight <= 0) {
+    return;
+  }
+
+  const closestShade = nearestIndexInAscendingOrder(SHADE_LEVELS, shadeAmount);
+  ctx.drawImage(
+    SHADED_TEX[textureId][SHADE_LEVELS[closestShade]],
+    textureColumnX,
+    clampedSourceY + sourceYOffset,
     1,
-    clampedSourceHeight,
-    x,
-    y0,
+    (finalColumnHeight / columnHeight) * clampedSourceHeight,
+    screenColumnX,
+    clampedDestTopY,
     1,
-    columnHeight
+    finalColumnHeight
   );
 }
 
-//Draw sprite column with alpha blending - preserves transparency
-const SPRITE_Y_ORIGIN_BOTTOM = false;
+//Gradient caches - arrays indexed by zone ID for O(1) access
+export const CEILING_GRADIENT_CACHE = [];
+export const FLOOR_FOG_GRADIENT_CACHE = [];
+export const CIELING_FOG_GRADIENT_CACHE = [];
+export const HAZE_GRADIENT_CACHE = [];
+export const SIMPLE_FLOOR_GRADIENT_CACHE = [];
+export const ZONE_GRID_CACHE = [];
+
+/**
+ * Clears all gradient caches and zone color caches. Critical for preventing
+ * memory leaks and visual artifacts when switching between maps that have
+ * different zone configurations, color schemes, or lighting setups.
+ *
+ * **Used by:**
+ * - `Main.js`: Called during map loading/switching to ensure clean state
+ *   and prevent stale cached gradients from previous maps
+ *
+ * @export
+ */
+export function clearGradientCaches() {
+  CEILING_GRADIENT_CACHE.length = 0;
+  FLOOR_FOG_GRADIENT_CACHE.length = 0;
+  CIELING_FOG_GRADIENT_CACHE.length = 0;
+  HAZE_GRADIENT_CACHE.length = 0;
+  SIMPLE_FLOOR_GRADIENT_CACHE.length = 0;
+  ZONE_CSS.clear();
+  ZONE_CIELING_CSS.clear();
+}
 
 /**
  * Renders a simple gradient-based ceiling using zone-specific colors.
- * Creates a linear gradient from top to horizon with configurable colors
- * for front, back, and fog zones. Uses caching for performance.
+ * Creates a linear gradient from top to horizon with configurable front, back,
+ * and fog colors. Uses caching for performance optimization. This is the "classic"
+ * approach used for simpler maps that don't require complex ceiling projection.
  *
  * **Used by:**
- * - `Main.js`: Called as alternative ceiling renderer when zone count <= 2
- *   for simpler maps that don't require complex per-pixel ceiling projection
+ * - `Main.js`: Called as the primary ceiling renderer when zone count <= 2,
+ *   providing a simpler alternative to per-pixel ceiling projection for
+ *   less complex map configurations
  *
  * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context
  * @export
  */
-export function classicCastCieling(ctx) {
+export function castCielingCLassic(ctx) {
   const px = player.x | 0;
   const py = player.y | 0;
   const zIndex = ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px];
 
+  //Check cache first - O(1) access
   let sky = CEILING_GRADIENT_CACHE[zIndex];
   if (!sky) {
     //Create and cache the gradient
@@ -280,7 +342,6 @@ function zoneCss(zoneId) {
   }
   return c;
 }
-
 export const ZONE_CIELING_CSS = new Map();
 function zoneCielingCss(zoneId) {
   let c = ZONE_CIELING_CSS.get(zoneId);
@@ -293,10 +354,10 @@ function zoneCielingCss(zoneId) {
 }
 
 /**
- * Pre-computes and caches zone IDs for every map grid position.
+ * Pre-computes and caches zone IDs for every grid position in the map.
  * Builds a flat array indexed by (y * MAP_W + x) containing zone IDs for
- * ultra-fast O(1) zone lookups during floor/ceiling rendering, avoiding
- * repeated expensive zoneIdAt() calculations during the render loop.
+ * ultra-fast O(1) zone lookups during floor/ceiling rendering, eliminating
+ * expensive zoneIdAt() calls during the tight render loop.
  *
  * **Used by:**
  * - `Main.js`: Called during map loading to populate the zone grid cache
@@ -317,6 +378,7 @@ export function cacheZoneIdAtGrid() {
   }
 }
 
+//#region Floor
 /**
  * Render the floor for a single screen column below the horizon.
  * Uses large row chunks with a small binary search to split only at zone
@@ -335,10 +397,10 @@ export function cacheZoneIdAtGrid() {
  *
  * @summary
  * - Skips rows hidden by fog or z-buffer.
- * - Classifies zones with global ROW_DIST and a tiny directional bias
+ * - Classifies zones with global row_dist and a tiny directional bias
  * - Fills one span per uniform zone run; 1-px band only when
  *   floorDepth differs across the boundary.
- * @uses WIDTH, HEIGHT, HALF_HEIGHT, player, zBuffer, ROW_DIST, ZONE_GRID_CACHE,
+ * @uses WIDTH, HEIGHT, HALF_HEIGHT, player, row_dist, ZONE_GRID_CACHE,
  *       gameStateObject, zoneCss, wallBottomY, ctx
  */
 export function castFloor(
@@ -349,7 +411,7 @@ export function castFloor(
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
   //start row
-  fromY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
+  fromY = HALF_HEIGHT;
   let y = fromY < HALF_HEIGHT ? HALF_HEIGHT : fromY;
   if (y >= HEIGHT) {
     return;
@@ -362,10 +424,9 @@ export function castFloor(
 
   //early cull (fog OR behind nearer wall)
   if (player.sightDist > 0) {
-    const zClip = zBuffer[screenColumnX] ?? Infinity;
     while (y < HEIGHT) {
       const d = ROW_DIST[y] ?? Infinity;
-      if (d <= player.sightDist && d <= zClip) {
+      if (d <= player.sightDist) {
         break;
       }
       y++;
@@ -374,6 +435,7 @@ export function castFloor(
       return;
     }
   }
+
   const DEPTH_STEP_COLOR = "#000000";
   const MAP_W = gameStateObject.MAP_W;
   const MAP_H = gameStateObject.MAP_H;
@@ -393,31 +455,6 @@ export function castFloor(
       return ZONE_GRID_CACHE[iy * MAP_W + ix];
     }
     return 0;
-    // pass 1: classify using the hint zone's plane height
-    /*let d = ROW_DIST_BY_ZONE?.[hintZone]?.[row] ?? ROW_DIST[row];
-    let wx = player.x + kx * d;
-    let wy = player.y + ky * d;
-    let ix = Math.floor(wx);
-    let iy = Math.floor(wy);
-    const z =
-      ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H
-        ? ZONE_GRID_CACHE[iy * MAP_W + ix]
-        : hintZone;
-    if (z === hintZone) {
-      return z;
-    }
-
-    // pass 2: refine using the found zone's plane height
-    d = ROW_DIST_BY_ZONE?.[z]?.[row];
-    wx = player.x + kx * d;
-    wy = player.y + ky * d;
-    ix = Math.floor(wx);
-    iy = Math.floor(wy);
-    const z2 =
-      ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H
-        ? ZONE_GRID_CACHE[iy * MAP_W + ix]
-        : z;
-    return z2;*/
   }
 
   //adaptive stride for perf (big jumps far from horizon)
@@ -429,8 +466,26 @@ export function castFloor(
 
   let runStartY = y;
   let lastStyle = null;
+  let notDrawing = false;
   while (y < HEIGHT) {
-    // try a large jump
+    const pixelDepth = getPixelDepth(screenColumnX, y | 0);
+    if (pixelDepth < Infinity) {
+      //Wall at this row - skip it, don't render
+      if (!notDrawing && y > runStartY) {
+        const col = zoneCss(lastZoneId);
+        if (col !== lastStyle) {
+          ctx.fillStyle = col;
+          lastStyle = col;
+        }
+        ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
+      }
+      notDrawing = true;
+      runStartY = y + 1; //Skip this row, start fresh next row
+      y++;
+      continue; //Keep going, don't return
+    }
+    notDrawing = false;
+    //try a large jump
     const step = Math.min(strideFor(y), HEIGHT - 1 - y);
     if (step <= 0) {
       break;
@@ -438,10 +493,10 @@ export function castFloor(
     const yProbe = y + step;
     const zProbe = zoneAtRow(yProbe, lastZoneId);
     if (zProbe === lastZoneId) {
-      // quick midpoint check to avoid missing a thin boundary
+      //quick midpoint check to avoid missing a thin boundary
       const mid = (y + yProbe) >> 1;
       if (zoneAtRow(mid, lastZoneId) === lastZoneId) {
-        // whole block is one zone -> draw once
+        //whole block is one zone -> draw once
         const col = zoneCss(lastZoneId);
         if (col !== lastStyle) {
           ctx.fillStyle = col;
@@ -486,15 +541,25 @@ export function castFloor(
     //draw a 1px band only if floor depths differ
     const oldDepth = gameStateObject.zones[lastZoneId]?.floorDepth ?? 0;
     const newDepth = gameStateObject.zones[newZoneId]?.floorDepth ?? 0;
+    const oldZone = gameStateObject.zones[lastZoneId] || {};
+    const newZone = gameStateObject.zones[newZoneId] || {};
+    const oldIsLiquid = oldZone.isLiquid;
+    const newIsLiquid = newZone.isLiquid;
     const wallEdgeY = wallBottomY[screenColumnX] ?? HALF_HEIGHT;
     const boundaryD =
-      ROW_DIST_BY_ZONE?.[lastZoneId]?.[hi] ?? ROW_DIST[hi] ?? Infinity; // global, stable
-    const wallD = zBuffer[screenColumnX] ?? Infinity;
+      ROW_DIST_BY_ZONE?.[lastZoneId]?.[hi] ?? ROW_DIST[hi] ?? Infinity; //global, stable
+    const wallD =
+      getPixelDepth(screenColumnX, wallBottomY[screenColumnX]) ?? Infinity;
 
     //skip band when it's at/under the wall edge or not strictly in front
-    const atWallEdge = hi === wallEdgeY; // touching wall bottom
-    const occludedByWall = boundaryD >= wallD - 0.11; // wall is nearer/equal
-    const isFirstFloorRow = runStartY === wallEdgeY; // first boundary after start
+    const atWallEdge = hi === wallEdgeY; //touching wall bottom
+    let occludedByWall = boundaryD >= wallD - 2; //wall is nearer/equal
+
+    if ((oldIsLiquid || newIsLiquid) && oldDepth !== newDepth) {
+      occludedByWall = false;
+    }
+
+    const isFirstFloorRow = runStartY === wallEdgeY; //first boundary after start
 
     const drawDepthBand =
       !!DEPTH_STEP_COLOR &&
@@ -504,22 +569,18 @@ export function castFloor(
       !isFirstFloorRow;
 
     if (drawDepthBand) {
-      const oldZone = gameStateObject.zones[lastZoneId] || {};
-      const newZone = gameStateObject.zones[newZoneId] || {};
-      const oldDepth = oldZone.floorDepth ?? 0; // negative or 0
-      const newDepth = newZone.floorDepth ?? 0; // negative or 0
-      const oldIsLiquid = !!oldZone.isLiquid;
-      const newIsLiquid = !!newZone.isLiquid;
+      const oldDepth = oldZone.floorDepth ?? 0; //negative or 0
+      const newDepth = newZone.floorDepth ?? 0; //negative or 0
 
       let amount = 0;
       if (oldIsLiquid || newIsLiquid) {
-        // liquid: keep legacy 7:2 thickness
-        amount = oldDepth > newDepth ? 7 : 2;
+        //liquid: keep legacy 7:2 thickness
+        amount = oldDepth > newDepth ? 5 : 0;
       } else {
         //Replace with proper projection portals and walls that are lower height then floors that floors get drawn on top of then you can climb on them or whatever
-        // non-liquid: scale thickness to actual floor depth delta, projected by distance
-        const depthDeltaUnits = oldDepth - newDepth; // units (negative depths -> positive delta)
-        // Prefer per-zone distance if available, else fall back to global boundary distance
+        //non-liquid: scale thickness to actual floor depth delta, projected by distance
+        const depthDeltaUnits = oldDepth - newDepth; //units (negative depths -> positive delta)
+        //Prefer per-zone distance if available, else fall back to global boundary distance
         const dOld = ROW_DIST_BY_ZONE?.[lastZoneId]?.[hi];
         const dNew = ROW_DIST_BY_ZONE?.[newZoneId]?.[hi];
         let d = boundaryD;
@@ -533,18 +594,20 @@ export function castFloor(
             d = boundaryD;
           }
         }
-        // Project vertical step to pixels. Derived from bottomY = horizon + eyeScale/d, where
-        // deltaEyeScale = HEIGHT * (oldDepth - newDepth) * 0.5
+        //Project vertical step to pixels. Derived from bottomY = horizon + eyeScale/d, where
+        //deltaEyeScale = HEIGHT * (oldDepth - newDepth) * 0.5
         const thicknessPx = (HEIGHT * depthDeltaUnits * 0.5) / d;
-        // Clamp to sane on-screen band
+        //Clamp to sane on-screen band
         amount = Math.max(1, thicknessPx | 0);
+        //console.log(amount);
         amount = oldDepth > newDepth ? amount : 0;
       }
 
       const y0 = hi;
       const y1 = y0 + amount;
       if (zoneAtRow(hi, lastZoneId) !== zoneAtRow(y1 - 1, newZoneId)) {
-        lastStyle = null; // force next span color set
+        //This prevents drawing the band if the zone changes again within the band to avoid un-immersive artifacts
+        lastStyle = null;
         lastZoneId = newZoneId;
       } else {
         if (y1 > y0) {
@@ -553,21 +616,22 @@ export function castFloor(
           }
           ctx.fillRect(screenColumnX, y0, 1, y1 - y0);
         }
-        lastStyle = null; // force next span color set
+        lastStyle = null; //force next span color set
         lastZoneId = newZoneId;
         y = y1;
         runStartY = y;
         continue;
       }
     }
+    //#endregion
 
-    // switch to new zone and continue below the band only if we drew it
+    //switch to new zone and continue below the band only if we drew it
     lastZoneId = newZoneId;
     y = hi;
     runStartY = y;
   }
 
-  // tail
+  //tail
   if (runStartY < HEIGHT) {
     const col = zoneCss(lastZoneId);
     if (col !== lastStyle) {
@@ -576,15 +640,17 @@ export function castFloor(
     ctx.fillRect(screenColumnX, runStartY, 1, HEIGHT - runStartY);
   }
 }
+//#region Ceiling
 /**
  * Renders ceiling projection for a single screen column using ray casting.
  * Projects ceiling colors by casting a ray from camera through each screen row above
- * the horizon, computing world coordinates and sampling zone ceiling colors. Uses
- * zone-specific ceiling heights and precomputed distance tables for proper projection.
- *
+ * the horizon, computing world coordinates and sampling zone-based ceiling colors.
+ * Uses zone-specific ceiling heights and precomputed distance tables for proper projection.
+ *Culls based on zbuffer and fog distance.
  * **Used by:**
  * - `Main.js`: Called in the main render loop for each screen column to draw
  *   ceilings that appear above the horizon line and above rendered walls
+ *   (when zone count > 2 for complex ceiling projection)
  *
  * @param {number} nowSec - Current time in seconds for potential animation effects
  * @param {Object} cameraBasisVectors - Camera direction and plane vectors {dirX, dirY, planeX, planeY}
@@ -600,7 +666,8 @@ export function castCieling(
 ) {
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors;
   //never draw above the horizon
-  const endY = wallTopY[screenColumnX] ?? HALF_HEIGHT;
+  //This needs to also work in spaces wher there is  a short wall in front of  a tall wall
+  const endY = HALF_HEIGHT;
   const startY = 0; //top of screen
   if (endY <= 0) {
     return;
@@ -610,7 +677,6 @@ export function castCieling(
   const rayX = dirX + planeX * camX;
   const rayY = dirY + planeY * camX;
   //Initialize world positions using first row distance
-  //1 / cos(theta) to remove tiny fisheye on floor
   const invDot = 1 / (dirX * rayX + dirY * rayY);
   //Initialize world positions using first row *perp* distance, corrected
   let lastZone = 0;
@@ -621,9 +687,10 @@ export function castCieling(
   let wy = player.y + rayY * dist * invDot;
   let runStartY = startY;
   let lastStyle = null;
+  let notDrawing = false;
   //Walk rows, build a vertical scan based on the floors we can see
   for (let y = startY; y < endY; y++) {
-    if (player.sightDist > 0 && Math.abs(dist) > player.sightDist) {
+    if (player.sightDist > 0 && dist > player.sightDist) {
       //flush up to the fog line and stop
       const color = zoneCielingCss(lastZone);
       if (color !== lastStyle) {
@@ -633,15 +700,30 @@ export function castCieling(
       return; //<- important: no tail fill beyond fog
     }
 
-    if (dist > zBuffer[screenColumnX]) {
-      //&& y <= wallTopY[screenColumnX]) { (For when i add ""portals"".)
-      const color = zoneCielingCss(lastZone);
-      if (color !== lastStyle) {
-        ctx.fillStyle = color;
+    if (dist >= getPixelDepth(screenColumnX, y | 0)) {
+      if (!notDrawing) {
+        //Flush the visible run BEFORE the occluding wall
+        const color = zoneCielingCss(lastZone);
+        if (color !== lastStyle) {
+          ctx.fillStyle = color;
+          lastStyle = color;
+        }
+        ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
       }
-      ctx.fillRect(screenColumnX, runStartY, 1, y - runStartY);
-      return; //<- important: no tail fill beyond wall that actually blocks ceiling
+      //Now skip to next distance level
+      const nextDist =
+        CILEING_DIST_BY_ZONE?.[lastZone]?.[y + 1] ??
+        CIELING_ROW_DIST[y + 1] ??
+        dist;
+      const delta = nextDist - dist;
+      wx += rayX * delta * invDot;
+      wy += rayY * delta * invDot;
+      dist = nextDist;
+      notDrawing = true;
+      runStartY = y;
+      continue;
     }
+    notDrawing = false;
     const ix = wx | 0;
     const iy = wy | 0;
     const zoneId =
@@ -681,21 +763,23 @@ export function castCieling(
   }
   ctx.fillRect(screenColumnX, runStartY, 1, endY - runStartY);
 }
-
+//#endregion
+//#region Haze
 /**
  * Renders atmospheric haze effect as a subtle gradient overlay across the entire screen.
- * Creates a dark blue tinted gradient that's strongest at the bottom, providing depth
- * and atmosphere to the 3D environment. Uses caching for performance optimization.
+ * Creates a dark blue tinted gradient that increases in intensity from top to bottom,
+ * providing environmental depth and mood to the 3D scene. Uses caching for performance
+ * since haze is static and not zone-dependent.
  *
  * **Used by:**
- * - `Main.js`: Called during the render loop to add atmospheric depth and mood
+ * - `Main.js`: Called during the render loop to add atmospheric depth and ambiance
  *   to the scene before sprites are rendered
  *
  * @param {CanvasRenderingContext2D} ctx - Canvas 2D rendering context
  * @export
  */
 export function castHaze(ctx) {
-  //Check cache first
+  //Check cache first - O(1) access (haze is static, not zone-dependent)
   let backgroundFogGradient = HAZE_GRADIENT_CACHE[0];
   if (!backgroundFogGradient) {
     //Create and cache the gradient
@@ -710,12 +794,14 @@ export function castHaze(ctx) {
   ctx.fillStyle = backgroundFogGradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 }
+//#endregion
 
+//#region Floor Fog
 /**
- * Renders floor fog effect using zone-specific fog colors.
- * Creates a gradient that starts near the horizon and fades to transparent
- * at the bottom, providing atmospheric depth to floor areas. Uses per-zone
- * caching for performance and supports zone-specific fog colors.
+ * Renders floor fog effect using zone-specific fog and floor colors.
+ * Creates a gradient that starts near the horizon with fog color, transitions
+ * to floor back color, then fades to transparent at the bottom. Provides
+ * atmospheric depth to floor areas with zone-specific customization.
  *
  * **Used by:**
  * - `Main.js`: Called during the render loop after floor rendering to add
@@ -729,8 +815,10 @@ export function castFloorFog(ctx) {
     h = HEIGHT - y0;
   const px = player.x | 0;
   const py = player.y | 0;
+
   const zIndex = ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px];
 
+  //Check cache first - O(1) access
   let g = FLOOR_FOG_GRADIENT_CACHE[zIndex];
   if (!g) {
     //Create and cache the gradient
@@ -749,12 +837,14 @@ export function castFloorFog(ctx) {
   ctx.fillStyle = g;
   ctx.fillRect(0, y0, WIDTH, h);
 }
+//#endregion
 
+//#region Ceiing Fog
 /**
  * Renders ceiling fog effect using zone-specific colors and atmospheric blending.
- * Creates a gradient from transparent at top to fog color near horizon, providing
- * atmospheric depth to ceiling areas. The effect is strongest near the horizon line
- * where ceiling meets the distance, enhancing the sense of depth and atmosphere.
+ * Creates a gradient from transparent at the top to fog color near the horizon,
+ * providing atmospheric depth to ceiling areas. The effect is strongest near
+ * the horizon line where ceiling meets distant areas.
  *
  * **Used by:**
  * - `Main.js`: Called during the render loop after ceiling rendering to add
@@ -790,6 +880,49 @@ export function castCielingFog(ctx) {
   ctx.fillStyle = g;
   ctx.fillRect(0, y0, WIDTH, h);
 }
+//#endregion
+
+//region Wall Casting
+
+function drawFogBand(screenX, y0f, y1f, dist) {
+  if (player.sightDist <= 0) {
+    return;
+  }
+  const start = player.sightDist * FOG_START_FRAC;
+  const end = player.sightDist;
+  if (dist <= start) {
+    return;
+  }
+
+  let y0 = y0f | 0;
+  let y1 = y1f | 0;
+  if (y0 < 0) {
+    y0 = 0;
+  }
+  if (y1 > HEIGHT) {
+    y1 = HEIGHT;
+  }
+  if (y1 <= y0) {
+    return;
+  }
+
+  const t = Math.min(
+    1,
+    Math.max(0, (dist - start) / Math.max(1e-6, end - start))
+  );
+  const px = player.x | 0;
+  const py = player.y | 0;
+  const zIndex =
+    ZONE_GRID_CACHE.length > 0
+      ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px] | 0
+      : 0;
+
+  ctx.save();
+  ctx.globalAlpha = t * 0.85;
+  ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
+  ctx.fillRect(screenX, y0, 1, y1 - y0);
+  ctx.restore();
+}
 
 /**
  * Core wall raycasting renderer (DDA).
@@ -815,53 +948,17 @@ export function castCielingFog(ctx) {
  * @param {number} MAP_H - Map height in grid cells
  * @export
  */
-export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
+export function castWalls(nowSec, cameraBasisVectors) {
+  clearPixelHeightBuffer();
   const { dirX, dirY, planeX, planeY } = cameraBasisVectors; //Camera forward and plane vectors.
   //Pre-compute culling flags outside the inner loop for performance
   const hasFarPlaneCulling = player.sightDist > 0;
-
-  function drawFogBand(screenX, y0f, y1f, dist) {
-    if (player.sightDist <= 0) {
-      return;
-    }
-    const start = player.sightDist * FOG_START_FRAC;
-    const end = player.sightDist;
-    if (dist <= start) {
-      return;
-    }
-
-    let y0 = y0f | 0;
-    let y1 = y1f | 0;
-    if (y0 < 0) {
-      y0 = 0;
-    }
-    if (y1 > HEIGHT) {
-      y1 = HEIGHT;
-    }
-    if (y1 <= y0) {
-      return;
-    }
-
-    const t = Math.min(
-      1,
-      Math.max(0, (dist - start) / Math.max(1e-6, end - start))
-    );
-    const px = player.x | 0;
-    const py = player.y | 0;
-    const zIndex =
-      ZONE_GRID_CACHE.length > 0
-        ? ZONE_GRID_CACHE[py * gameStateObject.MAP_W + px] | 0
-        : 0;
-
-    ctx.save();
-    ctx.globalAlpha = t * 0.85;
-    ctx.fillStyle = gameStateObject.zones[zIndex].fogColor || FOG_COLOR;
-    ctx.fillRect(screenX, y0, 1, y1 - y0);
-    ctx.restore();
-  }
+  const EYE = player.calculatePlayerHeight(); //same as sprites
+  let eyeScale = HEIGHT * (2 - 0 - EYE) * 0.5;
 
   //Cast one ray per screen column
   for (let screenColumnX = 0; screenColumnX < WIDTH; screenColumnX++) {
+    wallSegmentBuffer.length = 0;
     //Map screen X to camera plane [-1, +1], offset by 0.5 to center pixel
     const cameraPlaneX = (2 * (screenColumnX + 0.5)) / WIDTH - 1;
     const rayDirectionX = dirX + planeX * cameraPlaneX;
@@ -874,7 +971,6 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
       rayDirectionY < 1e-8 &&
       rayDirectionY > -1e-8
     ) {
-      zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
       wallBottomY[screenColumnX] = HALF_HEIGHT;
       wallTopY[screenColumnX] = HALF_HEIGHT;
       continue;
@@ -886,7 +982,7 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let currentMapX = player.x | 0;
     let currentMapY = player.y | 0;
 
-    //Distance to cross one grid cell - inline abs() for performance (called 320+ times per frame)
+    //Distance to cross one grid cell
     const deltaDistanceX = rayDirXRecip < 0 ? -rayDirXRecip : rayDirXRecip;
     const deltaDistanceY = rayDirYRecip < 0 ? -rayDirYRecip : rayDirYRecip;
 
@@ -913,580 +1009,353 @@ export function castWalls(nowSec, cameraBasisVectors, MAP, MAP_W, MAP_H) {
     let wallHit = false;
     //(hitPositionX/hitPositionY computed later for UVs)
     let iterationGuard = 0;
-    let culledApproximateDistance = 0;
 
     //DDA stepping - advance to next grid boundary until wall hit
-    while (!wallHit && iterationGuard++ < 256) {
-      if (sideDistanceX < sideDistanceY) {
-        sideDistanceX += deltaDistanceX;
-        currentMapX += stepDirectionX;
-        wallSide = 0;
-      } else {
-        sideDistanceY += deltaDistanceY;
-        currentMapY += stepDirectionY;
-        wallSide = 1;
-      }
 
-      //Far plane culling - use pre-computed flag to avoid repeated condition check
-      if (hasFarPlaneCulling) {
-        const approximateDistance = Math.min(sideDistanceX, sideDistanceY);
-        if (approximateDistance > player.sightDist) {
-          wallHit = false;
-          hitTextureId = 0;
-          culledApproximateDistance = approximateDistance;
-          break;
-        }
-      }
-
-      //Map bounds check
-      //Also places bricks on outside edge of map. (Could make customizable based on map)
-      if (
-        currentMapX < 0 ||
-        currentMapY < 0 ||
-        currentMapX >= MAP_W ||
-        currentMapY >= MAP_H
-      ) {
-        wallHit = true;
-        hitTextureId = 1;
-        break;
-      }
-
-      //Wall hit check
-      const mapCell = MAP[currentMapY][currentMapX];
-      if (mapCell > 0) {
-        wallHit = true;
-        hitTextureId = mapCell;
-        break;
-      }
-    }
-
-    const originalHitTextureId = hitTextureId;
-    hitTextureId = WALL_MAP?.[originalHitTextureId].textures[0][0] || "hedge";
-
-    //Skip if no wall hit within range
-    if (originalHitTextureId === 0) {
-      zBuffer[screenColumnX] = Number.POSITIVE_INFINITY;
-      wallBottomY[screenColumnX] = HALF_HEIGHT;
-      wallTopY[screenColumnX] = HALF_HEIGHT;
-      continue;
-    }
-
-    //Perpendicular distance (fisheye-corrected) and true hit point
-    let perpendicularDistance;
-    if (wallSide === 0) {
-      perpendicularDistance = sideDistanceX - deltaDistanceX;
-    } else {
-      perpendicularDistance = sideDistanceY - deltaDistanceY;
-    }
-    perpendicularDistance = Math.max(NEAR, perpendicularDistance);
-
-    //For UVs: keep front-wall stabilization only;
-    const UV_NEAR_DISTANCE = 0; //front-facing stabilization (center)
-    const normalXForward = wallSide === 0 ? stepDirectionX : 0;
-    const normalYForward = wallSide === 1 ? stepDirectionY : 0;
-    const incidenceForward = Math.abs(
-      normalXForward * dirX + normalYForward * dirY
-    );
-    const FRONT_INCIDENCE = 0.9;
-    const CAMERA_CENTER = 0.9;
-    const isFrontFacing =
-      incidenceForward >= FRONT_INCIDENCE &&
-      Math.abs(cameraPlaneX) <= CAMERA_CENTER;
-    const distanceForUV =
-      isFrontFacing && perpendicularDistance < UV_NEAR_DISTANCE
-        ? UV_NEAR_DISTANCE
-        : perpendicularDistance;
-
-    //True hit point from distanceForUV (front may clamp; sides use perpendicular distance)
-    const hitPositionX = player.x + distanceForUV * rayDirectionX;
-    const hitPositionY = player.y + distanceForUV * rayDirectionY;
-
-    //Derive horizontal texture coordinate from fractional part of true hit
-    let textureCoordinateU;
-    if (wallSide === 0) {
-      //x-side (vertical wall): use fractional part of Y
-      textureCoordinateU = hitPositionY - (hitPositionY | 0);
-    } else {
-      //y-side (horizontal wall): use fractional part of X
-      textureCoordinateU = hitPositionX - (hitPositionX | 0);
-    }
-    textureCoordinateU = Math.min(
-      0.999999,
-      Math.max(0.0, textureCoordinateU + 1e-6)
-    );
-
-    //Select texture based on material ID
-    const textureData = TEXCACHE[hitTextureId];
-
-    const textureCanvas = TEX[hitTextureId];
-    const textureWidth = textureCanvas
-      ? textureCanvas.width | 0
-      : textureData.w | 0;
-
-    //Convert to texel column and apply direction-based flip
-    let textureColumnX = (textureCoordinateU * textureWidth) | 0;
-    //Flip only by step/side rule to keep u monotonic across a wall face
-    if (
-      (wallSide === 0 && stepDirectionX > 0) ||
-      (wallSide === 1 && stepDirectionY < 0)
-    ) {
-      textureColumnX = textureWidth - textureColumnX - 1;
-    }
-    if (textureColumnX < 0) {
-      textureColumnX = 0;
-    }
-    if (textureColumnX >= textureWidth) {
-      textureColumnX = textureWidth - 1;
-    }
-
-    //Project wall height to screen space
-    const projectionDistance = Math.max(PROJ_NEAR, perpendicularDistance);
-    const wallLineHeight = (HEIGHT / projectionDistance) | 0;
-
-    //Compute unclipped vertical segment and derive texture source window for any clipping
-    const EYE = player.calculatePlayerHeight(); //same as sprites
-    const horizon = HALF_HEIGHT;
-    const eyeScale = HEIGHT * (2 - EYE) * 0.5; //matches sprite/LUT scale
-
-    //depth = perpendicularDistance
-    const bottomY = horizon + eyeScale / perpendicularDistance; //floor-aligned
-    const unclippedEndY = bottomY | 0; //wall bottom
-    const unclippedStartY = (bottomY - wallLineHeight) | 0; //wall top
-    let drawStartY = unclippedStartY;
-    let drawEndY = unclippedEndY;
-    if (drawStartY < 0) {
-      drawStartY = 0;
-    }
-    if (drawEndY > HEIGHT) {
-      drawEndY = HEIGHT;
-    }
-
-    //Clip walls to ceilings
-    // TODO: ALso clip on floors?
-    const faceX = currentMapX - (wallSide === 0 ? stepDirectionX : 0);
-    const faceY = currentMapY - (wallSide === 1 ? stepDirectionY : 0);
-    let faceZoneId = 0;
-    if (faceX >= 0 && faceY >= 0 && faceX < MAP_W && faceY < MAP_H) {
-      faceZoneId = ZONE_GRID_CACHE[faceY * MAP_W + faceX] | 0;
-    }
-    let tall = WALL_MAP[originalHitTextureId].height || 1;
-
-    let zoneId =
-      faceZoneId >= 0
-        ? faceZoneId
-        : ZONE_GRID_CACHE[currentMapY * MAP_W + currentMapX] | 0;
-    let zone = gameStateObject.zones[zoneId];
-    let ceilingHeight = zone.ceilingHeight || 2;
-    tall = ceilingHeight / 2 < tall && !zone.outside ? ceilingHeight / 2 : tall;
-
-    const visibleHeight = drawEndY - drawStartY;
-    wallBottomY[screenColumnX] = drawEndY;
-    wallTopY[screenColumnX] = drawStartY;
-    const nearTopFull = bottomY - wallLineHeight * (tall > 0 ? tall : 1);
-    const nearTopY = nearTopFull;
-    wallTopY[screenColumnX] = nearTopY;
-    if (visibleHeight <= 0) {
-      zBuffer[screenColumnX] = perpendicularDistance;
-      continue;
-    }
-    const textureHeight =
-      (textureCanvas
-        ? textureCanvas.height
-        : textureData.h || TEX[hitTextureId]?.height || 64) | 0;
-    const sourceY =
-      (drawStartY - unclippedStartY) *
-      (textureHeight / Math.max(1, wallLineHeight));
-    const sourceHeight =
-      visibleHeight * (textureHeight / Math.max(1, wallLineHeight));
-
-    //Distance shading with Y-side darkening
-    let shadeAmount =
-      (1 / (1 + perpendicularDistance * 0.25)) * (wallSide ? 0.5 : 1);
-
-    //Animated effect for flesh texture
-    if (WALL_MAP[originalHitTextureId].animated) {
-      shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
-    }
-
-    if (tall === 1.0) {
-      drawWallColumnImg(
-        ctx,
-        screenColumnX,
-        drawStartY,
-        drawEndY,
-        textureCanvas,
-        textureColumnX,
-        shadeAmount,
-        sourceY,
-        sourceHeight,
-        hitTextureId
-      );
-    } else if (tall > 1) {
-      drawWallColumnImg(
-        ctx,
-        screenColumnX,
-        drawStartY,
-        drawEndY,
-        textureCanvas,
-        textureColumnX,
-        shadeAmount,
-        sourceY,
-        sourceHeight,
-        hitTextureId
-      );
-
-      const segH = wallLineHeight; //one unit wall height on screen
-      const texH = (textureCanvas?.height || textureData.h || 64) | 0;
-      const texPerPix = texH / Math.max(1, segH);
-
-      //how many EXTRA full repeats above the base slice
-      const fullRepeats = Math.floor(tall) - 1;
-
-      //draw each full extra slice (each maps full 0..texH to segH pixels)
-      for (let i = 0; i < fullRepeats; i++) {
-        const topUnc = unclippedStartY - segH * (i + 1);
-        const botUnc = unclippedEndY - segH * (i + 1);
-
-        const y0 = Math.max(0, Math.ceil(topUnc));
-        const y1 = Math.min(HEIGHT, Math.floor(botUnc));
-        //wallTopY[screenColumnX] += y1;
-        const visH = y1 - y0;
-        if (visH <= 0) {
-          continue;
-        }
-
-        const srcY = (y0 - topUnc) * texPerPix; //0..texH (trimmed if clipped)
-        const srcH = visH * texPerPix;
-
-        drawWallColumnImg(
-          ctx,
-          screenColumnX,
-          y0,
-          y1,
-          textureCanvas,
-          textureColumnX,
-          shadeAmount,
-          srcY,
-          srcH,
-          WALL_MAP[originalHitTextureId].textures[0][i + 1]
-        );
-      }
-
-      //partial top slice for fractional heights
-      const remFrac = tall - (1 + fullRepeats);
-      if (remFrac > 1e-6) {
-        const partH = segH * remFrac;
-        //bottom of the partial slice = top of the last full slice
-        const botUnc = unclippedStartY - segH * fullRepeats;
-        const topUnc = botUnc - partH; //grow up from bottom
-        //clip
-        const y0 = Math.max(0, Math.ceil(topUnc));
-        const y1 = Math.min(HEIGHT, Math.floor(botUnc));
-        //wallTopY[screenColumnX] += y1;
-        const visH = y1 - y0;
-        if (visH > 0) {
-          const unitTopUnc = botUnc - segH;
-          let srcY = ((y0 - unitTopUnc) * texPerPix) % texH;
-          if (srcY < 0) {
-            srcY += texH;
-          }
-          const srcH = visH * texPerPix;
-
-          drawWallColumnImg(
-            ctx,
-            screenColumnX,
-            y0,
-            y1,
-            textureCanvas,
-            textureColumnX,
-            shadeAmount,
-            srcY,
-            srcH,
-            WALL_MAP[originalHitTextureId].textures[0][1 + fullRepeats]
-          );
-        }
-      }
-    } else if (tall < 1.0) {
-      const segH = wallLineHeight; //one unit wall height on screen
-      const texH = (textureCanvas?.height || textureData.h || 64) | 0;
-      const texPerPix = texH / Math.max(1, segH);
-
-      const remFrac = tall;
-      if (remFrac > 1e-6) {
-        const partH = segH * remFrac;
-        //bottom of the partial slice = top of the last full slice
-        const botUnc = unclippedEndY;
-        const topUnc = botUnc - partH; //grow up from bottom
-        //clip
-        const y0 = Math.max(0, Math.ceil(topUnc));
-        const y1 = Math.min(HEIGHT, Math.floor(botUnc));
-        const visH = y1 - y0;
-        if (visH > 0) {
-          const unitTopUnc = botUnc - segH;
-          let srcY = ((y0 - unitTopUnc) * texPerPix) % texH;
-          if (srcY < 0) {
-            srcY += texH;
-          }
-          const srcH = visH * texPerPix;
-
-          drawWallColumnImg(
-            ctx,
-            screenColumnX,
-            y0,
-            y1,
-            textureCanvas,
-            textureColumnX,
-            shadeAmount,
-            srcY,
-            srcH,
-            hitTextureId
-          );
-        }
-      }
-    }
-    {
-      //fog for the near visible band only (use near distance)
-      const nearTopFull = bottomY - wallLineHeight * (tall > 0 ? tall : 1);
-      const fogY0 = Math.max(0, Math.ceil(nearTopFull));
-      const fogY1 = Math.min(HEIGHT, unclippedEndY);
-      drawFogBand(screenColumnX, fogY0, fogY1, perpendicularDistance);
-    }
-
-    //Draw farther wall only if it is taller (>1x)
-    let newTall = tall;
-    if ((wallTopY[screenColumnX] | 0) > 0) {
-      let uncoveredTop = wallTopY[screenColumnX] | 0; //visible band is [0, uncoveredTop)
-      //Continue DDA stepping from current state
-      let contMapX = currentMapX;
-      let contMapY = currentMapY;
-      let contSideX = sideDistanceX;
-      let contSideY = sideDistanceY;
-      let contWallSide = wallSide;
-
-      let safety = 0;
-      while (
-        uncoveredTop > 0 &&
-        //this makes sure we dont draw beyond the clipping plane
-        safety++ < player.sightDist - perpendicularDistance
-      ) {
-        //Step to next grid boundary
-        if (contSideX < contSideY) {
-          contSideX += deltaDistanceX;
-          contMapX += stepDirectionX;
-          contWallSide = 0;
+    while (iterationGuard < player.sightDist * 1.5) {
+      wallHit = false;
+      while (!wallHit && iterationGuard++ < player.sightDist * 1.5) {
+        if (sideDistanceX < sideDistanceY) {
+          sideDistanceX += deltaDistanceX;
+          currentMapX += stepDirectionX;
+          wallSide = 0;
         } else {
-          contSideY += deltaDistanceY;
-          contMapY += stepDirectionY;
-          contWallSide = 1;
+          sideDistanceY += deltaDistanceY;
+          currentMapY += stepDirectionY;
+          wallSide = 1;
         }
 
+        //Far plane culling - use pre-computed flag to avoid repeated condition check
+        if (hasFarPlaneCulling) {
+          const approximateDistance = Math.min(sideDistanceX, sideDistanceY);
+          if (approximateDistance > player.sightDist) {
+            wallHit = false;
+            hitTextureId = 0;
+            break;
+          }
+        }
+
+        //Map bounds check
+        //Also places bricks on outside edge of map. (Could make customizable based on map)
         if (
-          contMapX < 0 ||
-          contMapY < 0 ||
-          contMapX >= MAP_W ||
-          contMapY >= MAP_H
+          currentMapX < 0 ||
+          currentMapY < 0 ||
+          currentMapX >= gameStateObject.MAP_W ||
+          currentMapY >= gameStateObject.MAP_H
         ) {
+          wallHit = true;
+          hitTextureId = 1;
           break;
         }
 
-        const contCellId = MAP[contMapY][contMapX] | 0;
-        if (contCellId <= 0) {
-          continue; //empty space
-        }
-
-        //Distance to this farther wall
-        const contPerp =
-          contWallSide === 0
-            ? contSideX - deltaDistanceX
-            : contSideY - deltaDistanceY;
-        if (hasFarPlaneCulling && contPerp > player.sightDist) {
+        //Wall hit check
+        const mapCell = gameStateObject.MAP[currentMapY][currentMapX];
+        if (mapCell > 0) {
+          wallHit = true;
+          hitTextureId = mapCell;
           break;
         }
-
-        const proj2 = Math.max(PROJ_NEAR, contPerp);
-        const lineH2 = (HEIGHT / proj2) | 0;
-        let tall2 = WALL_MAP[contCellId].height;
-
-        //Clip to zone cileing height if taller
-        //TODO: Need to handle cases where you can see through an opening including a cieling height change like
-        //a build style portal system and OnLy draw the tall wall slice. But bot the base wall slice as walls in front of tall walls cilip fine
-        zoneId =
-          faceZoneId >= 0
-            ? faceZoneId
-            : ZONE_GRID_CACHE[contMapY * MAP_W + contMapX] | 0;
-        zone = gameStateObject.zones[zoneId];
-        ceilingHeight = zone.ceilingHeight || 2;
-        tall2 =
-          ceilingHeight / 2 < tall2 && !zone.outside
-            ? ceilingHeight / 2
-            : tall2;
-
-        //Its always at least the second texture in the list
-        const originalTallHitTextureId = contCellId;
-
-        //Only render a farther wall if it i;s strictly taller than the previous wall + incurred tallness
-        if (tall2 <= newTall) {
-          continue;
-        }
-        //Project vertical placement for the farther wall using same eyeScale/horizon
-        const bottom2 = horizon + eyeScale / contPerp;
-        const fullTop2 = bottom2 - lineH2 * tall2;
-
-        // Must reach into the uncovered band above the near wall
-        if (!(fullTop2 < uncoveredTop)) {
-          continue;
-        }
-        const textureId = WALL_MAP?.[contCellId]?.textures[0][newTall | 0];
-
-        /*console.log(
-          textureId,
-          newTall,
-          WALL_MAP?.[contCellId]?.textures[0][newTall | 0]
-        );*/
-        // UV for farther wall (column)
-        const hitX2 = player.x + contPerp * rayDirectionX;
-        const hitY2 = player.y + contPerp * rayDirectionY;
-        const u2 =
-          contWallSide === 0 ? hitY2 - (hitY2 | 0) : hitX2 - (hitX2 | 0);
-        const texCanvas2 = TEX[textureId];
-        const texData2 = TEXCACHE[textureId];
-
-        const texW2 = texCanvas2 ? texCanvas2.width | 0 : texData2.w | 0;
-        let texX2 = (u2 * texW2) | 0;
-        if (
-          (contWallSide === 0 && stepDirectionX > 0) ||
-          (contWallSide === 1 && stepDirectionY < 0)
-        ) {
-          texX2 = texW2 - texX2 - 1;
-        }
-        if (texX2 < 0) {
-          texX2 = 0;
-        }
-        if (texX2 >= texW2) {
-          texX2 = texW2 - 1;
-        }
-
-        const texH2 = (texCanvas2 ? texCanvas2.height : texData2.h || 64) | 0;
-        const shade2 = (1 / (1 + contPerp * 0.25)) * (contWallSide ? 0.5 : 1);
-
-        // Draw tiled: base unit, then full repeats, then optional fractional top
-        const segH2 = lineH2; // one unit wall height on screen
-        const texPerPix2 = texH2 / Math.max(1, segH2);
-
-        // base slice
-        const baseTop = bottom2 - segH2;
-        const baseBot = bottom2;
-        let y0 = baseTop;
-        let y1 = Math.min(uncoveredTop, baseBot);
-        let visH = y1 - y0;
-        if (visH > 0) {
-          const srcY = (y0 - baseTop) * texPerPix2;
-          const srcH = visH * texPerPix2;
-          drawWallColumnImg(
-            ctx,
-            screenColumnX,
-            y0,
-            y1,
-            texCanvas2,
-            texX2,
-            shade2,
-            srcY,
-            srcH,
-            textureId
-          );
-          if (y0 < uncoveredTop) {
-            uncoveredTop = y0;
-            if (uncoveredTop < (wallTopY[screenColumnX] | 0)) {
-              wallTopY[screenColumnX] = uncoveredTop;
-            }
-          }
-          drawFogBand(screenColumnX, y0, y1, contPerp);
-        }
-
-        // full extra repeats above base
-        const fullRepeats2 = Math.floor(tall2) - 1;
-        for (let i = 0; i < fullRepeats2 && uncoveredTop > 0; i++) {
-          const topUnc2 = baseTop - segH2 * (i + 1);
-          const botUnc2 = baseBot - segH2 * (i + 1);
-          y0 = topUnc2;
-          y1 = Math.min(uncoveredTop, botUnc2) + 1;
-          visH = y1 - y0;
-          if (visH <= 0) {
-            continue;
-          }
-          const srcY = (y0 - topUnc2) * texPerPix2;
-          const srcH = visH * texPerPix2;
-
-          /*console.log(
-            i,
-            newTall,
-            WALL_MAP?.[originalTallHitTextureId]?.textures[0][(newTall | 0) + i]
-          );*/
-          drawWallColumnImg(
-            ctx,
-            screenColumnX,
-            y0,
-            y1,
-            texCanvas2,
-            texX2,
-            shade2,
-            srcY,
-            srcH,
-            WALL_MAP?.[originalTallHitTextureId]?.textures[0][(newTall | 0) + i]
-          );
-          if (y0 < uncoveredTop) {
-            uncoveredTop = y0;
-            if (uncoveredTop < (wallTopY[screenColumnX] | 0)) {
-              wallTopY[screenColumnX] = uncoveredTop;
-            }
-          }
-          drawFogBand(screenColumnX, y0, y1, contPerp);
-        }
-
-        // fractional top slice if any
-        const remFrac2 = tall2 - (1 + fullRepeats2);
-        if (remFrac2 > 1e-6 && uncoveredTop > 0) {
-          const partH2 = segH2 * remFrac2;
-          const botUnc2 = baseTop - segH2 * Math.max(0, fullRepeats2);
-          const topUnc2 = botUnc2 - partH2;
-          y0 = topUnc2;
-          y1 = Math.min(uncoveredTop, botUnc2);
-          visH = y1 - y0;
-          if (visH > 0) {
-            const unitTopUnc2 = botUnc2 - segH2;
-            let srcY = ((y0 - unitTopUnc2) * texPerPix2) % texH2;
-            if (srcY < 0) {
-              srcY += texH2;
-            }
-            const srcH = visH * texPerPix2;
-            drawWallColumnImg(
-              ctx,
-              screenColumnX,
-              y0,
-              y1,
-              texCanvas2,
-              texX2,
-              shade2,
-              srcY,
-              srcH,
-              WALL_MAP?.[originalTallHitTextureId]?.textures[0][
-                (newTall | 0) + fullRepeats2
-              ]
-            );
-            if (y0 < uncoveredTop) {
-              uncoveredTop = y0;
-              if (uncoveredTop < (wallTopY[screenColumnX] | 0)) {
-                wallTopY[screenColumnX] = uncoveredTop;
-              }
-            }
-            drawFogBand(screenColumnX, y0, y1, contPerp);
-          }
-        }
-        newTall = tall2; //update to new taller height
       }
+      const originalHitTextureId = hitTextureId;
+
+      //Skip if no wall hit within range
+      if (originalHitTextureId === 0) {
+        wallBottomY[screenColumnX] = HALF_HEIGHT;
+        wallTopY[screenColumnX] = HALF_HEIGHT;
+        //this means you never hit a wall
+        continue;
+      }
+
+      //Perpendicular distance and true hit point
+      let perpendicularDistance;
+      if (wallSide === 0) {
+        perpendicularDistance = sideDistanceX - deltaDistanceX;
+      } else {
+        perpendicularDistance = sideDistanceY - deltaDistanceY;
+      }
+
+      //True hit point from perpendicularDistance (front may clamp; sides use perpendicular distance)
+      const hitPositionX = player.x + perpendicularDistance * rayDirectionX;
+      const hitPositionY = player.y + perpendicularDistance * rayDirectionY;
+
+      perpendicularDistance = Math.max(0.01, perpendicularDistance); //avoid div0
+      //Needs to be | 0 because otherwise we get a float and wallLineHeight ends up slightly off
+
+      const zid =
+        ZONE_GRID_CACHE[currentMapY * gameStateObject.MAP_W + currentMapX] | 0;
+      const floorDepth = gameStateObject.zones[zid]?.floorDepth ?? 0;
+
+      if (!gameStateObject.zones[zid].isLiquid) {
+        //The wall bottom should account for both the wall's floor depth AND the relative height of the player vs the wall
+        eyeScale = HEIGHT * (2 - floorDepth - EYE) * 0.5;
+      }
+
+      //Clip walls to ceilings
+      const faceX = currentMapX - (wallSide === 0 ? stepDirectionX : 0);
+      const faceY = currentMapY - (wallSide === 1 ? stepDirectionY : 0);
+      let faceZoneId = 0;
+      if (
+        faceX >= 0 &&
+        faceY >= 0 &&
+        faceX < gameStateObject.MAP_W &&
+        faceY < gameStateObject.MAP_H
+      ) {
+        faceZoneId = ZONE_GRID_CACHE[faceY * gameStateObject.MAP_W + faceX] | 0;
+      }
+      const zoneId = faceZoneId >= 0 ? faceZoneId : zid | 0;
+
+      //Derive horizontal texture coordinate from fractional part of true hit for proper mirroring
+      let wallSideDirection;
+      let textureCoordinateU;
+      if (wallSide === 0) {
+        //x-side (vertical wall): use fractional part of Y
+        textureCoordinateU = hitPositionY - (hitPositionY | 0);
+
+        if (stepDirectionX < 0) {
+          wallSideDirection = DirectionEnum.EAST;
+          textureCoordinateU = 1 - textureCoordinateU;
+        } else {
+          wallSideDirection = DirectionEnum.WEST;
+        }
+      } else {
+        //y-side (horizontal wall): use fractional part of X
+        textureCoordinateU = hitPositionX - (hitPositionX | 0);
+
+        if (stepDirectionY > 0) {
+          wallSideDirection = DirectionEnum.NORTH;
+          textureCoordinateU = 1 - textureCoordinateU;
+        } else {
+          wallSideDirection = DirectionEnum.SOUTH;
+        }
+      }
+      //Convert to texel column
+      const textureColumnX = (textureCoordinateU * TEXTURE_HEIGHT) | 0;
+
+      collectWalls(
+        screenColumnX,
+        zoneId,
+        eyeScale,
+        perpendicularDistance,
+        wallSide,
+        nowSec,
+        wallSideDirection,
+        textureColumnX,
+        stepDirectionX,
+        stepDirectionY,
+        originalHitTextureId
+      );
+      //skip to next wall segment
+      //iterationGuard += 1;
     }
 
-    //Store distance for sprite depth testing (nearest only)
-    zBuffer[screenColumnX] = perpendicularDistance;
+    drawWalls();
+    //#endregion
+    //#region Far Wall Rendering
+    //#endregion
+
+    //Store distance for sprite depth testing
   }
 }
+
+function collectWalls(
+  screenColumnX,
+  zoneId,
+  eyeScale,
+  perpendicularDistance,
+  wallSide,
+  nowSec,
+  wallSideDirection,
+  textureColumnX,
+  stepDirectionX,
+  stepDirectionY,
+  originalHitTextureId
+) {
+  const playerZoneId =
+    ZONE_GRID_CACHE[player.y * gameStateObject.MAP_W + player.x] | 0;
+  const playerZone = gameStateObject.zones[playerZoneId];
+  const zone = gameStateObject.zones[zoneId];
+  perpendicularDistance = Math.max(0.01, perpendicularDistance);
+  const wallLineHeight = (HEIGHT / perpendicularDistance) | 0;
+  const bottomY = (HALF_HEIGHT + eyeScale / perpendicularDistance) | 0; //floor-aligned
+  const ceilingHeight = zone.ceilingHeight || 2;
+  //Distance shading with Y-side darkening
+  let shadeAmount =
+    (1 / (1 + perpendicularDistance * 0.25)) * (wallSide ? 0.5 : 1);
+  //Animated effect for flesh texture
+  if (WALL_MAP[originalHitTextureId].animated) {
+    shadeAmount *= 0.8 + 0.2 * Math.sin(nowSec * 6 + screenColumnX * 0.05);
+  }
+  const texPerPix = TEXTURE_HEIGHT / wallLineHeight;
+
+  let tall = WALL_MAP[originalHitTextureId].height || 1;
+  tall =
+    ceilingHeight / 2 < tall && !playerZone.outside ? ceilingHeight / 2 : tall;
+  let remaining = tall;
+
+  let seg = 0;
+  //Defined before loop
+  let sliceBottom = bottomY;
+  //#region Near Wall Rendering
+  const segArray = [];
+  while (remaining > 0) {
+    //this segment’s height in "units" (1.0 for full slice, <1.0 for partial)
+    const u = remaining >= 1 ? 1 : remaining;
+    const partH = wallLineHeight * u;
+    const sliceTop = sliceBottom - partH;
+
+    //unitTopUnc is the top of the full unit this slice belongs to
+    const unitTopUnc = sliceBottom - wallLineHeight;
+
+    //start inside that unit (0..texH for full; (1-u)*texH for bottom partial; 0.. for top partial)
+    let srcY = (sliceTop - unitTopUnc) * texPerPix;
+    if (srcY < 0 || srcY > TEXTURE_HEIGHT) {
+      srcY = ((srcY % TEXTURE_HEIGHT) + TEXTURE_HEIGHT) % TEXTURE_HEIGHT;
+    }
+    const srcH = (sliceBottom - sliceTop) * texPerPix;
+    //pick texture id: base (seg 0) uses the hit; higher segments use your per-level list
+    if (WALL_MAP[originalHitTextureId]?.textures?.ALL) {
+      wallSideDirection = DirectionEnum.ALL;
+    }
+
+    const segTexId =
+      WALL_MAP[originalHitTextureId]?.textures?.[wallSideDirection]?.[seg] ||
+      "brick";
+    //Select texture based on material ID
+    const textureData = TEXCACHE[segTexId];
+    const segment = {
+      screenColumnX,
+      sliceTop,
+      sliceBottom,
+      colLength: textureData.cols.length,
+      textureColumnX,
+      shadeAmount,
+      srcY,
+      srcH,
+      segTexId,
+      bottomY,
+      wallLineHeight,
+      perpendicularDistance,
+      tall,
+    };
+    segArray.push(segment);
+    //I now know the wall top for this column/row (segment)
+    sliceBottom = sliceTop;
+    remaining -= u;
+    seg++;
+  }
+  wallSegmentBuffer.push(segArray);
+}
+
+/**
+ * Preprocesses all segments to determine which are occluded by previously drawn walls.
+ * Removes occluded segments from the array entirely for cleaner drawing logic.
+ *
+ * @param {number} minTopDrawn - The minimum Y coordinate already drawn
+ * @returns {number} Updated minTopDrawn value after processing all segments
+ */
+function preprocessOcclusion(minTopDrawn) {
+  for (let i = 0; i < wallSegmentBuffer.length; i++) {
+    const segArray = wallSegmentBuffer[i];
+
+    // Skip entire column if it's already occluded
+    if (
+      minTopDrawn !== undefined &&
+      minTopDrawn <= segArray[segArray.length - 1].sliceTop
+    ) {
+      segArray.length = 0; // Clear the array
+      continue;
+    }
+
+    // Filter out occluded segments from this column
+    let writeIdx = 0;
+    for (let j = 0; j < segArray.length; j++) {
+      const segment = segArray[j];
+
+      // Keep segment if NOT occluded
+      if (minTopDrawn === undefined || minTopDrawn >= segment.sliceTop) {
+        segArray[writeIdx++] = segment;
+      }
+    }
+    segArray.length = writeIdx; // Trim array to only non-occluded segments
+
+    // Update minTopDrawn based on remaining segments
+    if (segArray.length > 0) {
+      const nearTopFull =
+        segArray[0].bottomY -
+        segArray[0].wallLineHeight *
+          (segArray[0].tall > 0 ? segArray[0].tall : 1);
+      const lastSliceTop = segArray[segArray.length - 1].sliceTop;
+
+      minTopDrawn =
+        minTopDrawn === undefined
+          ? Math.min(nearTopFull, lastSliceTop)
+          : Math.min(minTopDrawn, nearTopFull, lastSliceTop);
+    }
+  }
+  return minTopDrawn;
+}
+
+function drawWalls() {
+  let minTopDrawn = undefined;
+  minTopDrawn = preprocessOcclusion(minTopDrawn);
+  for (let i = wallSegmentBuffer.length - 1; i >= 0; i--) {
+    const segArray = wallSegmentBuffer[i];
+    if (segArray.length === 0) {
+      continue;
+    } // Skip empty arrays
+    for (let j = 0; j < segArray.length; j++) {
+      const {
+        screenColumnX,
+        sliceTop,
+        sliceBottom,
+        colLength,
+        textureColumnX,
+        shadeAmount,
+        srcY,
+        srcH,
+        segTexId,
+        perpendicularDistance,
+      } = segArray[j];
+
+      drawWallColumnImg(
+        ctx,
+        screenColumnX,
+        sliceTop,
+        sliceBottom,
+        colLength,
+        textureColumnX,
+        shadeAmount,
+        srcY,
+        srcH,
+        segTexId
+      );
+      //Store perpendicular distance in sparse buffer for each Y from sliceTop to sliceBottom
+      const wallScreenTop = sliceTop | 0;
+      const wallScreenBottom = sliceBottom | 0;
+      for (let py = wallScreenTop; py <= wallScreenBottom; py++) {
+        if (py < 0 || py >= HEIGHT) {
+          continue;
+        }
+        setPixelDepth(screenColumnX, py, perpendicularDistance);
+      }
+    }
+
+    const nearTopFull =
+      segArray[0].bottomY -
+      segArray[0].wallLineHeight *
+        (segArray[0].tall > 0 ? segArray[0].tall : 1);
+
+    const fogY0 = nearTopFull;
+    const fogY1 = segArray[0].bottomY;
+    wallBottomY[segArray[0].screenColumnX] = fogY1;
+    wallTopY[segArray[0].screenColumnX] = fogY0;
+    drawFogBand(
+      segArray[0].screenColumnX,
+      fogY0,
+      fogY1,
+      segArray[0].perpendicularDistance
+    );
+  }
+}
+
+//#endregion

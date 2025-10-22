@@ -1,11 +1,12 @@
 //Sprite projection - transforms world sprites to screen coordinates
 //Ground sprites align to floor, floating sprites center on horizon
 import { WIDTH, HEIGHT } from "./Dom.js";
-import { clamp } from "./Utils.js";
+import { clamp } from "./UntrustedUtils.js";
 import { player } from "./Player.js";
 import { spriteEnum } from "./Sprites.js";
-import { ZONE_GRID_CACHE } from "./Render.js";
 import { gameStateObject } from "./Map.js";
+import { ZONE_GRID_CACHE } from "./Render.js";
+
 //Calculate sprite screen height based on distance from camera
 function projectHeight(distanceFromCamera) {
   return HEIGHT / distanceFromCamera;
@@ -34,7 +35,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
     cameraBasisVectors
   );
 
-  if (cameraSpaceY <= 0.01) {
+  if (cameraSpaceY <= 0.0) {
     return null; //Behind camera
   }
 
@@ -65,6 +66,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
   }
   sprite._hR = roundedSpriteHeight;
 
+  //Push out of way effect
   const finalSpriteHeight = roundedSpriteHeight;
 
   const spriteImage = spriteEnum[sprite.img];
@@ -80,21 +82,23 @@ export function projectSprite(sprite, cameraBasisVectors) {
   //Calculate floor bias for ground sprites based on size and scale
 
   //Use the same constants the walls use
-  const EYE = player.calculatePlayerHeight();
-  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if we implement pitch
+  const EYE = player.calculatePlayerHeight(); //<-- match wall formula exactly
+  const horizon = HEIGHT * 0.5; //add + proj*Math.tan(pitch) if you implement pitch
   let occludedBottom = 0; //Pixels occluded by liquid cover, from bottom up
+  let occludedTop = 0; //Pixels occluded from top down (for future use)
   let startY, endY;
   if (sprite.ground) {
+    //Need to occlude tops of sprites in zones with specific cieling heights
+
     //Base locked to floor at depth cameraSpaceY (same eye-height model as walls)
 
-    // Move sprites lower if they are on a lower plane
+    //Move sprites lower if they are on a lower plane
     const newZoneId =
       ZONE_GRID_CACHE[(sprite.y | 0) * gameStateObject.MAP_W + (sprite.x | 0)];
-
     const zone = gameStateObject.zones[newZoneId];
 
-    // Convert floor-depth units to the same vertical units as EYE.
-    // One floor step = 0.5 of a wall-height unit.
+    //Convert floor-depth units to the same vertical units as EYE.
+    //One floor step = 0.5 of a wall-height unit.
     const playerDepth = player.getCurrentFloorDepth() || 0;
     const spriteDepth = zone.floorDepth || 0;
 
@@ -108,7 +112,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
       //When sprite is above you on a floor project based on player eye height and depth delta
       //This makes sprites on upper floors rise up when they are above you a bit
       const depthDeltaInHeightUnits = 0.5 * (playerDepth - spriteDepth);
-      //Base wall height is 2 nunits. Shift by relative depth delta.
+      //Base wall height is 2 height units. Shift by relative depth delta.
       const floorAdjust = 2 + depthDeltaInHeightUnits;
       bottomYF = horizon + (HEIGHT * (floorAdjust - EYE) * 0.5) / cameraSpaceY;
     }
@@ -123,16 +127,16 @@ export function projectSprite(sprite, cameraBasisVectors) {
 
     if (zone && zone.isLiquid) {
       const fd = zone.floorDepth ?? 0;
-      // Submerge occlusion: hide the lower part of a sprite when it’s under liquid.
-      // Right now this only fires for “low water” because fd is tied to the base floor.
-      // Making “high water” (raised rivers/pools) work is trivial—
-      // just separate water height from floor height.
+      //Submerge occlusion: hide the lower part of a sprite when it’s under liquid.
+      //Right now this only fires for “low water” because fd is tied to the base floor.
+      //Making “high water” (raised rivers/pools) work is trivial—
+      //just separate water height from floor height.
       if (fd < 0) {
-        const waterDepth = fd < 0 ? -fd : 0; // world units below base
-        // Tunables (world-unit based, independent of player eye height)
-        const WATER_FULL_COVER_UNITS = 1.2; // depth at which we approach max cover
+        const waterDepth = fd < 0 ? -fd : 0; //world units below base
+        //Tunables (world-unit based, independent of player eye height)
+        const WATER_FULL_COVER_UNITS = 1.2; //depth at which we approach max cover
         const depthNorm = clamp(waterDepth / WATER_FULL_COVER_UNITS, 0, 1);
-        // Quadratic ease (gentler start): depthNorm^2
+        //Quadratic ease (gentler start): depthNorm^2
         const autoCover = depthNorm;
         const coverFrac = clamp(autoCover, 0, 1);
         occludedBottom = Math.min(
@@ -141,7 +145,24 @@ export function projectSprite(sprite, cameraBasisVectors) {
         );
       }
     }
+
+    if (zone && zone.ceilingHeight) {
+      //Ceiling occlusion: hide the upper part of a sprite when it’s above the ceiling.
+      const ceilingHeightUnits = zone.ceilingHeight || 2;
+      const spriteTopHeightUnits =
+        EYE + ((finalSpriteHeight * 0.5 * cameraSpaceY) / HEIGHT) * 2;
+      const ceilingOverlapUnits = spriteTopHeightUnits - ceilingHeightUnits;
+      if (ceilingOverlapUnits > 0) {
+        //Convert height units to pixels
+        const ceilingOverlapPixels = Math.round(
+          (ceilingOverlapUnits * HEIGHT) / (cameraSpaceY * 1)
+        );
+        const maxOcclusion = finalSpriteHeight - 1 - occludedBottom;
+        occludedTop = Math.min(maxOcclusion, ceilingOverlapPixels);
+      }
+    }
   } else {
+    //TODO: Need to make it be on ceiling not just centered on horizon (Or add a third type that does this)
     const topY = Math.round(horizon - finalSpriteHeight * 0.5);
     startY = topY;
     endY = topY + finalSpriteHeight;
@@ -149,6 +170,7 @@ export function projectSprite(sprite, cameraBasisVectors) {
 
   const verticalPosition = { startY, endY };
   const drawStartX = Math.round(screenCenterPixelX - (finalSpriteWidth >> 1));
+  //Push things to the side effect
   const drawEndX = drawStartX + finalSpriteWidth;
 
   return {
@@ -160,8 +182,10 @@ export function projectSprite(sprite, cameraBasisVectors) {
     size: finalSpriteHeight,
     width: drawEndX - drawStartX,
     occludedBottom,
+    occludedTop,
   };
 }
+
 //Debug helpers
 export function debugDrawFloorAndHorizonLines(g) {
   g.save();

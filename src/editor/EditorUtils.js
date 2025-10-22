@@ -3,7 +3,7 @@
  * Helper functions specific to the map editor functionality
  */
 
-import { clamp } from "../Utils.js";
+import { clamp } from "../UntrustedUtils.js";
 
 /**
  * Create a 2D map array filled with a specific value

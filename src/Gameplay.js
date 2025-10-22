@@ -10,11 +10,19 @@ import {
   ammoText,
   cMini,
 } from "./Dom.js";
-import { clamp } from "./Utils.js";
-import { rollDice, chooseRandomElementFromArray } from "./UntrustedUtils.js";
+import {
+  rollDice,
+  getRandomElementFromArray,
+  clamp,
+} from "./UntrustedUtils.js";
 import { resumeAudio, SFX, ensureShooterMusic } from "./Audio.js";
 import { cameraBasis } from "./Camera.js";
-import { zBuffer, rebuildRowDistLUT, ZONE_GRID_CACHE } from "./Render.js";
+import {
+  rebuildRowDistLUT,
+  ZONE_GRID_CACHE,
+  getPixelDepth,
+  HALF_HEIGHT,
+} from "./Render.js";
 import { projectSprite } from "./Projection.js";
 import { gameStateObject, EXIT_POS, START_POS, mapDefinitions } from "./Map.js";
 import { player, collisionRadius, wave, setWave } from "./Player.js";
@@ -289,17 +297,16 @@ export function fire() {
   }
 }
 
-export function autoPickup() {
+export function processTouchEvents() {
   for (const s of sprites) {
     if (!s.alive) {
       continue;
     }
     const d = Math.hypot(s.x - player.x, s.y - player.y);
-    if (d >= 0.6) {
-      continue;
-    }
-    if (s.onTouch) {
-      s.onTouch(s);
+    if (d < 0.6) {
+      if (s.onTouch) {
+        s.onTouch(s);
+      }
     }
   }
 }
@@ -328,7 +335,7 @@ export function pickSpriteAtCenter(basis) {
   //I wanted to move this outside of the function but was paranoid that it would act weird if window is resized. (Might be able to?)
   const HALF_WIDTH = document.getElementById("view").width >> 1;
   const center = HALF_WIDTH | 0; //conservative center
-  const depth = zBuffer[center] || 1e9;
+  const depth = getPixelDepth(center, HALF_HEIGHT) || 1e9;
   let best = null;
   let bestDepth = 1e9;
   for (const s of sprites) {
@@ -410,7 +417,7 @@ export function randomEmptyTileInZone(zoneId) {
   if (!arr || arr.length === 0) {
     return null;
   }
-  return chooseRandomElementFromArray(arr);
+  return getRandomElementFromArray(arr);
 }
 
 export function onTileChanged() {

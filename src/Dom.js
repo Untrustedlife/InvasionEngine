@@ -1,7 +1,12 @@
 //Set to
-//width=960 height=540 if you want to use the same scale as the original
-export const LOGICAL_W = 480;
-export const LOGICAL_H = 270;
+
+const isFirefox =
+  typeof navigator !== "undefined" &&
+  navigator.userAgent.toLowerCase().includes("firefox");
+const firefoxScale = isFirefox ? 0.7 : 0.8;
+
+export const LOGICAL_W = 960 * firefoxScale;
+export const LOGICAL_H = 540 * firefoxScale;
 export const canvas = document.getElementById("view");
 
 //Backing stores match the logical size
@@ -39,4 +44,3 @@ export const btnToggleMap = document.getElementById("btnToggleMap");
 export const supportsImageBitmap =
   typeof createImageBitmap !== "undefined" &&
   typeof ImageBitmap !== "undefined";
-
