@@ -1,4 +1,4 @@
-## ⚠️ Deprecation Notice — October 21, 2025
+## Deprecation Notice, October 21, 2025
 
 This open-source repo is now **deprecated**. All new development is happening in the **closed-source** version of the engine.
 
@@ -7,12 +7,12 @@ This open-source repo is now **deprecated**. All new development is happening in
 - I rewrote the renderer _from scratch_ in this repo to reach **feature-parity** with my current closed source engine, so it includes the new rendering features you’ve seen in recent builds.
  Of Realmchild Invasion. https://untrustedlife.com/realmchildinvasion
 
--No code was copied wholesale over from the closed project—keeping the “no crossing streams” rule to respect licenses and contributor rights.
+-No code was copied wholesale over from the closed project to respect licenses and contributor rights.
 
 -No code was copied at all from the open source version to the closed version once it landed here.
 
 **Why deprecate?**
-Maintaining two engines (one open-source with ported features (That couldnt be copied directly.) and one closed) was **exhausting**, especially while ensuring code never moved from OSS → closed. The split slowed me down and added a lot of overhead. And i kind of dreaded this final rewrite.
+Maintaining two engines (one open-source with ported features (That couldnt be copied directly.) and one closed) was **exhausting**, especially while ensuring code never moved from OS → closed. The split slowed me down and added a lot of overhead. And i kind of dreaded this final rewrite.
 
 **What to expect here**
 
@@ -31,16 +31,6 @@ https://untrustedlife.github.io/InvasionEngine
 Invasion Engine is a professionally developed, open-source raycaster game engine that runs and embeds directly in your browser. Without utilizing WebGL.
 
 Built at first in collaboration with WildRose then fully taken over by Untrustedlife and powered by an engine developed by Untrustedlife as the foundation.
-
-This version has already diverged a lot from the original:
-
-All side-screen artifacting issues are fixed comapred to original engine.
-
-Sprite artifacting is gone comapred to original engine.
-
-Many textures and sprites are new or improved
-
-Gameplay feels smoother
 
 Use this as a base to build your own free, open-source raycaster games!
 
